@@ -87,6 +87,22 @@ export async function createReneoEcosystemOrder(input: {
   };
 }
 
+export async function getReneoPaymentMethods(): Promise<ReneoPaymentMethod[]> {
+  const cfg = getReneoConfig();
+  if (!cfg.enabled) return [];
+
+  const data = await fetchWithTimeout(`${cfg.panelUrl}/api/v1/app-catalog/payment-methods`, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      'X-Reneo-App-Token': cfg.appToken,
+    },
+  });
+
+  if (!data?.ok || !Array.isArray(data?.paymentMethods)) return [];
+  return data.paymentMethods;
+}
+
 export async function getReneoEcosystemOrder(publicId: string): Promise<ReneoOrderResult | null> {
   const cfg = getReneoConfig();
   if (!cfg.enabled || !publicId) return null;

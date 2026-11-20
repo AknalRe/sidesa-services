@@ -199,4 +199,6 @@ export const api = {
   getAttendance: async () => (await client.get('/admin/attendance')).data.data,
   createAttendance: async (payload: Record<string, any>) =>
     (await client.post('/admin/attendance', payload)).data.data,
+  uploadImage: async (dataUrl: string, filename?: string) =>
+    (await client.post('/admin/upload', { dataUrl, filename })).data.data,
 };

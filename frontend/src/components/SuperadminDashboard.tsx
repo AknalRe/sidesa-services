@@ -19,6 +19,7 @@ import {
 import { api } from '../services/api';
 import { ReneoSidesaLogo } from './ReneoSidesaLogo';
 import { WilayahSearchPicker } from './WilayahSearchPicker';
+import { ImageUploadField } from './ImageUploadField';
 
 type SuperTab = 'overview' | 'villages' | 'invoices' | 'plans';
 
@@ -37,17 +38,31 @@ function formatDate(d?: string | null): string {
 
 export const SuperadminDashboard: React.FC<{
   user: { name: string; email: string };
+  initialTab?: string;
+  onTabChange?: (tab: SuperTab) => void;
   onLogout: () => void;
   onOpenVillagePortal: (slug: string) => void;
   onManageVillage: (village: any) => void;
   onBackToLanding?: () => void;
-}> = ({ user, onLogout, onOpenVillagePortal, onManageVillage, onBackToLanding }) => {
-  const [tab, setTab] = useState<SuperTab>('overview');
+}> = ({ user, initialTab, onTabChange, onLogout, onOpenVillagePortal, onManageVillage, onBackToLanding }) => {
+  const validSuperTabs: SuperTab[] = ['overview', 'villages', 'invoices', 'plans'];
+  const [tab, setTabState] = useState<SuperTab>(() =>
+    validSuperTabs.includes(initialTab as SuperTab) ? (initialTab as SuperTab) : 'overview'
+  );
+  const setTab = (next: SuperTab) => {
+    setTabState(next);
+    onTabChange?.(next);
+  };
+  useEffect(() => {
+    if (initialTab && validSuperTabs.includes(initialTab as SuperTab)) {
+      setTabState(initialTab as SuperTab);
+    }
+  }, [initialTab]);
   const [overview, setOverview] = useState<any>(null);
   const [villages, setVillages] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
-  const [paymentConfig, setPaymentConfig] = useState<Record<string, string>>({});
+  const [paymentConfig, setPaymentConfig] = useState<Record<string, any>>({});
   const [savingMsg, setSavingMsg] = useState<string | null>(null);
   const [showCreateVillage, setShowCreateVillage] = useState(false);
   const [newVillage, setNewVillage] = useState({
@@ -344,24 +359,21 @@ export const SuperadminDashboard: React.FC<{
                       className="w-full h-9 px-3 rounded-lg border border-slate-300"
                     />
                   </div>
-                  <div>
-                    <label className="block font-bold text-slate-700 mb-1">URL Logo Desa (Opsional)</label>
-                    <input
-                      type="text"
-                      placeholder="https://..."
+                  <div className="sm:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <ImageUploadField
+                      label="Logo / Lambang Desa (Opsional)"
                       value={newVillage.logoUrl}
-                      onChange={(e) => setNewVillage({ ...newVillage, logoUrl: e.target.value })}
-                      className="w-full h-9 px-3 rounded-lg border border-slate-300"
+                      onChange={(url) => setNewVillage({ ...newVillage, logoUrl: url })}
+                      placeholder="Pilih PNG transparan lambang kabupaten / desa"
+                      preserveTransparency
+                      compact
                     />
-                  </div>
-                  <div>
-                    <label className="block font-bold text-slate-700 mb-1">URL Banner Hero (Opsional)</label>
-                    <input
-                      type="text"
-                      placeholder="https://..."
+                    <ImageUploadField
+                      label="Foto Banner Hero (Opsional)"
                       value={newVillage.heroImageUrl}
-                      onChange={(e) => setNewVillage({ ...newVillage, heroImageUrl: e.target.value })}
-                      className="w-full h-9 px-3 rounded-lg border border-slate-300"
+                      onChange={(url) => setNewVillage({ ...newVillage, heroImageUrl: url })}
+                      placeholder="Pilih foto balai desa atau pemandangan desa"
+                      compact
                     />
                   </div>
                   <div className="flex items-end pb-1.5">
@@ -711,8 +723,36 @@ export const SuperadminDashboard: React.FC<{
             </div>
 
             <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 space-y-4 max-w-2xl text-xs">
-              <h2 className="text-base font-extrabold text-slate-900">Rekening &amp; Instruksi Pembayaran Platform</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-base font-extrabold text-slate-900">Rekening &amp; Instruksi Pembayaran Platform</h2>
+                {Array.isArray(paymentConfig.reneoPaymentMethods) && paymentConfig.reneoPaymentMethods.length > 0 && (
+                  <span className="px-2.5 py-1 rounded-md bg-sky-50 text-[#0069b6] font-bold text-[11px]">
+                    Tersinkron Otomatis dari Panel Reneo
+                  </span>
+                )}
+              </div>
+
+              {Array.isArray(paymentConfig.reneoPaymentMethods) && paymentConfig.reneoPaymentMethods.length > 0 ? (
+                <div className="space-y-2.5">
+                  <p className="text-slate-600">
+                    Daftar rekening di bawah ini diambil langsung dari pengaturan pembayaran di <strong>Panel Reneo</strong> sehingga selalu seragam dengan seluruh aplikasi ekosistem Reneo.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {paymentConfig.reneoPaymentMethods.map((m: any, idx: number) => (
+                      <div key={idx} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-0.5">
+                        <div className="font-extrabold text-slate-900">{m.label || m.bankName || m.type}</div>
+                        {m.accountNumber && (
+                          <div className="font-mono text-sm font-extrabold text-[#0069b6]">{m.accountNumber}</div>
+                        )}
+                        {m.accountName && <div className="text-slate-600">a.n. {m.accountName}</div>}
+                        {m.instructions && <div className="text-[11px] text-slate-500 pt-1">{m.instructions}</div>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Nama Bank</label>
                   <input
@@ -759,16 +799,18 @@ export const SuperadminDashboard: React.FC<{
                   className="w-full p-3 rounded-lg border border-slate-300"
                 />
               </div>
-              <button
-                type="button"
-                onClick={async () => {
-                  await api.updateSuperadminPaymentConfig(paymentConfig);
-                  flash('Pengaturan rekening pembayaran berhasil disimpan.');
-                }}
-                className="h-9 px-5 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white font-bold"
-              >
-                Simpan Pengaturan Pembayaran
-              </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await api.updateSuperadminPaymentConfig(paymentConfig);
+                      flash('Pengaturan rekening pembayaran berhasil disimpan.');
+                    }}
+                    className="h-9 px-5 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white font-bold"
+                  >
+                    Simpan Pengaturan Pembayaran
+                  </button>
+                </>
+              )}
             </div>
           </section>
         )}

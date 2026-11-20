@@ -27,6 +27,7 @@ import { api, setActiveSuperadminVillage } from '../services/api';
 import { ReneoSidesaLogo } from '../components/ReneoSidesaLogo';
 import { SuperadminDashboard } from '../components/SuperadminDashboard';
 import { WilayahSearchPicker } from '../components/WilayahSearchPicker';
+import { ImageUploadField } from '../components/ImageUploadField';
 
 type AdminTab =
   | 'dashboard'
@@ -70,9 +71,16 @@ function formatRp(n: number): string {
 }
 
 export const AdminPanel: React.FC<{
+  initialAdminTab?: string;
+  initialSuperTab?: string;
+  onAdminTabChange?: (tab: string) => void;
+  onSuperTabChange?: (tab: string) => void;
   onBackToPortal: (slug?: string) => void;
   onBackToLanding?: () => void;
-}> = ({ onBackToPortal, onBackToLanding }) => {
+}> = ({ initialAdminTab, initialSuperTab, onAdminTabChange, onSuperTabChange, onBackToPortal, onBackToLanding }) => {
+  const validAdminTabs = MENU.map((m) => m.id);
+  const resolveAdminTab = (raw?: string): AdminTab =>
+    raw && validAdminTabs.includes(raw as AdminTab) ? (raw as AdminTab) : 'dashboard';
   const [auth, setAuth] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'superadmin_setup'>('login');
@@ -105,7 +113,7 @@ export const AdminPanel: React.FC<{
   const [confirmRef, setConfirmRef] = useState('');
   const [confirmNote, setConfirmNote] = useState('');
 
-  const [tab, setTab] = useState<AdminTab>('dashboard');
+  const [tab, setTab] = useState<AdminTab>(() => resolveAdminTab(initialAdminTab));
   const [dashboard, setDashboard] = useState<any>(null);
   const [letters, setLetters] = useState<any[]>([]);
   const [residents, setResidents] = useState<any[]>([]);
@@ -249,8 +257,20 @@ export const AdminPanel: React.FC<{
     void checkAuth();
   }, []);
 
-  const loadTab = async (t: AdminTab) => {
+  useEffect(() => {
+    if (!auth?.authenticated) return;
+    if (auth?.user?.role === 'SUPERADMIN' && !managedVillage) return;
+    const nextTab = resolveAdminTab(initialAdminTab);
+    if (nextTab !== tab) {
+      void loadTab(nextTab, false);
+    } else if (nextTab !== 'dashboard') {
+      void loadTab(nextTab, false);
+    }
+  }, [initialAdminTab, auth?.authenticated, managedVillage]);
+
+  const loadTab = async (t: AdminTab, syncUrl = true) => {
     setTab(t);
+    if (syncUrl) onAdminTabChange?.(t);
     if (t === 'dashboard') setDashboard(await api.getDashboard());
     else if (t === 'billing') setBillingData(await api.getBilling());
     else if (t === 'letters') setLetters(await api.getLetters());
@@ -328,6 +348,8 @@ export const AdminPanel: React.FC<{
     return (
       <SuperadminDashboard
         user={auth.user}
+        initialTab={initialSuperTab}
+        onTabChange={onSuperTabChange}
         onLogout={async () => {
           setActiveSuperadminVillage(null);
           await api.logout();
@@ -338,6 +360,7 @@ export const AdminPanel: React.FC<{
           setActiveSuperadminVillage(v.id);
           setManagedVillage(v);
           setTab('dashboard');
+          onAdminTabChange?.('dashboard');
           const [dash, prof, bill] = await Promise.all([
             api.getDashboard(),
             api.getVillageProfile(),
@@ -928,11 +951,6 @@ export const AdminPanel: React.FC<{
               <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-1.5 text-xs">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-bold text-slate-500 uppercase">Rekening Pembayaran Resmi</span>
-                  {billingData.reneoEcosystemEnabled && (
-                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold">
-                      NotifBank Reneo Aktif
-                    </span>
-                  )}
                 </div>
                 {Array.isArray(billingData.reneoPaymentMethods) && billingData.reneoPaymentMethods.length > 0 ? (
                   <div className="space-y-1.5">
@@ -1038,7 +1056,7 @@ export const AdminPanel: React.FC<{
                         <div>{formatRp(inv.amountTotal || inv.amount)}</div>
                         {inv.uniqueCode > 0 && (
                           <div className="text-[10px] font-sans font-semibold text-emerald-700">
-                            Termasuk kode unik +{inv.uniqueCode} (Auto-Verifikasi NotifBank)
+                            Termasuk kode unik +{inv.uniqueCode} (Transfer sesuai nominal)
                           </div>
                         )}
                       </td>
@@ -1066,7 +1084,7 @@ export const AdminPanel: React.FC<{
                             }}
                             className="px-2.5 py-1.5 rounded-lg border border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold"
                           >
-                            Cek NotifBank
+                            Cek Status Bayar
                           </button>
                         )}
                         {inv.status === 'UNPAID' && (
@@ -1422,24 +1440,19 @@ export const AdminPanel: React.FC<{
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold mb-1">URL Lambang Kabupaten / Logo Desa (opsional)</label>
-                  <input
-                    placeholder="https://..."
-                    value={village.logoUrl || ''}
-                    onChange={(e) => setVillage({ ...village, logoUrl: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold mb-1">URL Foto Banner Hero Utama (opsional)</label>
-                  <input
-                    placeholder="https://..."
-                    value={village.heroImageUrl || ''}
-                    onChange={(e) => setVillage({ ...village, heroImageUrl: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-xs"
-                  />
-                </div>
+                <ImageUploadField
+                  label="Lambang Kabupaten / Logo Desa (PNG Transparan)"
+                  value={village.logoUrl || ''}
+                  onChange={(url) => setVillage({ ...village, logoUrl: url })}
+                  placeholder="Pilih file PNG/JPG lambang desa"
+                  preserveTransparency
+                />
+                <ImageUploadField
+                  label="Foto Banner Hero Utama"
+                  value={village.heroImageUrl || ''}
+                  onChange={(url) => setVillage({ ...village, heroImageUrl: url })}
+                  placeholder="Pilih foto balai desa atau pemandangan desa"
+                />
               </div>
 
               <div>
@@ -1581,19 +1594,23 @@ export const AdminPanel: React.FC<{
                   className="h-10 px-3 rounded-xl border border-slate-300 text-sm"
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input
-                  placeholder="URL Foto Sampul / Thumbnail Artikel (https://...)"
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+                <ImageUploadField
+                  label="Foto Sampul Berita (opsional)"
                   value={newNews.coverUrl}
-                  onChange={(e) => setNewNews({ ...newNews, coverUrl: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                  onChange={(url) => setNewNews({ ...newNews, coverUrl: url })}
+                  placeholder="Pilih foto kegiatan atau dokumentasi berita"
+                  compact
                 />
-                <input
-                  placeholder="Ringkasan singkat (opsional, otomatis diambil dari paragraf awal)"
-                  value={newNews.excerpt}
-                  onChange={(e) => setNewNews({ ...newNews, excerpt: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300"
-                />
+                <div className="space-y-1.5">
+                  <label className="block font-bold text-slate-700">Ringkasan Singkat (opsional)</label>
+                  <input
+                    placeholder="Otomatis diambil dari paragraf awal jika dikosongkan"
+                    value={newNews.excerpt}
+                    onChange={(e) => setNewNews({ ...newNews, excerpt: e.target.value })}
+                    className="w-full h-10 px-3 rounded-xl border border-slate-300"
+                  />
+                </div>
               </div>
               <textarea
                 required
@@ -2140,15 +2157,20 @@ export const AdminPanel: React.FC<{
                 onChange={(e) => setNewOfficial({ ...newOfficial, nip: e.target.value })}
                 className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
               />
-              <input
-                placeholder="URL Foto Pejabat (opsional)"
-                value={newOfficial.photoUrl}
-                onChange={(e) => setNewOfficial({ ...newOfficial, photoUrl: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
-              />
-              <button type="submit" className="h-10 px-3 rounded-xl bg-[#0069b6] text-white font-bold">
-                Tambah Perangkat
-              </button>
+              <div className="sm:col-span-5 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end pt-1">
+                <div className="sm:col-span-2">
+                  <ImageUploadField
+                    label="Foto Perangkat Desa (opsional)"
+                    value={newOfficial.photoUrl}
+                    onChange={(url) => setNewOfficial({ ...newOfficial, photoUrl: url })}
+                    placeholder="Pilih foto resmi perangkat desa"
+                    compact
+                  />
+                </div>
+                <button type="submit" className="h-10 px-4 rounded-xl bg-[#0069b6] text-white font-bold">
+                  Tambah Perangkat
+                </button>
+              </div>
             </form>
             <div className="bg-white rounded-2xl shadow-2xs divide-y divide-slate-100 text-xs">
               {officials.map((o) => (
@@ -2240,12 +2262,15 @@ export const AdminPanel: React.FC<{
                   onChange={(e) => setNewUmkm({ ...newUmkm, sellerPhone: e.target.value })}
                   className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
                 />
-                <input
-                  placeholder="URL Foto Produk (https://...)"
-                  value={newUmkm.imageUrl}
-                  onChange={(e) => setNewUmkm({ ...newUmkm, imageUrl: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
-                />
+                <div className="sm:col-span-3">
+                  <ImageUploadField
+                    label="Foto Produk UMKM (opsional)"
+                    value={newUmkm.imageUrl}
+                    onChange={(url) => setNewUmkm({ ...newUmkm, imageUrl: url })}
+                    placeholder="Pilih foto produk UMKM warga"
+                    compact
+                  />
+                </div>
               </div>
               <div className="flex gap-2.5">
                 <input
@@ -2363,18 +2388,19 @@ export const AdminPanel: React.FC<{
                   className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
                 />
                 <input
-                  placeholder="Longitude (mis. 112.0220)"
+                  placeholder="Longitude (mis. 112.4724)"
                   value={newPlace.lng}
                   onChange={(e) => setNewPlace({ ...newPlace, lng: e.target.value })}
                   className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
                 />
-                <input
-                  placeholder="URL Foto (https://...)"
-                  value={newPlace.imageUrl}
-                  onChange={(e) => setNewPlace({ ...newPlace, imageUrl: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
-                />
               </div>
+              <ImageUploadField
+                label="Foto Lokasi / Potensi / Galeri (opsional)"
+                value={newPlace.imageUrl}
+                onChange={(url) => setNewPlace({ ...newPlace, imageUrl: url })}
+                placeholder="Pilih foto lokasi, potensi desa, atau dokumentasi galeri"
+                compact
+              />
               <div className="flex gap-2.5">
                 <input
                   placeholder="Keterangan / deskripsi..."

@@ -12,6 +12,7 @@ import {
 } from '../db/schema';
 import { slugifyTitle } from '../lib/helpers';
 import { getWilayahDetail } from '../services/wilayah.service';
+import { getReneoPaymentMethods, isReneoPaymentEcosystemEnabled } from '../services/reneoPayment.service';
 import { requireSuperadmin } from './auth';
 
 export default async function superadminRouter(fastify: FastifyInstance) {
@@ -305,9 +306,14 @@ export default async function superadminRouter(fastify: FastifyInstance) {
 
   // Pengaturan Rekening Pembayaran / QRIS / WA Konfirmasi
   fastify.get('/payment-config', async () => {
-    const rows = await db.select().from(platformSettings);
-    const config: Record<string, string> = {};
+    const [rows, reneoPaymentMethods] = await Promise.all([
+      db.select().from(platformSettings),
+      getReneoPaymentMethods(),
+    ]);
+    const config: Record<string, any> = {};
     for (const r of rows) config[r.key] = r.value;
+    config.reneoEcosystemEnabled = isReneoPaymentEcosystemEnabled();
+    config.reneoPaymentMethods = reneoPaymentMethods;
     return { success: true, data: config };
   });
 

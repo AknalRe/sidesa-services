@@ -4,12 +4,13 @@ import { PublicPortal } from './pages/PublicPortal';
 import { AdminPanel } from './pages/AdminPanel';
 import { getAppPrefix } from './lib/assets';
 
-type RouteView = 'landing' | 'village' | 'admin';
+type RouteView = 'landing' | 'village' | 'admin' | 'superadmin';
 
 export interface ParsedRoute {
   view: RouteView;
   villageSlug: string;
   initialTab?: string;
+  initialSubTab?: string;
 }
 
 const DEFAULT_VILLAGE_SLUG = 'pohjejer';
@@ -37,39 +38,58 @@ export function parseLocationRoute(): ParsedRoute {
   const cleanPath = stripProxyPrefix(window.location.pathname || '/');
   const searchParams = new URLSearchParams(window.location.search || '');
 
-  // 1. Check hash routes first for backward compatibility (#/desa/sugihwaras, #/admin)
+  // 1. Check hash routes first for backward compatibility (#/desa/pohjejer, #/admin, #/superadmin)
+  if (hash.startsWith('#/superadmin')) {
+    const segs = hash.slice(2).split('/').filter(Boolean);
+    return { view: 'superadmin', villageSlug: DEFAULT_VILLAGE_SLUG, initialTab: segs[1] || 'overview' };
+  }
   if (hash.startsWith('#/admin')) {
-    return { view: 'admin', villageSlug: DEFAULT_VILLAGE_SLUG };
+    const segs = hash.slice(2).split('/').filter(Boolean);
+    return { view: 'admin', villageSlug: DEFAULT_VILLAGE_SLUG, initialTab: segs[1] || 'dashboard' };
   }
   if (hash.startsWith('#/desa')) {
     const [hashPath, hashQuery] = hash.slice(2).split('?');
-    const segments = hashPath.split('/').filter(Boolean); // ['desa', 'sugihwaras', 'profil']
+    const segments = hashPath.split('/').filter(Boolean);
     const slug = segments[1] || DEFAULT_VILLAGE_SLUG;
     const subTab = segments[2] || (hashQuery ? new URLSearchParams(hashQuery).get('tab') || undefined : undefined);
-    return { view: 'village', villageSlug: slug, initialTab: subTab };
+    const deepSub = segments[3] || undefined;
+    return { view: 'village', villageSlug: slug, initialTab: subTab, initialSubTab: deepSub };
   }
 
-  // 2. Check clean URL path (/admin, /desa/sugihwaras, /desa/sugihwaras/profil)
+  // 2. Check clean URL path (/superadmin/:tab, /admin/:tab, /desa/:slug/:tab/:subTab)
+  if (cleanPath === '/superadmin' || cleanPath.startsWith('/superadmin/')) {
+    const segments = cleanPath.split('/').filter(Boolean);
+    return { view: 'superadmin', villageSlug: DEFAULT_VILLAGE_SLUG, initialTab: segments[1] || 'overview' };
+  }
+
   if (cleanPath === '/admin' || cleanPath.startsWith('/admin/')) {
-    return { view: 'admin', villageSlug: DEFAULT_VILLAGE_SLUG };
+    const segments = cleanPath.split('/').filter(Boolean);
+    return { view: 'admin', villageSlug: DEFAULT_VILLAGE_SLUG, initialTab: segments[1] || 'dashboard' };
   }
 
   if (cleanPath === '/desa' || cleanPath.startsWith('/desa/')) {
-    const segments = cleanPath.split('/').filter(Boolean); // ['desa', 'sugihwaras', 'profil']
+    const segments = cleanPath.split('/').filter(Boolean);
     const slug = segments[1] || DEFAULT_VILLAGE_SLUG;
     const subTab = segments[2] || searchParams.get('tab') || undefined;
-    return { view: 'village', villageSlug: slug, initialTab: subTab };
+    const deepSub = segments[3] || undefined;
+    return { view: 'village', villageSlug: slug, initialTab: subTab, initialSubTab: deepSub };
   }
 
   return { view: 'landing', villageSlug: DEFAULT_VILLAGE_SLUG };
 }
 
-export function navigateToPath(targetPath: string) {
+export function navigateToPath(targetPath: string, replace = false) {
   if (typeof window === 'undefined') return;
   const prefix = getAppPrefix();
   const normalized = targetPath.startsWith('/') ? targetPath : `/${targetPath}`;
   const fullPath = prefix ? `${prefix}${normalized === '/' ? '/' : normalized}` : normalized;
-  window.history.pushState({}, '', fullPath);
+  if (window.location.pathname !== fullPath) {
+    if (replace) {
+      window.history.replaceState({}, '', fullPath);
+    } else {
+      window.history.pushState({}, '', fullPath);
+    }
+  }
   window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
@@ -88,9 +108,25 @@ export default function App() {
     };
   }, []);
 
-  if (route.view === 'admin') {
+  if (route.view === 'admin' || route.view === 'superadmin') {
     return (
       <AdminPanel
+        initialAdminTab={route.view === 'admin' ? route.initialTab : undefined}
+        initialSuperTab={route.view === 'superadmin' ? route.initialTab : undefined}
+        onAdminTabChange={(nextTab) => {
+          const prefix = getAppPrefix();
+          const nextPath = `${prefix}/admin/${encodeURIComponent(nextTab)}`;
+          if (window.location.pathname !== nextPath) {
+            window.history.pushState({}, '', nextPath);
+          }
+        }}
+        onSuperTabChange={(nextTab) => {
+          const prefix = getAppPrefix();
+          const nextPath = `${prefix}/superadmin/${encodeURIComponent(nextTab)}`;
+          if (window.location.pathname !== nextPath) {
+            window.history.pushState({}, '', nextPath);
+          }
+        }}
         onBackToPortal={(slug?: string) => {
           navigateToPath(`/desa/${slug || route.villageSlug || DEFAULT_VILLAGE_SLUG}`);
         }}
@@ -106,17 +142,27 @@ export default function App() {
       <PublicPortal
         villageSlug={route.villageSlug || DEFAULT_VILLAGE_SLUG}
         initialTab={route.initialTab}
-        onTabChange={(tab) => {
+        initialSubTab={route.initialSubTab}
+        onTabChange={(tab, sub) => {
           const slug = route.villageSlug || DEFAULT_VILLAGE_SLUG;
           const prefix = getAppPrefix();
-          const nextPath = tab && tab !== 'beranda' ? `/desa/${slug}/${tab}` : `/desa/${slug}`;
-          window.history.replaceState({}, '', `${prefix}${nextPath}`);
+          let nextPath = `/desa/${slug}`;
+          if (tab && tab !== 'beranda') {
+            nextPath = `/desa/${slug}/${tab}`;
+            if (tab === 'infografis' && sub && sub !== 'penduduk') {
+              nextPath += `/${sub}`;
+            }
+          }
+          const full = `${prefix}${nextPath}`;
+          if (window.location.pathname !== full) {
+            window.history.pushState({}, '', full);
+          }
         }}
         onBackToPlatform={() => {
           navigateToPath('/');
         }}
         onOpenAdmin={() => {
-          navigateToPath('/admin');
+          navigateToPath('/admin/dashboard');
         }}
       />
     );
@@ -133,7 +179,7 @@ export default function App() {
         navigateToPath(nextPath);
       }}
       onOpenAdmin={() => {
-        navigateToPath('/admin');
+        navigateToPath('/admin/dashboard');
       }}
     />
   );

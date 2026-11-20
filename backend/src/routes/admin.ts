@@ -1,4 +1,6 @@
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 import { FastifyInstance } from 'fastify';
 import { and, count, desc, eq } from 'drizzle-orm';
 import { calculateSubscriptionAmount, db } from '../db';
@@ -33,9 +35,19 @@ import { buildLetterStatusMessage, sendWahaNotification } from '../services/waha
 import {
   createReneoEcosystemOrder,
   getReneoEcosystemOrder,
+  getReneoPaymentMethods,
   isReneoPaymentEcosystemEnabled,
 } from '../services/reneoPayment.service';
 import { getWilayahDetail } from '../services/wilayah.service';
+
+const UPLOAD_DIR = path.resolve(process.env.SIDESA_UPLOAD_DIR || path.join(process.cwd(), 'uploads'));
+const EXT_BY_MIME: Record<string, string> = {
+  'image/png': '.png',
+  'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
+  'image/webp': '.webp',
+  'image/svg+xml': '.svg',
+};
 
 function getVillageId(req: any): string {
   const user = req.sidesaUser as SessionUser;
@@ -49,6 +61,34 @@ function getVillageId(req: any): string {
 
 export default async function adminRouter(fastify: FastifyInstance) {
   fastify.addHook('preHandler', requireAuth);
+
+  // Upload Foto / Gambar langsung (Logo, Hero, Berita, UMKM, Perangkat, Lokasi/Galeri)
+  fastify.post<{ Body: { dataUrl?: string; filename?: string } }>('/upload', async (req, reply) => {
+    const dataUrl = String(req.body?.dataUrl || '').trim();
+    const match = dataUrl.match(/^data:(image\/(?:png|jpeg|jpg|webp|svg\+xml));base64,([A-Za-z0-9+/=\s]+)$/i);
+    if (!match) {
+      return reply
+        .status(400)
+        .send({ success: false, error: 'Format gambar tidak didukung. Gunakan PNG, JPG, WEBP, atau SVG.' });
+    }
+    const mime = match[1].toLowerCase();
+    const ext = EXT_BY_MIME[mime] || '.png';
+    const buf = Buffer.from(match[2].replace(/\s+/g, ''), 'base64');
+    if (buf.length === 0 || buf.length > 8 * 1024 * 1024) {
+      return reply.status(400).send({ success: false, error: 'Ukuran gambar maksimal 8 MB.' });
+    }
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+    const fileName = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`;
+    fs.writeFileSync(path.join(UPLOAD_DIR, fileName), buf);
+    return reply.status(201).send({
+      success: true,
+      data: {
+        url: `/api/uploads/${fileName}`,
+        filename: fileName,
+        size: buf.length,
+      },
+    });
+  });
 
   // Dashboard Overview
   fastify.get('/dashboard', async (req) => {
@@ -801,14 +841,14 @@ export default async function adminRouter(fastify: FastifyInstance) {
       db.select().from(platformSettings),
     ]);
 
-    let reneoPaymentMethods: any[] = [];
+    let reneoPaymentMethods: any[] = await getReneoPaymentMethods();
     const invoices = [];
     for (const inv of rawInvoices) {
       const synced = await syncInvoiceWithReneo(inv);
       invoices.push(synced.invoice);
-      if (synced.paymentMethods && synced.paymentMethods.length > 0 && reneoPaymentMethods.length === 0) {
+      if (reneoPaymentMethods.length === 0 && synced.paymentMethods && synced.paymentMethods.length > 0) {
         reneoPaymentMethods = synced.paymentMethods;
-      } else if (synced.invoice.reneoPaymentMethodsJson && reneoPaymentMethods.length === 0) {
+      } else if (reneoPaymentMethods.length === 0 && synced.invoice.reneoPaymentMethodsJson) {
         try {
           reneoPaymentMethods = JSON.parse(synced.invoice.reneoPaymentMethodsJson);
         } catch {

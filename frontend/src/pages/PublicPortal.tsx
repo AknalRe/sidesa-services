@@ -189,14 +189,18 @@ export const PublicPortal: React.FC<{
   villageSlug?: string;
   onOpenAdmin: () => void;
   onBackToPlatform?: () => void;
-  onTabChange?: (tab: PublicTab) => void;
+  onTabChange?: (tab: PublicTab, sub?: InfografisSubTab) => void;
   initialTab?: string;
-}> = ({ villageSlug = 'pohjejer', onOpenAdmin, onBackToPlatform, onTabChange, initialTab }) => {
+  initialSubTab?: string;
+}> = ({ villageSlug = 'pohjejer', onOpenAdmin, onBackToPlatform, onTabChange, initialTab, initialSubTab }) => {
   const [tab, setTab] = useState<PublicTab>(() => {
     const valid = NAV_ITEMS.some((i) => i.id === initialTab);
     return valid ? (initialTab as PublicTab) : 'beranda';
   });
-  const [infoSub, setInfoSub] = useState<InfografisSubTab>('penduduk');
+  const [infoSub, setInfoSub] = useState<InfografisSubTab>(() => {
+    const allowed: InfografisSubTab[] = ['penduduk', 'apbdes', 'bansos', 'indeks'];
+    return allowed.includes(initialSubTab as InfografisSubTab) ? (initialSubTab as InfografisSubTab) : 'penduduk';
+  });
   const [mobileMenu, setMobileMenu] = useState(false);
   const [slideIdx, setSlideIdx] = useState(0);
   const [poiFilter, setPoiFilter] = useState<string>('ALL');
@@ -282,8 +286,14 @@ export const PublicPortal: React.FC<{
   useEffect(() => {
     if (initialTab && NAV_ITEMS.some((i) => i.id === initialTab)) {
       setTab(initialTab as PublicTab);
+    } else if (!initialTab) {
+      setTab('beranda');
     }
-  }, [initialTab]);
+    const allowedSub: InfografisSubTab[] = ['penduduk', 'apbdes', 'bansos', 'indeks'];
+    if (initialSubTab && allowedSub.includes(initialSubTab as InfografisSubTab)) {
+      setInfoSub(initialSubTab as InfografisSubTab);
+    }
+  }, [initialTab, initialSubTab]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -525,7 +535,7 @@ export const PublicPortal: React.FC<{
     if (sub) setInfoSub(sub);
     setSelectedNews(null);
     setMobileMenu(false);
-    onTabChange?.(nextTab);
+    onTabChange?.(nextTab, sub || (nextTab === 'infografis' ? infoSub : undefined));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -1625,7 +1635,10 @@ export const PublicPortal: React.FC<{
                     <button
                       key={k}
                       type="button"
-                      onClick={() => setInfoSub(k)}
+                      onClick={() => {
+                        setInfoSub(k);
+                        onTabChange?.('infografis', k);
+                      }}
                       className={`h-10 px-5 rounded-xl text-sm font-bold transition-colors ${
                         infoSub === k
                           ? 'bg-[#0069b6] text-white shadow-xs'

@@ -14,7 +14,7 @@ export function sidesaAsset(filename: string): string {
 
 export function resolveAssetUrl(url?: string | null, fallback?: string): string {
   if (!url) return fallback || '';
-  if (url.startsWith('/assets/')) {
+  if (url.startsWith('/assets/') || url.startsWith('/api/uploads/')) {
     return `${getAppPrefix()}${url}`;
   }
   return url;
