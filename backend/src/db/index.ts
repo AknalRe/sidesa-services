@@ -320,11 +320,18 @@ export async function ensureDatabaseSchema(): Promise<void> {
       AND NOT EXISTS (SELECT 1 FROM village_users WHERE village_id = 'default-village');
   `);
 
-  // Pastikan logo Desa Pohjejer menggunakan PNG transparan (tanpa background putih)
+  // Pastikan logo & geolokasi resmi Desa Pohjejer (Kepmendagri 35.16.02.2010 dari wilayah.smartartstudio.my.id) terupdate
   await queryClient.unsafe(`
     UPDATE villages
     SET logo_url = '/assets/sidesa/pohjejer-logo.png'
     WHERE slug = 'pohjejer' AND logo_url = '/assets/sidesa/pohjejer-logo.jpg';
+
+    UPDATE villages
+    SET kode_desa = '35.16.02.2010',
+        map_lat = -7.610556,
+        map_lng = 112.472453,
+        postal_code = '61372'
+    WHERE slug = 'pohjejer' AND (kode_desa IS NULL OR kode_desa = '');
   `);
 
   await seedDefaultPlansAndSettings();
@@ -455,7 +462,7 @@ export async function seedDesaPohjejerIfMissing(): Promise<void> {
     id: vid,
     name: 'Desa Pohjejer',
     slug: 'pohjejer',
-    kodeDesa: null,
+    kodeDesa: '35.16.02.2010',
     district: 'Gondang',
     regency: 'Mojokerto',
     province: 'Jawa Timur',
@@ -480,8 +487,8 @@ export async function seedDesaPohjejerIfMissing(): Promise<void> {
       south: 'Perlu konfirmasi peta desa',
       west: 'Perlu konfirmasi peta desa',
     }),
-    mapLat: -7.6194,
-    mapLng: 112.4822,
+    mapLat: -7.610556,
+    mapLng: 112.472453,
     logoUrl: '/assets/sidesa/pohjejer-logo.png',
     heroImageUrl: '/assets/sidesa/pohjejer-hero.jpg',
     officialStatsJson: JSON.stringify({

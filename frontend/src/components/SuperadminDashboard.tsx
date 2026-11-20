@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { ReneoSidesaLogo } from './ReneoSidesaLogo';
+import { WilayahSearchPicker } from './WilayahSearchPicker';
 
 type SuperTab = 'overview' | 'villages' | 'invoices' | 'plans';
 
@@ -241,6 +242,19 @@ export const SuperadminDashboard: React.FC<{
                 className="bg-white border border-slate-200 rounded-xl p-5 space-y-3 text-xs"
               >
                 <div className="text-sm font-extrabold text-slate-900">Buat Profil Desa Baru (Bisa Diklaim Perangkat Desa)</div>
+                <WilayahSearchPicker
+                  onSelect={(w) =>
+                    setNewVillage((prev) => ({
+                      ...prev,
+                      name: w.name,
+                      slug: w.slug,
+                      kodeDesa: w.kode,
+                      district: w.district || prev.district,
+                      regency: w.regency || prev.regency,
+                      province: w.province || prev.province,
+                    }))
+                  }
+                />
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block font-bold text-slate-700 mb-1">Nama Desa *</label>

@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { resolveAssetUrl, sidesaAsset } from '../lib/assets';
+import { VillageBoundaryMap } from '../components/VillageBoundaryMap';
 
 type PublicTab =
   | 'beranda'
@@ -474,13 +475,6 @@ export const PublicPortal: React.FC<{
 
   const { village, officials, demographics, apbdes, indicator, latestNews, umkm, places, letterTypes } = data;
   const villageLogo = resolveAssetUrl(village.logoUrl, DEFAULT_VILLAGE_CREST);
-  const mapLat = Number(village.mapLat || -7.6194);
-  const mapLng = Number(village.mapLng || 112.4822);
-  const mapEmbedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${(mapLng - 0.02).toFixed(4)}%2C${(
-    mapLat - 0.015
-  ).toFixed(4)}%2C${(mapLng + 0.02).toFixed(4)}%2C${(mapLat + 0.015).toFixed(4)}&layer=mapnik&marker=${mapLat.toFixed(
-    4
-  )}%2C${mapLng.toFixed(4)}`;
   const officialStats = village.officialStats || null;
   const dynamicSlides = [
     {
@@ -1037,14 +1031,14 @@ export const PublicPortal: React.FC<{
               </p>
             </div>
 
-            <div className="w-full h-[420px] sm:h-[500px] rounded-2xl overflow-hidden shadow-md bg-white relative">
-              <iframe
-                title={`Peta Wilayah ${village.name}`}
-                src={mapEmbedUrl}
-                className="w-full h-full border-0"
-                loading="lazy"
-              />
-            </div>
+            <VillageBoundaryMap
+              kodeDesa={village.kodeDesa}
+              villageName={village.name}
+              lat={village.mapLat}
+              lng={village.mapLng}
+              places={places}
+              heightClass="h-[420px] sm:h-[500px]"
+            />
           </section>
 
           {/* 5. SOTK (Struktur Organisasi dan Tata Kerja) */}
@@ -2242,14 +2236,14 @@ export const PublicPortal: React.FC<{
                 </div>
               </div>
 
-              <div className="w-full h-[420px] rounded-2xl overflow-hidden shadow-md bg-white">
-                <iframe
-                  title={`Peta ${village.name}`}
-                  src="https://www.openstreetmap.org/export/embed.html?bbox=112.0020%2C-7.2160%2C112.0420%2C-7.1860&amp;layer=mapnik&amp;marker=-7.2010%2C112.0220"
-                  className="w-full h-full border-0"
-                  loading="lazy"
-                />
-              </div>
+              <VillageBoundaryMap
+                kodeDesa={village.kodeDesa}
+                villageName={village.name}
+                lat={village.mapLat}
+                lng={village.mapLng}
+                places={filteredPlaces}
+                heightClass="h-[440px]"
+              />
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {filteredPlaces.map((pl: any) => (

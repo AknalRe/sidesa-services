@@ -24,6 +24,7 @@ import {
 import { api, setActiveSuperadminVillage } from '../services/api';
 import { ReneoSidesaLogo } from '../components/ReneoSidesaLogo';
 import { SuperadminDashboard } from '../components/SuperadminDashboard';
+import { WilayahSearchPicker } from '../components/WilayahSearchPicker';
 
 type AdminTab =
   | 'dashboard'
@@ -582,6 +583,20 @@ export const AdminPanel: React.FC<{
                     )}
                   </div>
                 )}
+
+                <WilayahSearchPicker
+                  onSelect={(w) =>
+                    setAuthForm((prev) => ({
+                      ...prev,
+                      villageName: w.name,
+                      slug: w.slug,
+                      kodeDesa: w.kode,
+                      district: w.district || prev.district,
+                      regency: w.regency || prev.regency,
+                      province: w.province || prev.province,
+                    }))
+                  }
+                />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>

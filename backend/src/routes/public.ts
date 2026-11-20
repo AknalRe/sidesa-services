@@ -27,6 +27,14 @@ import {
 } from '../lib/helpers';
 import { buildLetterStatusMessage, sendWahaNotification } from '../services/wahaNotify.service';
 import { verifyStudentPddikti } from '../services/pddikti.service';
+import {
+  getWilayahDetail,
+  listWilayahDistricts,
+  listWilayahProvinces,
+  listWilayahRegencies,
+  listWilayahVillages,
+  searchWilayah,
+} from '../services/wilayah.service';
 
 async function resolvePublicVillage(slug?: string) {
   if (slug) {
@@ -112,6 +120,34 @@ export default async function publicRouter(fastify: FastifyInstance) {
       studyProgram: req.body?.studyProgram || '',
     });
     return { success: true, data: result };
+  });
+
+  // Mapping Wilayah & Geospasial Polygon Boundaries via wilayah.smartartstudio.my.id
+  fastify.get<{ Querystring: { name?: string } }>('/wilayah/search', async (req) => {
+    const rows = await searchWilayah(req.query.name || '');
+    return { success: true, data: rows };
+  });
+
+  fastify.get<{ Params: { code: string } }>('/wilayah/detail/:code', async (req, reply) => {
+    const detail = await getWilayahDetail(req.params.code);
+    if (!detail) return reply.status(404).send({ success: false, error: 'Data wilayah tidak ditemukan.' });
+    return { success: true, data: detail };
+  });
+
+  fastify.get('/wilayah/provinces', async () => {
+    return { success: true, data: await listWilayahProvinces() };
+  });
+
+  fastify.get<{ Params: { code: string } }>('/wilayah/provinces/:code/regencies', async (req) => {
+    return { success: true, data: await listWilayahRegencies(req.params.code) };
+  });
+
+  fastify.get<{ Params: { code: string } }>('/wilayah/regencies/:code/districts', async (req) => {
+    return { success: true, data: await listWilayahDistricts(req.params.code) };
+  });
+
+  fastify.get<{ Params: { code: string } }>('/wilayah/districts/:code/villages', async (req) => {
+    return { success: true, data: await listWilayahVillages(req.params.code) };
   });
 
   // Complete public village portal bootstrap (Beranda + Profil + SOTK + Ringkasan)

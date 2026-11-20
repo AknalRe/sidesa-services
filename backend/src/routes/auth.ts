@@ -13,6 +13,7 @@ import {
 import { slugifyTitle } from '../lib/helpers';
 import { verifyStudentPddikti } from '../services/pddikti.service';
 import { createReneoEcosystemOrder } from '../services/reneoPayment.service';
+import { getWilayahDetail } from '../services/wilayah.service';
 
 export const SESSION_COOKIE = 'sidesa_session';
 
@@ -301,16 +302,31 @@ export default async function authRouter(fastify: FastifyInstance) {
     const district = String(req.body?.district || 'Kecamatan').trim();
     const regency = String(req.body?.regency || 'Kabupaten').trim();
     const province = String(req.body?.province || 'Jawa Timur').trim();
+    const kodeDesaClean = String(req.body?.kodeDesa || '').trim() || null;
+
+    let mapLat = -7.2575;
+    let mapLng = 112.0125;
+    let postalCode = '60000';
+    if (kodeDesaClean) {
+      const geo = await getWilayahDetail(kodeDesaClean).catch(() => null);
+      if (geo?.coordinates?.lat && geo?.coordinates?.lng) {
+        mapLat = Number(geo.coordinates.lat);
+        mapLng = Number(geo.coordinates.lng);
+      }
+      if (geo?.kodepos) postalCode = String(geo.kodepos);
+    }
 
     await db.insert(villages).values({
       id: villageId,
       name: villageName,
       slug: finalSlug,
-      kodeDesa: String(req.body?.kodeDesa || '').trim() || null,
+      kodeDesa: kodeDesaClean,
       district,
       regency,
       province,
-      postalCode: '60000',
+      postalCode,
+      mapLat,
+      mapLng,
       headName: name,
       headTitle: 'Kepala Desa',
       headGreeting: `Selamat datang di Website Resmi ${villageName}, Kecamatan ${district}, Kabupaten ${regency}. Portal ini menjadi sarana pelayanan publik mandiri dan keterbukaan informasi bagi seluruh warga.`,

@@ -23,6 +23,10 @@ export const api = {
     university: string;
     studyProgram?: string;
   }) => (await client.post('/public/verify-student', payload)).data.data,
+  searchWilayah: async (name: string) =>
+    (await client.get('/public/wilayah/search', { params: { name } })).data.data,
+  getWilayahDetail: async (code: string) =>
+    (await client.get(`/public/wilayah/detail/${encodeURIComponent(code)}`)).data.data,
   getPublicVillage: async (villageSlug?: string) =>
     (await client.get('/public/village', { params: villageSlug ? { village: villageSlug } : undefined })).data.data,
   getPublicInfografis: async (year?: number, villageSlug?: string) =>

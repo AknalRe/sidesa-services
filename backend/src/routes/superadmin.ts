@@ -11,6 +11,7 @@ import {
   villageUsers,
 } from '../db/schema';
 import { slugifyTitle } from '../lib/helpers';
+import { getWilayahDetail } from '../services/wilayah.service';
 import { requireSuperadmin } from './auth';
 
 export default async function superadminRouter(fastify: FastifyInstance) {
@@ -98,6 +99,19 @@ export default async function superadminRouter(fastify: FastifyInstance) {
     const regency = String(req.body?.regency || '').trim();
     const province = String(req.body?.province || 'Jawa Timur').trim();
     const publishNow = req.body?.publishNow !== false;
+    const kodeDesaClean = String(req.body?.kodeDesa || '').trim() || null;
+
+    let mapLat = -7.2575;
+    let mapLng = 112.0125;
+    let postalCode = '';
+    if (kodeDesaClean) {
+      const geo = await getWilayahDetail(kodeDesaClean).catch(() => null);
+      if (geo?.coordinates?.lat && geo?.coordinates?.lng) {
+        mapLat = Number(geo.coordinates.lat);
+        mapLng = Number(geo.coordinates.lng);
+      }
+      if (geo?.kodepos) postalCode = String(geo.kodepos);
+    }
 
     const [created] = await db
       .insert(villages)
@@ -105,10 +119,13 @@ export default async function superadminRouter(fastify: FastifyInstance) {
         id: villageId,
         name,
         slug: finalSlug,
-        kodeDesa: String(req.body?.kodeDesa || '').trim() || null,
+        kodeDesa: kodeDesaClean,
         district,
         regency,
         province,
+        postalCode,
+        mapLat,
+        mapLng,
         headName: String(req.body?.headName || '').trim(),
         headTitle: 'Kepala Desa',
         headGreeting: `Selamat datang di Website Resmi ${name}${district ? `, Kecamatan ${district}` : ''}${regency ? `, Kabupaten ${regency}` : ''}.`,
