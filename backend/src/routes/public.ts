@@ -34,6 +34,26 @@ async function resolvePublicVillage(slug?: string) {
 }
 
 export default async function publicRouter(fastify: FastifyInstance) {
+  // List all active registered villages on this SaaS platform
+  fastify.get('/villages', async () => {
+    const list = await db
+      .select({
+        id: villages.id,
+        name: villages.name,
+        slug: villages.slug,
+        kodeDesa: villages.kodeDesa,
+        district: villages.district,
+        regency: villages.regency,
+        province: villages.province,
+        headName: villages.headName,
+        logoUrl: villages.logoUrl,
+        heroImageUrl: villages.heroImageUrl,
+      })
+      .from(villages)
+      .orderBy(villages.createdAt);
+    return { success: true, data: list };
+  });
+
   // Complete public village portal bootstrap (Beranda + Profil + SOTK + Ringkasan)
   fastify.get<{ Querystring: { village?: string } }>('/village', async (req, reply) => {
     const village = await resolvePublicVillage(req.query.village);

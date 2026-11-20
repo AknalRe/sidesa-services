@@ -2,7 +2,8 @@ import crypto from 'crypto';
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { count, eq } from 'drizzle-orm';
 import { db, getDefaultVillage } from '../db';
-import { DEFAULT_VILLAGE_ID, villages, villageUsers } from '../db/schema';
+import { DEFAULT_VILLAGE_ID, villageIndicators, villages, villageUsers } from '../db/schema';
+import { slugifyTitle } from '../lib/helpers';
 
 export const SESSION_COOKIE = 'sidesa_session';
 
@@ -169,6 +170,111 @@ export default async function authRouter(fastify: FastifyInstance) {
       maxAge: 7 * 86400,
     });
     return { success: true, data: { user: sessionUser } };
+  });
+
+  fastify.post<{
+    Body: {
+      villageName: string;
+      slug?: string;
+      district?: string;
+      regency?: string;
+      province?: string;
+      kodeDesa?: string;
+      name: string;
+      email: string;
+      password: string;
+    };
+  }>('/register-village', async (req, reply) => {
+    const villageName = String(req.body?.villageName || '').trim();
+    const name = String(req.body?.name || '').trim();
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const password = String(req.body?.password || '');
+
+    if (!villageName || !name || !email || password.length < 6) {
+      return reply.status(400).send({
+        success: false,
+        error: 'Nama desa, nama perangkat admin, email, dan kata sandi (minimal 6 karakter) wajib diisi.',
+      });
+    }
+
+    const [existingUser] = await db.select().from(villageUsers).where(eq(villageUsers.email, email)).limit(1);
+    if (existingUser) {
+      return reply.status(409).send({ success: false, error: 'Email tersebut sudah terdaftar. Silakan login.' });
+    }
+
+    const baseSlug = slugifyTitle(req.body?.slug?.trim() || villageName.replace(/^desa\s+/i, '')) || 'desa';
+    let finalSlug = baseSlug;
+    const [existingSlug] = await db.select().from(villages).where(eq(villages.slug, finalSlug)).limit(1);
+    if (existingSlug) {
+      finalSlug = `${baseSlug}-${Date.now().toString(36).slice(-4)}`;
+    }
+
+    const villageId = `village-${finalSlug}`;
+    const district = String(req.body?.district || 'Kecamatan').trim();
+    const regency = String(req.body?.regency || 'Kabupaten').trim();
+    const province = String(req.body?.province || 'Jawa Timur').trim();
+
+    await db.insert(villages).values({
+      id: villageId,
+      name: villageName,
+      slug: finalSlug,
+      kodeDesa: String(req.body?.kodeDesa || '35.00.00.2001').trim(),
+      district,
+      regency,
+      province,
+      postalCode: '60000',
+      headName: name,
+      headTitle: 'Kepala Desa',
+      headGreeting: `Selamat datang di Website Resmi ${villageName}, Kecamatan ${district}, Kabupaten ${regency}. Portal ini menjadi sarana pelayanan publik mandiri dan keterbukaan informasi bagi seluruh warga.`,
+      vision: `Terwujudnya ${villageName} yang Maju, Mandiri, Transparan, dan Sejahtera.`,
+      mission: `1. Meningkatkan kualitas pelayanan administrasi dan persuratan warga secara digital.\n2. Mewujudkan keterbukaan informasi publik dan akuntabilitas APBDes.\n3. Mengembangkan potensi ekonomi warga dan UMKM desa.`,
+      history: `${villageName} merupakan desa di wilayah Kecamatan ${district}, Kabupaten ${regency}, Provinsi ${province} yang terus berbenah meningkatkan pelayanan publik dan pembangunan masyarakat.`,
+      address: `Kantor Balai ${villageName}, Kec. ${district}, Kab. ${regency}`,
+      areaKm2: 4.5,
+      boundariesJson: JSON.stringify({ north: 'Desa Sebelah Utara', east: 'Desa Sebelah Timur', south: 'Desa Sebelah Selatan', west: 'Desa Sebelah Barat' }),
+    });
+
+    await db.insert(villageIndicators).values({
+      id: crypto.randomUUID(),
+      villageId,
+      year: new Date().getFullYear(),
+      idmScore: 0.752,
+      idmStatus: 'MAJU',
+      sdgsScore: 74.5,
+      stuntingCases: 0,
+      stuntingRate: 0,
+      dimensionsJson: JSON.stringify([
+        { name: 'Layanan Dasar', score: 82 },
+        { name: 'Sosial', score: 78 },
+        { name: 'Ekonomi', score: 74 },
+        { name: 'Lingkungan', score: 76 },
+        { name: 'Aksesibilitas', score: 80 },
+        { name: 'Tata Kelola Pemerintahan Desa', score: 85 },
+      ]),
+    });
+
+    const userId = crypto.randomUUID();
+    await db.insert(villageUsers).values({
+      id: userId,
+      villageId,
+      name,
+      email,
+      passwordHash: hashPassword(password),
+      role: 'ADMIN',
+      position: 'Administrator Desa',
+    });
+
+    const sessionUser: SessionUser = { id: userId, villageId, name, email, role: 'ADMIN' };
+    reply.setCookie(SESSION_COOKIE, signToken(sessionUser), {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 7 * 86400,
+    });
+    return reply.status(201).send({
+      success: true,
+      data: { user: sessionUser, villageSlug: finalSlug },
+    });
   });
 
   fastify.post('/logout', async (_req, reply) => {

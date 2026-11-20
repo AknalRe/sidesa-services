@@ -7,6 +7,7 @@ const client = axios.create({
 
 export const api = {
   // Public Village Portal (supports multi-village slug e.g. /desa/sugihwaras)
+  getPublicVillages: async () => (await client.get('/public/villages')).data.data,
   getPublicVillage: async (villageSlug?: string) =>
     (await client.get('/public/village', { params: villageSlug ? { village: villageSlug } : undefined })).data.data,
   getPublicInfografis: async (year?: number, villageSlug?: string) =>
@@ -56,6 +57,17 @@ export const api = {
   getAuthStatus: async () => (await client.get('/auth/status')).data.data,
   setupAdmin: async (payload: { name: string; email: string; password: string; villageName?: string }) =>
     (await client.post('/auth/setup', payload)).data.data,
+  registerVillage: async (payload: {
+    villageName: string;
+    slug?: string;
+    district?: string;
+    regency?: string;
+    province?: string;
+    kodeDesa?: string;
+    name: string;
+    email: string;
+    password: string;
+  }) => (await client.post('/auth/register-village', payload)).data.data,
   login: async (payload: { email: string; password: string }) =>
     (await client.post('/auth/login', payload)).data.data,
   logout: async () => (await client.post('/auth/logout')).data,
@@ -89,6 +101,8 @@ export const api = {
     (await client.patch(`/admin/complaints/${id}`, payload)).data.data,
   getNewsAdmin: async () => (await client.get('/admin/news')).data.data,
   createNews: async (payload: Record<string, any>) => (await client.post('/admin/news', payload)).data.data,
+  updateNews: async (id: string, payload: Record<string, any>) =>
+    (await client.patch(`/admin/news/${id}`, payload)).data.data,
   deleteNews: async (id: string) => (await client.delete(`/admin/news/${id}`)).data,
   getUmkmAdmin: async () => (await client.get('/admin/umkm')).data.data,
   createUmkm: async (payload: Record<string, any>) => (await client.post('/admin/umkm', payload)).data.data,
@@ -100,6 +114,14 @@ export const api = {
   getPpidAdmin: async () => (await client.get('/admin/ppid')).data.data,
   createPpidDoc: async (payload: Record<string, any>) =>
     (await client.post('/admin/ppid/documents', payload)).data.data,
+  deletePpidDoc: async (id: string) => (await client.delete(`/admin/ppid/documents/${id}`)).data,
+  updatePpidRequest: async (id: string, payload: { status: string; responseNotes?: string }) =>
+    (await client.patch(`/admin/ppid/requests/${id}`, payload)).data.data,
+  getPlacesAdmin: async () => (await client.get('/admin/places')).data.data,
+  createPlace: async (payload: Record<string, any>) => (await client.post('/admin/places', payload)).data.data,
+  deletePlace: async (id: string) => (await client.delete(`/admin/places/${id}`)).data,
+  getIndicatorsAdmin: async () => (await client.get('/admin/indicators')).data.data,
+  saveIndicator: async (payload: Record<string, any>) => (await client.post('/admin/indicators', payload)).data.data,
   getAttendance: async () => (await client.get('/admin/attendance')).data.data,
   createAttendance: async (payload: Record<string, any>) =>
     (await client.post('/admin/attendance', payload)).data.data,

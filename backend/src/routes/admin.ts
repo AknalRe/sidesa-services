@@ -82,7 +82,15 @@ export default async function adminRouter(fastify: FastifyInstance) {
   fastify.get('/village', async (req) => {
     const vid = getVillageId(req);
     const [v] = await db.select().from(villages).where(eq(villages.id, vid)).limit(1);
-    return { success: true, data: v };
+    let boundaries = { north: '', east: '', south: '', west: '' };
+    if (v?.boundariesJson) {
+      try {
+        boundaries = { ...boundaries, ...JSON.parse(v.boundariesJson) };
+      } catch {
+        // ignore
+      }
+    }
+    return { success: true, data: v ? { ...v, boundaries } : null };
   });
 
   fastify.patch<{ Body: Record<string, any> }>('/village', async (req) => {
@@ -90,12 +98,16 @@ export default async function adminRouter(fastify: FastifyInstance) {
     const b = req.body || {};
     const updates: Record<string, any> = { updatedAt: new Date() };
     const allowed = [
-      'name', 'kodeDesa', 'district', 'regency', 'province', 'postalCode',
+      'name', 'slug', 'kodeDesa', 'district', 'regency', 'province', 'postalCode',
       'headName', 'headTitle', 'headGreeting', 'vision', 'mission', 'history',
       'address', 'phone', 'email', 'website', 'areaKm2', 'mapLat', 'mapLng',
+      'logoUrl', 'heroImageUrl',
     ];
     for (const k of allowed) {
       if (b[k] !== undefined) updates[k] = b[k];
+    }
+    if (typeof updates.slug === 'string') {
+      updates.slug = slugifyTitle(updates.slug) || 'desa';
     }
     if (b.boundaries && typeof b.boundaries === 'object') {
       updates.boundariesJson = JSON.stringify(b.boundaries);
@@ -393,6 +405,32 @@ export default async function adminRouter(fastify: FastifyInstance) {
     return reply.status(201).send({ success: true, data: created });
   });
 
+  fastify.patch<{ Params: { id: string }; Body: Record<string, any> }>('/news/:id', async (req, reply) => {
+    const vid = getVillageId(req);
+    const b = req.body || {};
+    const [existing] = await db
+      .select()
+      .from(newsArticles)
+      .where(and(eq(newsArticles.id, req.params.id), eq(newsArticles.villageId, vid)))
+      .limit(1);
+    if (!existing) return reply.status(404).send({ success: false, error: 'Berita tidak ditemukan.' });
+    const nextTitle = b.title !== undefined ? String(b.title).trim() : existing.title;
+    const nextContent = b.content !== undefined ? String(b.content).trim() : existing.content;
+    const [updated] = await db
+      .update(newsArticles)
+      .set({
+        title: nextTitle,
+        category: b.category !== undefined ? String(b.category).trim() : existing.category,
+        excerpt: b.excerpt !== undefined ? String(b.excerpt).trim() : nextContent.slice(0, 160),
+        content: nextContent,
+        coverUrl: b.coverUrl !== undefined ? (b.coverUrl?.trim() || null) : existing.coverUrl,
+        published: b.published !== undefined ? Boolean(b.published) : existing.published,
+      })
+      .where(eq(newsArticles.id, existing.id))
+      .returning();
+    return { success: true, data: updated };
+  });
+
   fastify.delete<{ Params: { id: string } }>('/news/:id', async (req) => {
     const vid = getVillageId(req);
     await db.delete(newsArticles).where(and(eq(newsArticles.id, req.params.id), eq(newsArticles.villageId, vid)));
@@ -424,6 +462,7 @@ export default async function adminRouter(fastify: FastifyInstance) {
         sellerName: String(b.sellerName).trim(),
         sellerPhone: String(b.sellerPhone).trim(),
         description: String(b.description || '').trim(),
+        imageUrl: b.imageUrl?.trim() || null,
       })
       .returning();
     return reply.status(201).send({ success: true, data: created });
@@ -457,6 +496,7 @@ export default async function adminRouter(fastify: FastifyInstance) {
         position: String(b.position).trim(),
         nip: b.nip?.trim() || null,
         phone: b.phone?.trim() || null,
+        photoUrl: b.photoUrl?.trim() || null,
         sortOrder: Number(b.sortOrder) || 10,
       })
       .returning();
@@ -501,6 +541,34 @@ export default async function adminRouter(fastify: FastifyInstance) {
     return reply.status(201).send({ success: true, data: created });
   });
 
+  fastify.delete<{ Params: { id: string } }>('/ppid/documents/:id', async (req) => {
+    const vid = getVillageId(req);
+    await db.delete(ppidDocuments).where(and(eq(ppidDocuments.id, req.params.id), eq(ppidDocuments.villageId, vid)));
+    return { success: true };
+  });
+
+  fastify.patch<{ Params: { id: string }; Body: { status: string; responseText?: string } }>(
+    '/ppid/requests/:id',
+    async (req, reply) => {
+      const vid = getVillageId(req);
+      const [existing] = await db
+        .select()
+        .from(ppidRequests)
+        .where(and(eq(ppidRequests.id, req.params.id), eq(ppidRequests.villageId, vid)))
+        .limit(1);
+      if (!existing) return reply.status(404).send({ success: false, error: 'Permohonan PPID tidak ditemukan.' });
+      const [updated] = await db
+        .update(ppidRequests)
+        .set({
+          status: req.body?.status || existing.status,
+          responseText: req.body?.responseText ?? existing.responseText,
+        })
+        .where(eq(ppidRequests.id, existing.id))
+        .returning();
+      return { success: true, data: updated };
+    }
+  );
+
   // Attendance & Guestbook
   fastify.get('/attendance', async (req) => {
     const vid = getVillageId(req);
@@ -540,7 +608,7 @@ export default async function adminRouter(fastify: FastifyInstance) {
     const vid = getVillageId(req);
     const b = req.body || {};
     if (!b.title?.trim()) {
-      return reply.status(400).send({ success: false, error: 'Judul lokasi/potensi wajib diisi.' });
+      return reply.status(400).send({ success: false, error: 'Judul lokasi/potensi/galeri wajib diisi.' });
     }
     const [created] = await db
       .insert(villagePlaces)
@@ -554,15 +622,75 @@ export default async function adminRouter(fastify: FastifyInstance) {
         address: String(b.address || '').trim(),
         lat: b.lat ? Number(b.lat) : null,
         lng: b.lng ? Number(b.lng) : null,
+        imageUrl: b.imageUrl?.trim() || null,
       })
       .returning();
     return reply.status(201).send({ success: true, data: created });
+  });
+
+  fastify.delete<{ Params: { id: string } }>('/places/:id', async (req) => {
+    const vid = getVillageId(req);
+    await db.delete(villagePlaces).where(and(eq(villagePlaces.id, req.params.id), eq(villagePlaces.villageId, vid)));
+    return { success: true };
   });
 
   // Indicators (IDM / SDGs / Stunting)
   fastify.get('/indicators', async (req) => {
     const vid = getVillageId(req);
     const rows = await db.select().from(villageIndicators).where(eq(villageIndicators.villageId, vid)).orderBy(desc(villageIndicators.year));
-    return { success: true, data: rows };
+    return {
+      success: true,
+      data: rows.map((r) => ({
+        ...r,
+        dimensions: (() => {
+          try {
+            return r.dimensionsJson ? JSON.parse(r.dimensionsJson) : [];
+          } catch {
+            return [];
+          }
+        })(),
+      })),
+    };
+  });
+
+  fastify.post<{ Body: Record<string, any> }>('/indicators', async (req) => {
+    const vid = getVillageId(req);
+    const b = req.body || {};
+    const year = Number(b.year) || new Date().getFullYear();
+    const [existing] = await db
+      .select()
+      .from(villageIndicators)
+      .where(and(eq(villageIndicators.villageId, vid), eq(villageIndicators.year, year)))
+      .limit(1);
+
+    const payload = {
+      idmScore: Number(b.idmScore) || 0.75,
+      idmStatus: String(b.idmStatus || 'MAJU').trim(),
+      sdgsScore: Number(b.sdgsScore) || 75,
+      stuntingCases: Number(b.stuntingCases) || 0,
+      stuntingRate: Number(b.stuntingRate) || 0,
+      dimensionsJson: Array.isArray(b.dimensions) ? JSON.stringify(b.dimensions) : existing?.dimensionsJson || '[]',
+      updatedAt: new Date(),
+    };
+
+    if (existing) {
+      const [updated] = await db
+        .update(villageIndicators)
+        .set(payload)
+        .where(eq(villageIndicators.id, existing.id))
+        .returning();
+      return { success: true, data: updated };
+    }
+
+    const [created] = await db
+      .insert(villageIndicators)
+      .values({
+        id: crypto.randomUUID(),
+        villageId: vid,
+        year,
+        ...payload,
+      })
+      .returning();
+    return { success: true, data: created };
   });
 }

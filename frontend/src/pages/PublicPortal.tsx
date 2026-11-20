@@ -424,10 +424,40 @@ export const PublicPortal: React.FC<{
   }
 
   const { village, officials, demographics, apbdes, indicator, latestNews, umkm, places, letterTypes } = data;
+  const villageLogo = village.logoUrl || BOJONEGORO_CREST;
+  const dynamicSlides = [
+    {
+      eyebrow: 'Selamat Datang',
+      title: `Website Resmi ${village.name}`,
+      subtitle: `Sumber informasi terbaru tentang pemerintahan, pelayanan warga, transparansi anggaran, dan potensi ${village.name}, Kecamatan ${village.district}, Kabupaten ${village.regency}.`,
+      image: village.heroImageUrl || HERO_SLIDES[0].image,
+      ctaLabel: 'Jelajahi Profil Desa',
+      targetTab: 'profil' as PublicTab,
+    },
+    ...(latestNews && latestNews.length > 0
+      ? latestNews.slice(0, 3).map((n: any, idx: number) => ({
+          eyebrow: n.category || 'Berita Desa',
+          title: n.title,
+          subtitle: n.excerpt || String(n.content || '').slice(0, 180),
+          image: n.coverUrl || NEWS_IMAGES[idx % NEWS_IMAGES.length],
+          ctaLabel: 'Baca Artikel Berita',
+          targetTab: 'berita' as PublicTab,
+        }))
+      : HERO_SLIDES.slice(1)),
+  ];
+  const activeSlide = dynamicSlides[slideIdx % dynamicSlides.length];
   const filteredPpid = ppidCat ? ppidDocs.filter((d) => d.category === ppidCat) : ppidDocs;
-  const activeSlide = HERO_SLIDES[slideIdx % HERO_SLIDES.length];
   const filteredPlaces =
     poiFilter === 'ALL' ? places : places.filter((p: any) => String(p.kind || '').toUpperCase() === poiFilter);
+  const dynamicGallery = places.filter((p: any) => String(p.kind || '').toUpperCase() === 'GALERI');
+  const galleryList =
+    dynamicGallery.length > 0
+      ? dynamicGallery.map((g: any, i: number) => ({
+          title: g.title,
+          date: g.category || 'Dokumentasi Desa',
+          image: g.imageUrl || GALLERY_PHOTOS[i % GALLERY_PHOTOS.length].image,
+        }))
+      : GALLERY_PHOTOS;
   const missionList = String(village.mission || '')
     .split('\n')
     .map((line) => line.replace(/^\d+\.\s*/, '').trim())
@@ -453,7 +483,7 @@ export const PublicPortal: React.FC<{
             className="flex items-center gap-3 text-left min-w-0"
           >
             <img
-              src={BOJONEGORO_CREST}
+              src={villageLogo}
               alt={`Lambang ${village.regency}`}
               className="w-11 h-11 sm:w-14 sm:h-14 object-contain shrink-0 drop-shadow-xs"
             />
@@ -729,9 +759,9 @@ export const PublicPortal: React.FC<{
                   className="rounded-2xl overflow-hidden shadow-md bg-[#099cff] text-white flex flex-col justify-between"
                 >
                   <div className="pt-8 pb-4 px-6 flex flex-col items-center justify-center">
-                    <div className="w-32 h-32 rounded-full bg-white/20 border-4 border-white/40 flex items-center justify-center">
+                    <div className="w-32 h-32 rounded-full bg-white/20 border-4 border-white/40 flex items-center justify-center overflow-hidden">
                       <img
-                        src={BOJONEGORO_CREST}
+                        src={o.photoUrl || villageLogo}
                         alt={o.name}
                         className="w-20 h-20 object-contain"
                       />
@@ -903,7 +933,7 @@ export const PublicPortal: React.FC<{
                   <div>
                     <div className="relative h-56 w-full overflow-hidden bg-slate-200">
                       <img
-                        src={NEWS_IMAGES[idx % NEWS_IMAGES.length]}
+                        src={n.coverUrl || NEWS_IMAGES[idx % NEWS_IMAGES.length]}
                         alt={n.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
@@ -1040,7 +1070,7 @@ export const PublicPortal: React.FC<{
                   <div>
                     <div className="relative h-52 w-full bg-slate-200 overflow-hidden">
                       <img
-                        src={UMKM_IMAGES[idx % UMKM_IMAGES.length]}
+                        src={item.imageUrl || UMKM_IMAGES[idx % UMKM_IMAGES.length]}
                         alt={item.name}
                         className="w-full h-full object-cover"
                       />
@@ -1099,7 +1129,7 @@ export const PublicPortal: React.FC<{
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {GALLERY_PHOTOS.map((g) => (
+              {galleryList.map((g: any) => (
                 <div key={g.title} className="group relative h-64 rounded-2xl overflow-hidden shadow-sm bg-slate-900">
                   <img
                     src={g.image}

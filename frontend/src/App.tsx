@@ -88,8 +88,8 @@ export default function App() {
   if (route.view === 'admin') {
     return (
       <AdminPanel
-        onBackToPortal={() => {
-          navigateToPath(`/desa/${route.villageSlug || DEFAULT_VILLAGE_SLUG}`);
+        onBackToPortal={(slug?: string) => {
+          navigateToPath(`/desa/${slug || route.villageSlug || DEFAULT_VILLAGE_SLUG}`);
         }}
         onBackToLanding={() => {
           navigateToPath('/');
