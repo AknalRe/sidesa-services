@@ -344,6 +344,7 @@ export async function ensureDatabaseSchema(): Promise<void> {
 
   await seedDefaultPlansAndSettings();
   await seedDesaPohjejerIfMissing();
+  await seedDesaDlangguIfMissing();
 }
 
 async function seedDefaultPlansAndSettings(): Promise<void> {
@@ -667,6 +668,224 @@ export async function seedDesaPohjejerIfMissing(): Promise<void> {
   ]);
 
   console.log('[SIDesa DB] Seeded Desa Pohjejer (Kec. Gondang, Kab. Mojokerto) — status UNCLAIMED & PUBLIC');
+}
+
+export async function seedDesaDlangguIfMissing(): Promise<void> {
+  const existing = await db
+    .select()
+    .from(schema.villages)
+    .where(eq(schema.villages.slug, 'dlanggu'))
+    .limit(1);
+  if (existing.length > 0) return;
+
+  const vid = 'village-dlanggu';
+  await db.insert(schema.villages).values({
+    id: vid,
+    name: 'Desa Dlanggu',
+    slug: 'dlanggu',
+    kodeDesa: '35.16.09.2012',
+    district: 'Dlanggu',
+    regency: 'Mojokerto',
+    province: 'Jawa Timur',
+    postalCode: '61371',
+    headName: 'Muhammad Nur Huda',
+    headTitle: 'Kepala Desa',
+    headGreeting:
+      'Selamat datang di portal informasi Desa Dlanggu, Kecamatan Dlanggu, Kabupaten Mojokerto, Jawa Timur. Sebagai pusat pemerintahan dan perekonomian Kecamatan Dlanggu dengan status Desa Mandiri, portal ini menyajikan informasi 4 dusun (Dlanggu, Kademangan, Sroyo, dan Segaran), layanan warga, serta potensi perdagangan dan UMKM desa.',
+    vision:
+      'Mewujudkan Desa Dlanggu yang Mandiri, Maju, Transparan, dan Sejahtera sebagai Pusat Perekonomian serta Pelayanan Publik di Kecamatan Dlanggu.',
+    mission:
+      '1. Meningkatkan tata kelola pemerintahan desa yang tertib, terbuka, dan melayani di 4 dusun (Dlanggu, Kademangan, Sroyo, Segaran).\n2. Mengembangkan ekonomi kreatif desa, UMKM lokal, Coffee Taman BUMDes, dan optimalisasi aktivitas perdagangan Pasar Dlanggu.\n3. Menjaga produktivitas lahan pertanian (±93,18 ha) serta memperkuat fasilitas publik dan kepemudaan desa.',
+    history:
+      'Desa Dlanggu merupakan pusat pemerintahan sekaligus simpul perekonomian utama di Kecamatan Dlanggu, Kabupaten Mojokerto, Provinsi Jawa Timur (Kode Pos 61371). Secara historis, kawasan Dlanggu telah lama menjadi pusat administrasi kawedanan/kecamatan yang ditandai keberadaan Tugu Perjuangan Pahlawan di kawasan pertigaan Pasar Dlanggu.\n\nLuas wilayah Desa Dlanggu tercatat sekitar 172,77 hektare (1,73 km²) yang meliputi lahan pertanian (±93,18 ha), pekarangan (±68,50 ha), tanah kas desa (±10,40 ha), dan penggunaan lainnya (±0,69 ha), serta terbagi atas 4 dusun: Dusun Dlanggu, Dusun Kademangan, Dusun Sroyo, dan Dusun Segaran. Kepemimpinan desa tercatat berkesinambungan dari masa ke masa hingga kepemimpinan Kepala Desa Muhammad Nur Huda dengan capaian status Desa Mandiri di Kabupaten Mojokerto.',
+    address: 'Jl. Jendral Ahmad Yani No. 9, Desa Dlanggu, Kecamatan Dlanggu, Kabupaten Mojokerto, Jawa Timur 61371',
+    phone: '(0321) 510176',
+    email: 'pemdes@dlanggu.desa.id',
+    website: '',
+    areaKm2: 1.73,
+    boundariesJson: JSON.stringify({
+      north: 'Desa Pohkecik',
+      east: 'Desa Ngembeh',
+      south: 'Desa Mojokarang',
+      west: 'Desa Jrambe',
+    }),
+    mapLat: -7.56645,
+    mapLng: 112.483986,
+    logoUrl: '/assets/sidesa/pohjejer-logo.png',
+    heroImageUrl: '/assets/sidesa/dlanggu-hero.jpg',
+    officialStatsJson: JSON.stringify({
+      source: 'Profil Administrasi Desa Dlanggu & Data Wilayah Kecamatan Dlanggu (Kab. Mojokerto)',
+      year: '2023/2024',
+      totalResidents: 3873,
+      populationTotal: 3873,
+      populationMale: 1915,
+      populationFemale: 1958,
+      households: 1948,
+      dusunCount: 4,
+      dusunNames: ['Dusun Dlanggu', 'Dusun Kademangan', 'Dusun Sroyo', 'Dusun Segaran'],
+      sexRatio: 97.8,
+      densityPerKm2: 2239,
+      landUseNote:
+        'Luas wilayah ±172,77 ha (1,73 km²): Lahan Pertanian ±93,18 ha, Pekarangan ±68,50 ha, Tanah Kas Desa ±10,40 ha, Lain-lain ±0,69 ha.',
+    }),
+    status: 'ACTIVE',
+    isClaimed: false,
+    licenseStatus: 'UNCLAIMED',
+    licensePlan: 'Belum Diklaim',
+    licenseExpiresAt: null,
+  });
+
+  await db.insert(schema.villageIndicators).values({
+    id: crypto.randomUUID(),
+    villageId: vid,
+    year: 2024,
+    idmStatus: 'MANDIRI',
+    idmScore: 0.85,
+    sdgsScore: 0,
+    stuntingCases: 0,
+    stuntingRate: 0,
+    detailsJson: JSON.stringify([
+      { name: 'Status Desa (Pemkab Mojokerto)', score: 'DESA MANDIRI' },
+      { name: 'Pembagian Wilayah', score: '4 Dusun (Dlanggu, Kademangan, Sroyo, Segaran)' },
+    ]),
+  });
+
+  await db.insert(schema.villagePlaces).values([
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'POI',
+      title: 'Balai Desa Dlanggu',
+      category: 'Pemerintahan',
+      description:
+        'Kantor pelayanan pemerintahan dan administrasi Desa Dlanggu di pusat Kecamatan Dlanggu, Kabupaten Mojokerto.',
+      address: 'Jl. Jendral Ahmad Yani No. 9, Dlanggu, Mojokerto 61371',
+      lat: -7.56645,
+      lng: 112.483986,
+      imageUrl: '/assets/sidesa/dlanggu-hero.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'POTENSI',
+      title: 'Pasar Dlanggu (Pasar Tanjungsari)',
+      category: 'Perdagangan & Ekonomi',
+      description:
+        'Pasar tradisional utama sekaligus simpul ekonomi Kecamatan Dlanggu yang berada di pertigaan jalur strategis menuju Gondang/Pacet dan Kutorejo.',
+      address: 'Pertigaan Pasar Dlanggu, Desa Dlanggu, Mojokerto 61371',
+      lat: -7.5658,
+      lng: 112.4847,
+      imageUrl: '/assets/sidesa/dlanggu-pasar.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'POTENSI',
+      title: 'Coffee Taman & Sentra UMKM Desa Dlanggu',
+      category: 'Ekonomi Kreatif & BUMDes',
+      description:
+        'Unit usaha ekonomi kreatif dan kuliner UMKM binaan desa di kawasan taman sekitar Balai Desa Dlanggu.',
+      address: 'Kawasan Balai Desa Dlanggu, Mojokerto 61371',
+      lat: -7.5666,
+      lng: 112.4837,
+      imageUrl: '/assets/sidesa/dlanggu-coffee-taman.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'POI',
+      title: 'Tugu Perjuangan Pahlawan Dlanggu',
+      category: 'Sejarah & Landmark',
+      description:
+        'Monumen sejarah perjuangan kemerdekaan yang menjadi penanda kawasan pusat pertigaan Pasar Dlanggu.',
+      address: 'Pertigaan Dlanggu, Desa Dlanggu, Mojokerto 61371',
+      lat: -7.5655,
+      lng: 112.4843,
+      imageUrl: '/assets/sidesa/dlanggu-hero.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'POI',
+      title: 'Lapangan Sepak Bola Desa Dlanggu',
+      category: 'Olahraga & Pemuda',
+      description:
+        'Fasilitas lapangan olahraga desa yang aktif dimanfaatkan untuk pembinaan pemuda, olahraga masyarakat, dan agenda lokal.',
+      address: 'Desa Dlanggu, Kecamatan Dlanggu, Mojokerto 61371',
+      imageUrl: '/assets/sidesa/dlanggu-hero.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'POTENSI',
+      title: 'Lahan Pertanian Produktif Desa Dlanggu (±93,18 Ha)',
+      category: 'Pertanian & Ketahanan Pangan',
+      description:
+        'Hamparan lahan pertanian dataran rendah seluas ±93,18 hektare yang menopang ketahanan pangan dan ekonomi petani di 4 dusun.',
+      address: 'Dusun Dlanggu, Kademangan, Sroyo & Segaran',
+      imageUrl: '/assets/sidesa/dlanggu-pasar.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'GALERI',
+      title: 'Balai Desa & Pusat Pemerintahan Desa Dlanggu',
+      category: 'Profil Wilayah',
+      description: 'Dokumentasi visual kawasan Balai Desa Dlanggu, Kecamatan Dlanggu, Kabupaten Mojokerto.',
+      imageUrl: '/assets/sidesa/dlanggu-hero.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'GALERI',
+      title: 'Aktivitas Perdagangan di Pasar Dlanggu',
+      category: 'Ekonomi Desa',
+      description: 'Suasana pusat perdagangan tradisional di Pasar Dlanggu yang melayani warga Kecamatan Dlanggu.',
+      imageUrl: '/assets/sidesa/dlanggu-pasar.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'GALERI',
+      title: 'Coffee Taman & Ruang Ekonomi Kreatif UMKM Desa',
+      category: 'UMKM & BUMDes',
+      description: 'Kawasan kuliner Coffee Taman dan etalase UMKM lokal Desa Dlanggu.',
+      imageUrl: '/assets/sidesa/dlanggu-coffee-taman.jpg',
+    },
+  ]);
+
+  await db.insert(schema.newsArticles).values([
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      slug: 'profil-wilayah-dan-4-dusun-desa-dlanggu-kabupaten-mojokerto',
+      title: 'Profil Wilayah, Batas Administrasi & 4 Dusun Desa Dlanggu (Kode Pos 61371)',
+      category: 'Data Wilayah',
+      excerpt:
+        'Desa Dlanggu memiliki luas ±172,77 ha (1,73 km²), 4 dusun (Dlanggu, Kademangan, Sroyo, Segaran), dan jumlah penduduk sekitar 3.873 jiwa.',
+      content:
+        'Desa Dlanggu (Kode Kemendagri 35.16.09.2012, Kode Pos 61371) terletak di pusat Kecamatan Dlanggu, Kabupaten Mojokerto, Provinsi Jawa Timur. Wilayah desa berbatasan langsung dengan Desa Pohkecik di utara, Desa Ngembeh di timur, Desa Mojokarang di selatan, dan Desa Jrambe di barat.\n\nLuas wilayah Desa Dlanggu tercatat sekitar 172,77 hektare (1,73 km²) yang terdiri atas lahan pertanian ±93,18 ha, pekarangan ±68,50 ha, tanah kas desa ±10,40 ha, dan penggunaan lainnya ±0,69 ha.\n\nSecara administratif, Desa Dlanggu terbagi atas 4 dusun yaitu Dusun Dlanggu, Dusun Kademangan, Dusun Sroyo, dan Dusun Segaran dengan jumlah penduduk sekitar 3.873 jiwa (1.915 laki-laki dan 1.958 perempuan; ±1.948 KK).',
+      coverUrl: '/assets/sidesa/dlanggu-hero.jpg',
+      authorName: 'Tim Persiapan Data Desa Dlanggu',
+      views: 1,
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      slug: 'desa-mandiri-dlanggu-pasar-tanjungsari-dan-coffee-taman-bumdes',
+      title: 'Status Desa Mandiri, Simpul Pasar Dlanggu & Inovasi Ekonomi Kreatif Coffee Taman',
+      category: 'Potensi & BUMDes',
+      excerpt:
+        'Desa Dlanggu berperan sebagai pusat pemerintahan dan ekonomi Kecamatan Dlanggu melalui Pasar Dlanggu, UMKM lokal, dan unit usaha Coffee Taman.',
+      content:
+        'Sebagai salah satu desa berstatus Desa Mandiri di Kabupaten Mojokerto di bawah kepemimpinan Kepala Desa Muhammad Nur Huda, Desa Dlanggu memadukan potensi perdagangan tradisional dengan inovasi ekonomi kreatif masyarakat.\n\nKeberadaan Pasar Dlanggu (Pasar Tanjungsari) di jalur utama menuju Gondang/Pacet dan Kutorejo menjadi penggerak utama transaksi hasil bumi dan perdagangan harian warga. Di sekitar kawasan Balai Desa, pengembangan unit usaha seperti Coffee Taman dan pemberdayaan produk UMKM lokal terus didorong untuk memperluas peluang usaha warga serta meningkatkan kemandirian ekonomi desa.',
+      coverUrl: '/assets/sidesa/dlanggu-coffee-taman.jpg',
+      authorName: 'Tim Persiapan Data Desa Dlanggu',
+      views: 1,
+    },
+  ]);
+
+  console.log('[SIDesa DB] Seeded Desa Dlanggu (Kec. Dlanggu, Kab. Mojokerto 61371) — status UNCLAIMED & PUBLIC');
 }
 
 export async function getDefaultVillage() {

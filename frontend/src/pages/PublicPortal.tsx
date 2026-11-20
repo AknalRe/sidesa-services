@@ -1126,12 +1126,30 @@ export const PublicPortal: React.FC<{
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {(demographics.totalResidents === 0 && officialStats
                 ? [
-                    { label: 'Penduduk (Data 2023)', value: officialStats.totalResidents },
+                    {
+                      label: `Penduduk (${officialStats.year || 'Data Resmi'})`,
+                      value: officialStats.populationTotal ?? officialStats.totalResidents,
+                    },
                     { label: 'Wilayah Dusun', value: officialStats.dusunCount },
-                    { label: 'Rukun Warga (RW)', value: officialStats.rwCount },
-                    { label: 'Rukun Tetangga (RT)', value: officialStats.rtCount },
-                    { label: 'Sex Ratio (Data 2023)', value: officialStats.sexRatio },
-                    { label: 'Islam (Rincian Agama 2023)', value: officialStats.religionBreakdown?.[0]?.total || 0 },
+                    ...(officialStats.populationMale
+                      ? [
+                          { label: 'Laki-Laki', value: officialStats.populationMale },
+                          { label: 'Perempuan', value: officialStats.populationFemale },
+                        ]
+                      : [
+                          { label: 'Rukun Warga (RW)', value: officialStats.rwCount },
+                          { label: 'Rukun Tetangga (RT)', value: officialStats.rtCount },
+                        ]),
+                    {
+                      label: officialStats.households ? 'Kepala Keluarga (KK)' : `Sex Ratio (${officialStats.year || 'Data 2023'})`,
+                      value: officialStats.households ?? officialStats.sexRatio,
+                    },
+                    {
+                      label: officialStats.religionBreakdown?.[0]
+                        ? 'Islam (Rincian Agama)'
+                        : 'Kepadatan (/km²)',
+                      value: officialStats.religionBreakdown?.[0]?.total ?? officialStats.densityPerKm2 ?? 0,
+                    },
                   ]
                 : [
                     { label: 'Penduduk', value: demographics.totalResidents },
@@ -1628,19 +1646,34 @@ export const PublicPortal: React.FC<{
                         {[
                           {
                             label: 'Total Penduduk',
-                            value: Number(officialStats.populationTotal || 0).toLocaleString('id-ID'),
+                            value: Number(officialStats.populationTotal ?? officialStats.totalResidents ?? 0).toLocaleString('id-ID'),
                           },
+                          ...(officialStats.populationMale
+                            ? [
+                                {
+                                  label: 'Laki-Laki',
+                                  value: Number(officialStats.populationMale).toLocaleString('id-ID'),
+                                },
+                                {
+                                  label: 'Perempuan',
+                                  value: Number(officialStats.populationFemale || 0).toLocaleString('id-ID'),
+                                },
+                              ]
+                            : [
+                                {
+                                  label: 'Kepadatan (/km²)',
+                                  value: Number(officialStats.densityPerKm2 || 0).toLocaleString('id-ID'),
+                                },
+                                {
+                                  label: 'Sex Ratio',
+                                  value: String(officialStats.sexRatio ?? '-'),
+                                },
+                              ]),
                           {
-                            label: 'Laki-Laki',
-                            value: Number(officialStats.populationMale || 0).toLocaleString('id-ID'),
-                          },
-                          {
-                            label: 'Perempuan',
-                            value: Number(officialStats.populationFemale || 0).toLocaleString('id-ID'),
-                          },
-                          {
-                            label: 'Dusun / RW / RT',
-                            value: `${officialStats.dusunCount || 0} / ${officialStats.rwCount || 0} / ${officialStats.rtCount || 0}`,
+                            label: officialStats.rwCount ? 'Dusun / RW / RT' : 'Wilayah Dusun',
+                            value: officialStats.rwCount
+                              ? `${officialStats.dusunCount || 0} / ${officialStats.rwCount || 0} / ${officialStats.rtCount || 0}`
+                              : `${officialStats.dusunCount || 0} Dusun`,
                           },
                         ].map((s) => (
                           <div
