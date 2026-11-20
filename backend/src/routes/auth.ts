@@ -12,6 +12,7 @@ import {
 } from '../db/schema';
 import { slugifyTitle } from '../lib/helpers';
 import { verifyStudentPddikti } from '../services/pddikti.service';
+import { createReneoEcosystemOrder } from '../services/reneoPayment.service';
 
 export const SESSION_COOKIE = 'sidesa_session';
 
@@ -355,9 +356,18 @@ export default async function authRouter(fastify: FastifyInstance) {
       position: 'Administrator Desa',
     });
 
-    // Terbitkan Invoice Berlangganan layaknya hosting
+    // Terbitkan Invoice Berlangganan layaknya hosting (sinkron ke Ekosistem Pembayaran & NotifBank Reneo jika tersedia)
+    const reneoOrder = await createReneoEcosystemOrder({
+      planCode: plan.code,
+      planName: plan.name,
+      durationMonths,
+      amountList: totalAmount,
+      buyerName: `${villageName} (${name})`,
+      buyerEmail: email,
+      paymentMethod,
+    });
     const invoiceId = crypto.randomUUID();
-    const invoiceNumber = generateInvoiceNumber();
+    const invoiceNumber = reneoOrder?.invoiceNumber || generateInvoiceNumber();
     const [invoice] = await db
       .insert(subscriptionInvoices)
       .values({
@@ -368,9 +378,14 @@ export default async function authRouter(fastify: FastifyInstance) {
         planName: plan.name,
         durationMonths,
         amount: totalAmount,
+        uniqueCode: reneoOrder?.uniqueCode || 0,
+        amountTotal: reneoOrder?.amountTotal || totalAmount,
         status: 'UNPAID',
         paymentMethod,
         studentIdentityJson,
+        reneoOrderPublicId: reneoOrder?.publicId || null,
+        reneoInvoiceNumber: reneoOrder?.invoiceNumber || null,
+        reneoPaymentMethodsJson: reneoOrder?.paymentMethods ? JSON.stringify(reneoOrder.paymentMethods) : null,
       })
       .returning();
 
@@ -499,7 +514,17 @@ export default async function authRouter(fastify: FastifyInstance) {
       })
       .where(eq(villages.id, village.id));
 
-    const invoiceNumber = generateInvoiceNumber();
+    const reneoOrder = await createReneoEcosystemOrder({
+      planCode: plan.code,
+      planName: plan.name,
+      durationMonths,
+      amountList: totalAmount,
+      buyerName: `${village.name} (${name})`,
+      buyerEmail: email,
+      buyerPhone: String(req.body?.phone || '').trim(),
+      paymentMethod,
+    });
+    const invoiceNumber = reneoOrder?.invoiceNumber || generateInvoiceNumber();
     const [invoice] = await db
       .insert(subscriptionInvoices)
       .values({
@@ -510,9 +535,14 @@ export default async function authRouter(fastify: FastifyInstance) {
         planName: plan.name,
         durationMonths,
         amount: totalAmount,
+        uniqueCode: reneoOrder?.uniqueCode || 0,
+        amountTotal: reneoOrder?.amountTotal || totalAmount,
         status: 'UNPAID',
         paymentMethod,
         studentIdentityJson,
+        reneoOrderPublicId: reneoOrder?.publicId || null,
+        reneoInvoiceNumber: reneoOrder?.invoiceNumber || null,
+        reneoPaymentMethodsJson: reneoOrder?.paymentMethods ? JSON.stringify(reneoOrder.paymentMethods) : null,
       })
       .returning();
 

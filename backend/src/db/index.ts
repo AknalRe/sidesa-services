@@ -69,6 +69,11 @@ export async function ensureDatabaseSchema(): Promise<void> {
     ALTER TABLE villages ADD COLUMN IF NOT EXISTS is_claimed BOOLEAN NOT NULL DEFAULT TRUE;
     ALTER TABLE villages ADD COLUMN IF NOT EXISTS official_stats_json TEXT;
     ALTER TABLE subscription_invoices ADD COLUMN IF NOT EXISTS student_identity_json TEXT;
+    ALTER TABLE subscription_invoices ADD COLUMN IF NOT EXISTS unique_code INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE subscription_invoices ADD COLUMN IF NOT EXISTS amount_total INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE subscription_invoices ADD COLUMN IF NOT EXISTS reneo_order_public_id TEXT;
+    ALTER TABLE subscription_invoices ADD COLUMN IF NOT EXISTS reneo_invoice_number TEXT;
+    ALTER TABLE subscription_invoices ADD COLUMN IF NOT EXISTS reneo_payment_methods_json TEXT;
 
     CREATE TABLE IF NOT EXISTS officials (
       id TEXT PRIMARY KEY,

@@ -328,11 +328,16 @@ export const subscriptionInvoices = pgTable('subscription_invoices', {
   planName: text('plan_name').notNull(),
   durationMonths: integer('duration_months').notNull().default(12),
   amount: integer('amount').notNull().default(0),
+  uniqueCode: integer('unique_code').notNull().default(0),
+  amountTotal: integer('amount_total').notNull().default(0),
   status: text('status').notNull().default('UNPAID'), // UNPAID | WAITING_VERIFICATION | PAID | CANCELLED
   paymentMethod: text('payment_method').notNull().default('TRANSFER_BANK'), // TRANSFER_BANK | QRIS | VIRTUAL_ACCOUNT
   paymentReference: text('payment_reference'),
   paymentNote: text('payment_note'),
   studentIdentityJson: text('student_identity_json'),
+  reneoOrderPublicId: text('reneo_order_public_id'),
+  reneoInvoiceNumber: text('reneo_invoice_number'),
+  reneoPaymentMethodsJson: text('reneo_payment_methods_json'),
   paidAt: timestamp('paid_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });

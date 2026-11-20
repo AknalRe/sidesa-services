@@ -117,6 +117,7 @@ export const api = {
     id: string,
     payload: { paymentMethod?: string; paymentReference?: string; paymentNote?: string }
   ) => (await client.post(`/admin/billing/invoices/${id}/confirm`, payload)).data.data,
+  syncBillingInvoice: async (id: string) => (await client.post(`/admin/billing/invoices/${id}/sync`)).data.data,
 
   // Superadmin Platform SaaS
   getSuperadminOverview: async () => (await client.get('/superadmin/overview')).data.data,

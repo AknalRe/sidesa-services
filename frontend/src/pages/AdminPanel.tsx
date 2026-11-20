@@ -847,13 +847,36 @@ export const AdminPanel: React.FC<{
                     : 'Menunggu Aktivasi'}
                 </div>
               </div>
-              <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-1 text-xs">
-                <div className="font-bold text-slate-500 uppercase">Rekening Pembayaran Resmi</div>
-                <div className="font-bold text-slate-900">{billingData.paymentConfig?.bankName}</div>
-                <div className="font-mono text-sm font-extrabold text-[#0069b6]">
-                  {billingData.paymentConfig?.bankAccountNumber}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-1.5 text-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-bold text-slate-500 uppercase">Rekening Pembayaran Resmi</span>
+                  {billingData.reneoEcosystemEnabled && (
+                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold">
+                      NotifBank Reneo Aktif
+                    </span>
+                  )}
                 </div>
-                <div className="text-slate-600">a.n. {billingData.paymentConfig?.bankAccountHolder}</div>
+                {Array.isArray(billingData.reneoPaymentMethods) && billingData.reneoPaymentMethods.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {billingData.reneoPaymentMethods.map((m: any, i: number) => (
+                      <div key={i} className="pt-1 border-t border-slate-100 first:border-t-0 first:pt-0">
+                        <div className="font-bold text-slate-900">{m.label || m.bankName || m.type}</div>
+                        {m.accountNumber && (
+                          <div className="font-mono text-sm font-extrabold text-[#0069b6]">{m.accountNumber}</div>
+                        )}
+                        {m.accountName && <div className="text-slate-600">a.n. {m.accountName}</div>}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <div className="font-bold text-slate-900">{billingData.paymentConfig?.bankName}</div>
+                    <div className="font-mono text-sm font-extrabold text-[#0069b6]">
+                      {billingData.paymentConfig?.bankAccountNumber}
+                    </div>
+                    <div className="text-slate-600">a.n. {billingData.paymentConfig?.bankAccountHolder}</div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -933,7 +956,14 @@ export const AdminPanel: React.FC<{
                         <div className="font-semibold">{inv.planName}</div>
                         <div className="text-slate-500">{inv.durationMonths} Bulan · {inv.paymentMethod}</div>
                       </td>
-                      <td className="py-3 px-4 font-mono font-bold text-[#0069b6]">{formatRp(inv.amount)}</td>
+                      <td className="py-3 px-4 font-mono font-bold text-[#0069b6]">
+                        <div>{formatRp(inv.amountTotal || inv.amount)}</div>
+                        {inv.uniqueCode > 0 && (
+                          <div className="text-[10px] font-sans font-semibold text-emerald-700">
+                            Termasuk kode unik +{inv.uniqueCode} (Auto-Verifikasi NotifBank)
+                          </div>
+                        )}
+                      </td>
                       <td className="py-3 px-4">
                         <span
                           className={`px-2 py-0.5 rounded font-bold text-[11px] ${
@@ -947,14 +977,27 @@ export const AdminPanel: React.FC<{
                           {inv.status}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
+                        {inv.reneoOrderPublicId && inv.status !== 'PAID' && inv.status !== 'CANCELLED' && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              await api.syncBillingInvoice(inv.id);
+                              setBillingData(await api.getBilling());
+                              setVillage(await api.getVillageProfile());
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg border border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold"
+                          >
+                            Cek NotifBank
+                          </button>
+                        )}
                         {inv.status === 'UNPAID' && (
                           <button
                             type="button"
                             onClick={() => setConfirmInvoiceId(inv.id)}
                             className="px-3 py-1.5 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white font-bold"
                           >
-                            Konfirmasi Sudah Bayar
+                            Konfirmasi Bayar
                           </button>
                         )}
                       </td>

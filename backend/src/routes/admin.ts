@@ -30,6 +30,11 @@ import {
   summarizeApbdes,
 } from '../lib/helpers';
 import { buildLetterStatusMessage, sendWahaNotification } from '../services/wahaNotify.service';
+import {
+  createReneoEcosystemOrder,
+  getReneoEcosystemOrder,
+  isReneoPaymentEcosystemEnabled,
+} from '../services/reneoPayment.service';
 
 function getVillageId(req: any): string {
   const user = req.sidesaUser as SessionUser;
@@ -702,12 +707,65 @@ export default async function adminRouter(fastify: FastifyInstance) {
     return { success: true, data: created };
   });
 
-  // Billing & Langganan Paket Desa (Layaknya Hosting)
+  // Billing & Langganan Paket Desa (Terintegrasi Ekosistem Pembayaran & NotifBank Reneo)
+  async function syncInvoiceWithReneo(inv: typeof subscriptionInvoices.$inferSelect) {
+    if (!inv.reneoOrderPublicId || inv.status === 'PAID' || inv.status === 'CANCELLED') {
+      return { invoice: inv, paymentMethods: null as any[] | null };
+    }
+    const rOrder = await getReneoEcosystemOrder(inv.reneoOrderPublicId);
+    if (!rOrder) return { invoice: inv, paymentMethods: null as any[] | null };
+
+    const methodsJson = rOrder.paymentMethods?.length ? JSON.stringify(rOrder.paymentMethods) : inv.reneoPaymentMethodsJson;
+
+    if (rOrder.status === 'paid') {
+      const now = new Date();
+      const [village] = await db.select().from(villages).where(eq(villages.id, inv.villageId)).limit(1);
+      if (village) {
+        const currentExp = village.licenseExpiresAt ? new Date(village.licenseExpiresAt) : null;
+        const baseDate = currentExp && currentExp > now ? currentExp : now;
+        const newExpiry = new Date(baseDate);
+        newExpiry.setMonth(newExpiry.getMonth() + Number(inv.durationMonths || 12));
+        await db
+          .update(villages)
+          .set({
+            status: 'ACTIVE',
+            licenseStatus: 'ACTIVE',
+            licensePlan: inv.planName,
+            licenseExpiresAt: newExpiry,
+            updatedAt: now,
+          })
+          .where(eq(villages.id, village.id));
+      }
+      const [updatedInv] = await db
+        .update(subscriptionInvoices)
+        .set({
+          status: 'PAID',
+          paidAt: now,
+          paymentNote: inv.paymentNote || 'Terverifikasi otomatis oleh NotifBank / Ekosistem Reneo',
+          reneoPaymentMethodsJson: methodsJson,
+        })
+        .where(eq(subscriptionInvoices.id, inv.id))
+        .returning();
+      return { invoice: updatedInv, paymentMethods: rOrder.paymentMethods };
+    }
+
+    if (rOrder.status === 'review' && inv.status === 'UNPAID') {
+      const [updatedInv] = await db
+        .update(subscriptionInvoices)
+        .set({ status: 'WAITING_VERIFICATION', reneoPaymentMethodsJson: methodsJson })
+        .where(eq(subscriptionInvoices.id, inv.id))
+        .returning();
+      return { invoice: updatedInv, paymentMethods: rOrder.paymentMethods };
+    }
+
+    return { invoice: inv, paymentMethods: rOrder.paymentMethods };
+  }
+
   fastify.get('/billing', async (req, reply) => {
     const vid = getVillageId(req);
-    const [village] = await db.select().from(villages).where(eq(villages.id, vid)).limit(1);
+    let [village] = await db.select().from(villages).where(eq(villages.id, vid)).limit(1);
     if (!village) return reply.status(404).send({ success: false, error: 'Desa tidak ditemukan.' });
-    const [invoices, plans, settings] = await Promise.all([
+    const [rawInvoices, plans, settings] = await Promise.all([
       db
         .select()
         .from(subscriptionInvoices)
@@ -720,11 +778,34 @@ export default async function adminRouter(fastify: FastifyInstance) {
         .orderBy(subscriptionPlans.sortOrder),
       db.select().from(platformSettings),
     ]);
+
+    let reneoPaymentMethods: any[] = [];
+    const invoices = [];
+    for (const inv of rawInvoices) {
+      const synced = await syncInvoiceWithReneo(inv);
+      invoices.push(synced.invoice);
+      if (synced.paymentMethods && synced.paymentMethods.length > 0 && reneoPaymentMethods.length === 0) {
+        reneoPaymentMethods = synced.paymentMethods;
+      } else if (synced.invoice.reneoPaymentMethodsJson && reneoPaymentMethods.length === 0) {
+        try {
+          reneoPaymentMethods = JSON.parse(synced.invoice.reneoPaymentMethodsJson);
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    // Refresh village status in case NotifBank auto-activated it
+    const [refreshedVillage] = await db.select().from(villages).where(eq(villages.id, vid)).limit(1);
+    if (refreshedVillage) village = refreshedVillage;
+
     const paymentConfig: Record<string, string> = {};
     for (const s of settings) paymentConfig[s.key] = s.value;
     return {
       success: true,
       data: {
+        reneoEcosystemEnabled: isReneoPaymentEcosystemEnabled(),
+        reneoPaymentMethods,
         subscription: {
           status: village.status,
           licenseStatus: village.licenseStatus,
@@ -742,6 +823,8 @@ export default async function adminRouter(fastify: FastifyInstance) {
     '/billing/invoices',
     async (req, reply) => {
       const vid = getVillageId(req);
+      const user = (req as any).sidesaUser as SessionUser;
+      const [village] = await db.select().from(villages).where(eq(villages.id, vid)).limit(1);
       const planCode = String(req.body?.planCode || 'PRO').toUpperCase();
       const durationMonths = [1, 6, 12, 24].includes(Number(req.body?.durationMonths))
         ? Number(req.body?.durationMonths)
@@ -755,9 +838,20 @@ export default async function adminRouter(fastify: FastifyInstance) {
       if (!plan) return reply.status(404).send({ success: false, error: 'Paket langganan tidak ditemukan.' });
 
       const amount = calculateSubscriptionAmount(plan, durationMonths);
+      const reneoOrder = await createReneoEcosystemOrder({
+        planCode: plan.code,
+        planName: plan.name,
+        durationMonths,
+        amountList: amount,
+        buyerName: `${village?.name || 'Desa'} (${user.name})`,
+        buyerEmail: user.email,
+        paymentMethod,
+      });
+
       const d = new Date();
       const ym = `${String(d.getFullYear()).slice(-2)}${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const invoiceNumber = `INV-SIDESA-${ym}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+      const invoiceNumber =
+        reneoOrder?.invoiceNumber || `INV-SIDESA-${ym}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
 
       const [created] = await db
         .insert(subscriptionInvoices)
@@ -769,13 +863,30 @@ export default async function adminRouter(fastify: FastifyInstance) {
           planName: plan.name,
           durationMonths,
           amount,
+          uniqueCode: reneoOrder?.uniqueCode || 0,
+          amountTotal: reneoOrder?.amountTotal || amount,
           status: 'UNPAID',
           paymentMethod,
+          reneoOrderPublicId: reneoOrder?.publicId || null,
+          reneoInvoiceNumber: reneoOrder?.invoiceNumber || null,
+          reneoPaymentMethodsJson: reneoOrder?.paymentMethods ? JSON.stringify(reneoOrder.paymentMethods) : null,
         })
         .returning();
       return reply.status(201).send({ success: true, data: created });
     }
   );
+
+  fastify.post<{ Params: { id: string } }>('/billing/invoices/:id/sync', async (req, reply) => {
+    const vid = getVillageId(req);
+    const [existing] = await db
+      .select()
+      .from(subscriptionInvoices)
+      .where(and(eq(subscriptionInvoices.id, req.params.id), eq(subscriptionInvoices.villageId, vid)))
+      .limit(1);
+    if (!existing) return reply.status(404).send({ success: false, error: 'Tagihan tidak ditemukan.' });
+    const synced = await syncInvoiceWithReneo(existing);
+    return { success: true, data: synced.invoice };
+  });
 
   fastify.post<{ Params: { id: string }; Body: { paymentMethod?: string; paymentReference?: string; paymentNote?: string } }>(
     '/billing/invoices/:id/confirm',
