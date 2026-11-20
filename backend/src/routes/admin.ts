@@ -35,6 +35,7 @@ import {
   getReneoEcosystemOrder,
   isReneoPaymentEcosystemEnabled,
 } from '../services/reneoPayment.service';
+import { getWilayahDetail } from '../services/wilayah.service';
 
 function getVillageId(req: any): string {
   const user = req.sidesaUser as SessionUser;
@@ -123,8 +124,28 @@ export default async function adminRouter(fastify: FastifyInstance) {
     if (typeof updates.slug === 'string') {
       updates.slug = slugifyTitle(updates.slug) || 'desa';
     }
+    if (updates.areaKm2 !== undefined) {
+      const n = Number(updates.areaKm2);
+      updates.areaKm2 = Number.isFinite(n) ? n : 0;
+    }
+    if (updates.mapLat !== undefined) {
+      const n = Number(updates.mapLat);
+      updates.mapLat = Number.isFinite(n) ? n : null;
+    }
+    if (updates.mapLng !== undefined) {
+      const n = Number(updates.mapLng);
+      updates.mapLng = Number.isFinite(n) ? n : null;
+    }
     if (b.boundaries && typeof b.boundaries === 'object') {
       updates.boundariesJson = JSON.stringify(b.boundaries);
+    }
+    // Auto-resolve center lat/lng from Wilayah API if kodeDesa is set and coordinates are missing
+    if (updates.kodeDesa && (!updates.mapLat || !updates.mapLng)) {
+      const detail = await getWilayahDetail(String(updates.kodeDesa)).catch(() => null);
+      if (detail?.coordinates?.lat && detail?.coordinates?.lng) {
+        updates.mapLat = Number(detail.coordinates.lat);
+        updates.mapLng = Number(detail.coordinates.lng);
+      }
     }
     const [updated] = await db.update(villages).set(updates).where(eq(villages.id, vid)).returning();
     return { success: true, data: updated };
@@ -560,7 +581,7 @@ export default async function adminRouter(fastify: FastifyInstance) {
     return { success: true };
   });
 
-  fastify.patch<{ Params: { id: string }; Body: { status: string; responseText?: string } }>(
+  fastify.patch<{ Params: { id: string }; Body: { status: string; responseText?: string; responseNotes?: string } }>(
     '/ppid/requests/:id',
     async (req, reply) => {
       const vid = getVillageId(req);
@@ -570,11 +591,12 @@ export default async function adminRouter(fastify: FastifyInstance) {
         .where(and(eq(ppidRequests.id, req.params.id), eq(ppidRequests.villageId, vid)))
         .limit(1);
       if (!existing) return reply.status(404).send({ success: false, error: 'Permohonan PPID tidak ditemukan.' });
+      const nextResp = req.body?.responseText ?? req.body?.responseNotes;
       const [updated] = await db
         .update(ppidRequests)
         .set({
           status: req.body?.status || existing.status,
-          responseText: req.body?.responseText ?? existing.responseText,
+          responseText: nextResp !== undefined ? nextResp : existing.responseText,
         })
         .where(eq(ppidRequests.id, existing.id))
         .returning();

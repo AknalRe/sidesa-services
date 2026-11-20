@@ -194,11 +194,12 @@ export const AdminPanel: React.FC<{
     title: '',
     category: 'Fasilitas Umum',
     address: '',
-    lat: '-7.2010',
-    lng: '112.0220',
+    lat: '',
+    lng: '',
     imageUrl: '',
     description: '',
   });
+  const [actionBanner, setActionBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [newPpidDoc, setNewPpidDoc] = useState({
     category: 'BERKALA',
     title: '',
@@ -741,7 +742,7 @@ export const AdminPanel: React.FC<{
     );
   }
 
-  const activeSlug = village?.slug || auth?.village?.slug || 'sugihwaras';
+  const activeSlug = village?.slug || auth?.village?.slug || 'pohjejer';
 
   return (
     <div className="min-h-screen w-full bg-[#F6F6F6] flex flex-col lg:flex-row">
@@ -808,6 +809,24 @@ export const AdminPanel: React.FC<{
 
       {/* Main Content */}
       <main className="flex-1 p-4 sm:p-8 overflow-y-auto space-y-6">
+        {actionBanner && (
+          <div
+            className={`no-print p-3.5 rounded-xl border text-xs font-semibold flex items-center justify-between gap-3 ${
+              actionBanner.type === 'success'
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                : 'bg-rose-50 border-rose-200 text-rose-800'
+            }`}
+          >
+            <span>{actionBanner.text}</span>
+            <button
+              type="button"
+              onClick={() => setActionBanner(null)}
+              className="text-[11px] font-bold underline shrink-0"
+            >
+              Tutup
+            </button>
+          </div>
+        )}
         {managedVillage && auth?.user?.role === 'SUPERADMIN' && (
           <div className="p-3.5 rounded-xl bg-[#0B2A57] text-white flex flex-wrap items-center justify-between gap-3 text-xs">
             <div>
@@ -1224,15 +1243,44 @@ export const AdminPanel: React.FC<{
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
-                const updated = await api.updateVillageProfile(village);
-                setVillage({
-                  ...updated,
-                  boundaries: village.boundaries,
-                });
-                alert('Profil dan tampilan desa berhasil diperbarui!');
+                setActionBanner(null);
+                try {
+                  const updated = await api.updateVillageProfile(village);
+                  setVillage({
+                    ...updated,
+                    boundaries: village.boundaries,
+                  });
+                  setActionBanner({ type: 'success', text: 'Profil, koordinat peta, dan tampilan desa berhasil disimpan.' });
+                } catch (err: any) {
+                  setActionBanner({
+                    type: 'error',
+                    text: err?.response?.data?.error || 'Gagal menyimpan profil desa. Periksa kembali isian Anda.',
+                  });
+                }
               }}
               className="bg-white rounded-2xl shadow-2xs p-6 space-y-4 text-xs"
             >
+              <div className="p-3.5 rounded-xl bg-sky-50/70 border border-sky-200 space-y-2">
+                <div className="font-bold text-sky-900">
+                  Sinkronkan Wilayah &amp; Peta Resmi (Kemendagri / Wilayah API)
+                </div>
+                <WilayahSearchPicker
+                  onSelect={(item) => {
+                    setVillage({
+                      ...village,
+                      kodeDesa: item.kode,
+                      name: item.name.startsWith('Desa ') || item.name.startsWith('Kelurahan ') ? item.name : `Desa ${item.name}`,
+                      district: item.district || village.district,
+                      regency: item.regency || village.regency,
+                      province: item.province || village.province,
+                      postalCode: item.postalCode || village.postalCode,
+                      mapLat: item.lat ?? village.mapLat,
+                      mapLng: item.lng ?? village.mapLng,
+                    });
+                  }}
+                />
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block font-bold mb-1">Nama Desa *</label>
@@ -1295,8 +1343,19 @@ export const AdminPanel: React.FC<{
                 <div>
                   <label className="block font-bold mb-1">Telepon / WhatsApp Balai Desa</label>
                   <input
+                    placeholder="08xx-xxxx-xxxx"
                     value={village.phone || ''}
                     onChange={(e) => setVillage({ ...village, phone: e.target.value })}
+                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold mb-1">Email Resmi Balai Desa</label>
+                  <input
+                    type="email"
+                    placeholder={`pemdes@${village.slug || 'desa'}.desa.id`}
+                    value={village.email || ''}
+                    onChange={(e) => setVillage({ ...village, email: e.target.value })}
                     className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-sm"
                   />
                 </div>
@@ -1307,6 +1366,28 @@ export const AdminPanel: React.FC<{
                     step="0.01"
                     value={village.areaKm2 ?? 0}
                     onChange={(e) => setVillage({ ...village, areaKm2: Number(e.target.value) })}
+                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold mb-1">Latitude Pusat Peta</label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    placeholder="-7.610556"
+                    value={village.mapLat ?? ''}
+                    onChange={(e) => setVillage({ ...village, mapLat: e.target.value === '' ? null : Number(e.target.value) })}
+                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold mb-1">Longitude Pusat Peta</label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    placeholder="112.472453"
+                    value={village.mapLng ?? ''}
+                    onChange={(e) => setVillage({ ...village, mapLng: e.target.value === '' ? null : Number(e.target.value) })}
                     className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-sm"
                   />
                 </div>
@@ -2190,18 +2271,28 @@ export const AdminPanel: React.FC<{
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
-                await api.createPlace(newPlace);
-                setNewPlace({
-                  kind: 'POI',
-                  title: '',
-                  category: 'Fasilitas Umum',
-                  address: '',
-                  lat: '-7.2010',
-                  lng: '112.0220',
-                  imageUrl: '',
-                  description: '',
-                });
-                setPlaces(await api.getPlacesAdmin());
+                setActionBanner(null);
+                try {
+                  await api.createPlace({
+                    ...newPlace,
+                    lat: newPlace.lat || (village?.mapLat != null ? String(village.mapLat) : ''),
+                    lng: newPlace.lng || (village?.mapLng != null ? String(village.mapLng) : ''),
+                  });
+                  setNewPlace({
+                    kind: 'POI',
+                    title: '',
+                    category: 'Fasilitas Umum',
+                    address: '',
+                    lat: village?.mapLat != null ? String(village.mapLat) : '',
+                    lng: village?.mapLng != null ? String(village.mapLng) : '',
+                    imageUrl: '',
+                    description: '',
+                  });
+                  setPlaces(await api.getPlacesAdmin());
+                  setActionBanner({ type: 'success', text: 'Titik lokasi / potensi desa berhasil ditambahkan.' });
+                } catch (err: any) {
+                  setActionBanner({ type: 'error', text: err?.response?.data?.error || 'Gagal menambah lokasi.' });
+                }
               }}
               className="bg-white rounded-2xl shadow-2xs p-5 space-y-3 text-xs"
             >
@@ -2303,8 +2394,13 @@ export const AdminPanel: React.FC<{
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
-                await api.saveIndicator(indicatorForm);
-                alert('Data Indeks Desa, SDGs, dan Stunting berhasil disimpan.');
+                setActionBanner(null);
+                try {
+                  await api.saveIndicator(indicatorForm);
+                  setActionBanner({ type: 'success', text: 'Data Indeks Desa (IDM), SDGs, dan Stunting berhasil disimpan.' });
+                } catch (err: any) {
+                  setActionBanner({ type: 'error', text: err?.response?.data?.error || 'Gagal menyimpan indeks desa.' });
+                }
               }}
               className="bg-white rounded-2xl shadow-2xs p-6 space-y-4 text-xs"
             >
@@ -2437,27 +2533,115 @@ export const AdminPanel: React.FC<{
             </form>
 
             <div className="bg-white rounded-2xl shadow-2xs divide-y divide-slate-100 text-xs">
-              {(ppidData.documents || []).map((d) => (
-                <div key={d.id} className="p-4 flex items-center justify-between gap-2">
-                  <div>
-                    <div className="font-bold">
-                      <span className="px-2 py-0.5 rounded bg-sky-50 text-[#0069b6] mr-2">{d.category}</span>
-                      {d.title}
+              {(ppidData.documents || []).length === 0 ? (
+                <div className="p-6 text-center text-slate-500">Belum ada dokumen PPID yang dipublikasikan.</div>
+              ) : (
+                (ppidData.documents || []).map((d) => (
+                  <div key={d.id} className="p-4 flex items-center justify-between gap-2">
+                    <div>
+                      <div className="font-bold">
+                        <span className="px-2 py-0.5 rounded bg-sky-50 text-[#0069b6] mr-2">{d.category}</span>
+                        {d.title}
+                      </div>
+                      <div className="text-slate-500 mt-0.5">{d.summary}</div>
                     </div>
-                    <div className="text-slate-500 mt-0.5">{d.summary}</div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await api.deletePpidDoc(d.id);
+                        setPpidData(await api.getPpidAdmin());
+                      }}
+                      className="text-rose-600 p-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await api.deletePpidDoc(d.id);
-                      setPpidData(await api.getPpidAdmin());
-                    }}
-                    className="text-rose-600 p-1"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
+                ))
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <h2 className="text-base font-extrabold text-slate-900">
+                Permohonan Informasi Publik dari Warga ({(ppidData.requests || []).length})
+              </h2>
+              <div className="space-y-2.5">
+                {(ppidData.requests || []).length === 0 ? (
+                  <div className="bg-white rounded-2xl p-6 text-center text-xs text-slate-500">
+                    Belum ada permohonan informasi publik yang masuk.
+                  </div>
+                ) : (
+                  (ppidData.requests || []).map((r) => (
+                    <div key={r.id} className="bg-white rounded-2xl shadow-2xs p-5 space-y-2 text-xs">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-mono font-bold text-[#0069b6]">
+                          {r.ticketCode} · NIK {r.requesterNik}
+                        </span>
+                        <span className="px-2 py-0.5 rounded bg-slate-100 font-mono font-bold text-slate-700">
+                          {r.status}
+                        </span>
+                      </div>
+                      <div className="font-bold text-slate-900">
+                        {r.requesterName} ({r.requesterPhone})
+                      </div>
+                      <p className="text-slate-700">
+                        <strong>Informasi diminta:</strong> {r.informationNeeded}
+                      </p>
+                      <p className="text-slate-500">
+                        <strong>Tujuan:</strong> {r.purpose}
+                      </p>
+                      {r.responseText && (
+                        <div className="p-2.5 rounded-lg bg-slate-50 text-slate-700">
+                          <strong>Tanggapan PPID:</strong> {r.responseText}
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await api.updatePpidRequest(r.id, {
+                              status: 'DIPROSES',
+                              responseText: 'Permohonan sedang diverifikasi oleh PPID Desa.',
+                            });
+                            setPpidData(await api.getPpidAdmin());
+                            setActionBanner({ type: 'success', text: `Permohonan ${r.ticketCode} ditandai DIPROSES.` });
+                          }}
+                          className="px-3 py-1.5 rounded-lg border border-slate-300 font-bold"
+                        >
+                          Proses
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await api.updatePpidRequest(r.id, {
+                              status: 'DIKABULKAN',
+                              responseText: 'Informasi publik disetujui dan dapat diambil/diakses melalui Balai Desa.',
+                            });
+                            setPpidData(await api.getPpidAdmin());
+                            setActionBanner({ type: 'success', text: `Permohonan ${r.ticketCode} DIKABULKAN.` });
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold"
+                        >
+                          Kabulkan
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await api.updatePpidRequest(r.id, {
+                              status: 'DITOLAK',
+                              responseText: 'Permohonan tidak dapat dipenuhi sesuai ketentuan pengecualian UU KIP.',
+                            });
+                            setPpidData(await api.getPpidAdmin());
+                            setActionBanner({ type: 'success', text: `Permohonan ${r.ticketCode} ditandai DITOLAK.` });
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-rose-600 text-white font-bold"
+                        >
+                          Tolak
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -2564,16 +2748,20 @@ export const AdminPanel: React.FC<{
               </button>
             </form>
             <div className="bg-white rounded-2xl shadow-2xs divide-y divide-slate-100 text-xs">
-              {attendance.map((a) => (
-                <div key={a.id} className="p-4 flex items-center justify-between gap-2">
-                  <div>
-                    <span className="px-2 py-0.5 rounded bg-slate-100 font-bold mr-2">{a.kind}</span>
-                    <strong>{a.personName}</strong> <span className="text-slate-500">· {a.roleOrOrigin}</span>
-                    {a.purpose && <div className="text-slate-500 mt-0.5">{a.purpose}</div>}
+              {attendance.length === 0 ? (
+                <div className="p-6 text-center text-slate-500">Belum ada catatan absensi aparatur atau buku tamu.</div>
+              ) : (
+                attendance.map((a) => (
+                  <div key={a.id} className="p-4 flex items-center justify-between gap-2">
+                    <div>
+                      <span className="px-2 py-0.5 rounded bg-slate-100 font-bold mr-2">{a.kind}</span>
+                      <strong>{a.personName}</strong> <span className="text-slate-500">· {a.roleOrOrigin}</span>
+                      {a.purpose && <div className="text-slate-500 mt-0.5">{a.purpose}</div>}
+                    </div>
+                    <span className="font-mono text-slate-500">{new Date(a.checkInAt).toLocaleString('id-ID')}</span>
                   </div>
-                  <span className="font-mono text-slate-500">{new Date(a.checkInAt).toLocaleString('id-ID')}</span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         )}

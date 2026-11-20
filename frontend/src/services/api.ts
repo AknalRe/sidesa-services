@@ -189,7 +189,7 @@ export const api = {
   createPpidDoc: async (payload: Record<string, any>) =>
     (await client.post('/admin/ppid/documents', payload)).data.data,
   deletePpidDoc: async (id: string) => (await client.delete(`/admin/ppid/documents/${id}`)).data,
-  updatePpidRequest: async (id: string, payload: { status: string; responseNotes?: string }) =>
+  updatePpidRequest: async (id: string, payload: { status: string; responseText?: string; responseNotes?: string }) =>
     (await client.patch(`/admin/ppid/requests/${id}`, payload)).data.data,
   getPlacesAdmin: async () => (await client.get('/admin/places')).data.data,
   createPlace: async (payload: Record<string, any>) => (await client.post('/admin/places', payload)).data.data,

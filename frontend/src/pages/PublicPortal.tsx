@@ -48,9 +48,9 @@ const DEFAULT_VILLAGE_CREST = sidesaAsset('crest-default.svg');
 const HERO_SLIDES = [
   {
     eyebrow: 'Selamat Datang',
-    title: 'Website Resmi Desa Sugihwaras',
+    title: 'Website Resmi Pemerintah Desa',
     subtitle:
-      'Sumber informasi terbaru tentang pemerintahan, pelayanan warga, transparansi anggaran, dan potensi Desa Sugihwaras, Kecamatan Kepohbaru, Kabupaten Bojonegoro.',
+      'Sumber informasi terbaru tentang pemerintahan, pelayanan warga, transparansi anggaran, dan potensi desa berbasis layanan digital.',
     image: sidesaAsset('hero-village.jpg'),
     ctaLabel: 'Jelajahi Profil Desa',
     targetTab: 'profil' as PublicTab,
@@ -191,7 +191,7 @@ export const PublicPortal: React.FC<{
   onBackToPlatform?: () => void;
   onTabChange?: (tab: PublicTab) => void;
   initialTab?: string;
-}> = ({ villageSlug = 'sugihwaras', onOpenAdmin, onBackToPlatform, onTabChange, initialTab }) => {
+}> = ({ villageSlug = 'pohjejer', onOpenAdmin, onBackToPlatform, onTabChange, initialTab }) => {
   const [tab, setTab] = useState<PublicTab>(() => {
     const valid = NAV_ITEMS.some((i) => i.id === initialTab);
     return valid ? (initialTab as PublicTab) : 'beranda';
@@ -224,6 +224,7 @@ export const PublicPortal: React.FC<{
   });
   const [letterSubmitting, setLetterSubmitting] = useState(false);
   const [letterCreated, setLetterCreated] = useState<any | null>(null);
+  const [letterSubmitErr, setLetterSubmitErr] = useState<string | null>(null);
   const [letterTrackCode, setLetterTrackCode] = useState('');
   const [letterTrackResult, setLetterTrackResult] = useState<any | null>(null);
   const [letterTrackErr, setLetterTrackErr] = useState<string | null>(null);
@@ -238,6 +239,7 @@ export const PublicPortal: React.FC<{
   });
   const [complaintSubmitting, setComplaintSubmitting] = useState(false);
   const [complaintCreated, setComplaintCreated] = useState<any | null>(null);
+  const [complaintSubmitErr, setComplaintSubmitErr] = useState<string | null>(null);
   const [complaintTrackCode, setComplaintTrackCode] = useState('');
   const [complaintTrackResult, setComplaintTrackResult] = useState<any | null>(null);
   const [complaintTrackErr, setComplaintTrackErr] = useState<string | null>(null);
@@ -253,6 +255,7 @@ export const PublicPortal: React.FC<{
   });
   const [ppidSubmitting, setPpidSubmitting] = useState(false);
   const [ppidCreated, setPpidCreated] = useState<any | null>(null);
+  const [ppidSubmitErr, setPpidSubmitErr] = useState<string | null>(null);
 
   // Klaim Desa (jika isClaimed === false)
   const [claimOpen, setClaimOpen] = useState(false);
@@ -360,6 +363,7 @@ export const PublicPortal: React.FC<{
   const handleSubmitLetter = async (e: React.FormEvent) => {
     e.preventDefault();
     setLetterSubmitting(true);
+    setLetterSubmitErr(null);
     try {
       const res = await api.submitLetterRequest({ ...letterForm, villageSlug: data?.village?.slug || villageSlug });
       setLetterCreated(res);
@@ -372,7 +376,7 @@ export const PublicPortal: React.FC<{
         notes: '',
       });
     } catch (err: any) {
-      alert(err?.response?.data?.error || 'Gagal mengajukan surat.');
+      setLetterSubmitErr(err?.response?.data?.error || 'Gagal mengajukan surat. Periksa kembali data Anda.');
     } finally {
       setLetterSubmitting(false);
     }
@@ -394,6 +398,7 @@ export const PublicPortal: React.FC<{
   const handleSubmitComplaint = async (e: React.FormEvent) => {
     e.preventDefault();
     setComplaintSubmitting(true);
+    setComplaintSubmitErr(null);
     try {
       const res = await api.submitComplaint({ ...complaintForm, villageSlug: data?.village?.slug || villageSlug });
       setComplaintCreated(res);
@@ -405,7 +410,7 @@ export const PublicPortal: React.FC<{
         description: '',
       });
     } catch (err: any) {
-      alert(err?.response?.data?.error || 'Gagal mengirim pengaduan.');
+      setComplaintSubmitErr(err?.response?.data?.error || 'Gagal mengirim pengaduan. Periksa kembali isian Anda.');
     } finally {
       setComplaintSubmitting(false);
     }
@@ -427,6 +432,7 @@ export const PublicPortal: React.FC<{
   const handleSubmitPpid = async (e: React.FormEvent) => {
     e.preventDefault();
     setPpidSubmitting(true);
+    setPpidSubmitErr(null);
     try {
       const res = await api.submitPpidRequest({ ...ppidForm, villageSlug: data?.village?.slug || villageSlug });
       setPpidCreated(res);
@@ -439,7 +445,7 @@ export const PublicPortal: React.FC<{
         purpose: '',
       });
     } catch (err: any) {
-      alert(err?.response?.data?.error || 'Gagal mengirim permohonan PPID.');
+      setPpidSubmitErr(err?.response?.data?.error || 'Gagal mengirim permohonan PPID.');
     } finally {
       setPpidSubmitting(false);
     }
@@ -984,7 +990,7 @@ export const PublicPortal: React.FC<{
             </div>
           </section>
 
-          {/* 3. SAMBUTAN KEPALA DESA SUGIHWARAS */}
+          {/* 3. SAMBUTAN KEPALA DESA */}
           <section className="w-full px-4 sm:px-8 lg:px-14 xl:px-20">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
               <div className="lg:col-span-4 flex flex-col items-center justify-center">
@@ -1528,25 +1534,35 @@ export const PublicPortal: React.FC<{
                   Struktur Organisasi dan Tata Kerja Pemerintah {village.name}
                 </p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {officials.map((o: any) => (
-                  <div
-                    key={o.id}
-                    className="rounded-2xl overflow-hidden shadow-md bg-[#099cff] text-white flex flex-col justify-between"
-                  >
-                    <div className="pt-8 pb-4 px-6 flex flex-col items-center justify-center">
-                      <div className="w-32 h-32 rounded-full bg-white/20 border-4 border-white/40 flex items-center justify-center">
-                        <img src={o.photoUrl || villageLogo} alt={o.name} className="w-20 h-20 object-contain" />
+              {officials.length === 0 ? (
+                <div className="bg-white rounded-2xl shadow-xs p-8 text-center text-sm text-slate-500">
+                  Data perangkat desa belum ditambahkan oleh operator desa.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {officials.map((o: any) => (
+                    <div
+                      key={o.id}
+                      className="rounded-2xl overflow-hidden shadow-md bg-[#099cff] text-white flex flex-col justify-between"
+                    >
+                      <div className="pt-8 pb-4 px-6 flex flex-col items-center justify-center">
+                        <div className="w-32 h-32 rounded-full bg-white/20 border-4 border-white/40 flex items-center justify-center overflow-hidden">
+                          <img
+                            src={resolveAssetUrl(o.photoUrl, villageLogo)}
+                            alt={o.name}
+                            className="w-20 h-20 object-contain"
+                          />
+                        </div>
+                      </div>
+                      <div className="bg-[#0069b6] p-4 text-center space-y-0.5">
+                        <div className="text-lg font-extrabold text-white">{o.name}</div>
+                        <div className="text-sm text-sky-100 font-semibold">{o.position}</div>
+                        {o.nip && <div className="text-xs font-mono text-sky-200">NIP. {o.nip}</div>}
                       </div>
                     </div>
-                    <div className="bg-[#0069b6] p-4 text-center space-y-0.5">
-                      <div className="text-lg font-extrabold text-white">{o.name}</div>
-                      <div className="text-sm text-sky-100 font-semibold">{o.position}</div>
-                      {o.nip && <div className="text-xs font-mono text-sky-200">NIP. {o.nip}</div>}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </section>
           )}
 
@@ -1589,56 +1605,132 @@ export const PublicPortal: React.FC<{
 
               {infoSub === 'penduduk' && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[
-                      { label: 'Total Penduduk', value: demographics.totalResidents },
-                      { label: 'Kepala Keluarga', value: demographics.totalHouseholds },
-                      { label: 'Wajib Pilih', value: demographics.voters },
-                    ].map((s) => (
-                      <div
-                        key={s.label}
-                        className="h-20 rounded-xl overflow-hidden shadow-xs bg-white grid grid-cols-12 items-center"
-                      >
-                        <div className="col-span-5 h-full flex items-center justify-center bg-[#0069b6] text-white text-2xl font-extrabold font-mono">
-                          {s.value}
-                        </div>
-                        <div className="col-span-7 px-5 text-lg font-extrabold text-slate-700">{s.label}</div>
+                  {demographics.totalResidents === 0 && officialStats ? (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                        {[
+                          {
+                            label: 'Total Penduduk',
+                            value: Number(officialStats.populationTotal || 0).toLocaleString('id-ID'),
+                          },
+                          {
+                            label: 'Laki-Laki',
+                            value: Number(officialStats.populationMale || 0).toLocaleString('id-ID'),
+                          },
+                          {
+                            label: 'Perempuan',
+                            value: Number(officialStats.populationFemale || 0).toLocaleString('id-ID'),
+                          },
+                          {
+                            label: 'Dusun / RW / RT',
+                            value: `${officialStats.dusunCount || 0} / ${officialStats.rwCount || 0} / ${officialStats.rtCount || 0}`,
+                          },
+                        ].map((s) => (
+                          <div
+                            key={s.label}
+                            className="h-20 rounded-xl overflow-hidden shadow-xs bg-white grid grid-cols-12 items-center"
+                          >
+                            <div className="col-span-5 h-full flex items-center justify-center bg-[#0069b6] text-white text-xl font-extrabold font-mono px-2">
+                              {s.value}
+                            </div>
+                            <div className="col-span-7 px-4 text-sm font-extrabold text-slate-700">{s.label}</div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {[
-                      ['Berdasarkan Dusun', demographics.byDusun],
-                      ['Berdasarkan Pendidikan', demographics.byEducation],
-                      ['Berdasarkan Pekerjaan', demographics.byOccupation],
-                    ].map(([title, list]: any) => (
-                      <div key={title} className="bg-white rounded-2xl shadow-xs p-6 space-y-3">
-                        <h3 className="text-lg font-extrabold text-slate-900">{title}</h3>
-                        <div className="space-y-2.5 text-sm">
-                          {list.map((row: any) => {
-                            const pct = calcPercent(row.total, demographics.totalResidents);
-                            return (
-                              <div key={row.label} className="space-y-1">
-                                <div className="flex justify-between">
-                                  <span className="font-semibold text-slate-700">{row.label}</span>
-                                  <span className="font-mono font-bold text-slate-900">
-                                    {row.total} ({pct}%)
-                                  </span>
+                      {Array.isArray(officialStats.religionBreakdown) && officialStats.religionBreakdown.length > 0 && (
+                        <div className="bg-white rounded-2xl shadow-xs p-6 space-y-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <h3 className="text-lg font-extrabold text-slate-900">Komposisi Penduduk Menurut Agama</h3>
+                            <span className="text-xs font-mono text-slate-500">
+                              Sumber: {officialStats.source || 'Data Profil Desa'} ({officialStats.year || 'Terkini'})
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                            {officialStats.religionBreakdown.map((r: any) => {
+                              const pct = calcPercent(r.total, officialStats.populationTotal || 1);
+                              return (
+                                <div key={r.label} className="space-y-1">
+                                  <div className="flex justify-between">
+                                    <span className="font-semibold text-slate-700">{r.label}</span>
+                                    <span className="font-mono font-bold text-slate-900">
+                                      {Number(r.total || 0).toLocaleString('id-ID')} ({pct}%)
+                                    </span>
+                                  </div>
+                                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-[#099cff] rounded-full"
+                                      style={{ width: `${Math.max(r.total > 0 ? 4 : 0, pct)}%` }}
+                                    />
+                                  </div>
                                 </div>
-                                <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                                  <div
-                                    className="h-full bg-[#099cff] rounded-full"
-                                    style={{ width: `${Math.max(8, pct)}%` }}
-                                  />
-                                </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                          </div>
+                          {officialStats.religionTotalNote && (
+                            <p className="text-xs text-slate-500 pt-1">{officialStats.religionTotalNote}</p>
+                          )}
                         </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {[
+                          { label: 'Total Penduduk', value: demographics.totalResidents },
+                          { label: 'Kepala Keluarga', value: demographics.totalHouseholds },
+                          { label: 'Wajib Pilih', value: demographics.voters },
+                        ].map((s) => (
+                          <div
+                            key={s.label}
+                            className="h-20 rounded-xl overflow-hidden shadow-xs bg-white grid grid-cols-12 items-center"
+                          >
+                            <div className="col-span-5 h-full flex items-center justify-center bg-[#0069b6] text-white text-2xl font-extrabold font-mono">
+                              {s.value}
+                            </div>
+                            <div className="col-span-7 px-5 text-lg font-extrabold text-slate-700">{s.label}</div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {[
+                          ['Berdasarkan Dusun', demographics.byDusun],
+                          ['Berdasarkan Pendidikan', demographics.byEducation],
+                          ['Berdasarkan Pekerjaan', demographics.byOccupation],
+                        ].map(([title, list]: any) => (
+                          <div key={title} className="bg-white rounded-2xl shadow-xs p-6 space-y-3">
+                            <h3 className="text-lg font-extrabold text-slate-900">{title}</h3>
+                            <div className="space-y-2.5 text-sm">
+                              {list.length === 0 ? (
+                                <p className="text-xs text-slate-500">Belum ada rincian data penduduk.</p>
+                              ) : (
+                                list.map((row: any) => {
+                                  const pct = calcPercent(row.total, demographics.totalResidents);
+                                  return (
+                                    <div key={row.label} className="space-y-1">
+                                      <div className="flex justify-between">
+                                        <span className="font-semibold text-slate-700">{row.label}</span>
+                                        <span className="font-mono font-bold text-slate-900">
+                                          {row.total} ({pct}%)
+                                        </span>
+                                      </div>
+                                      <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                        <div
+                                          className="h-full bg-[#099cff] rounded-full"
+                                          style={{ width: `${Math.max(8, pct)}%` }}
+                                        />
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -1802,6 +1894,11 @@ export const PublicPortal: React.FC<{
                     <strong className="font-mono">{letterCreated.trackingCode}</strong>
                   </div>
                 )}
+                {letterSubmitErr && (
+                  <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-800">
+                    {letterSubmitErr}
+                  </div>
+                )}
                 <form onSubmit={handleSubmitLetter} className="space-y-4 text-sm">
                   <div>
                     <label className="block font-bold text-slate-700 mb-1">Jenis Surat</label>
@@ -1931,28 +2028,34 @@ export const PublicPortal: React.FC<{
                   <h1 className="text-3xl sm:text-4xl font-extrabold text-[#099cff] uppercase">
                     Berita {village.name}
                   </h1>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {latestNews.map((n: any, idx: number) => (
-                      <article
-                        key={n.id}
-                        onClick={() => setSelectedNews(n)}
-                        className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition-all"
-                      >
-                        <img
-                          src={NEWS_IMAGES[idx % NEWS_IMAGES.length]}
-                          alt={n.title}
-                          className="h-52 w-full object-cover"
-                        />
-                        <div className="p-5 space-y-2">
-                          <span className="px-2.5 py-0.5 rounded bg-sky-50 text-[#0069b6] text-xs font-bold">
-                            {n.category}
-                          </span>
-                          <h2 className="text-lg font-extrabold text-slate-900">{n.title}</h2>
-                          <p className="text-sm text-slate-600 line-clamp-3">{n.excerpt}</p>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
+                  {latestNews.length === 0 ? (
+                    <div className="bg-white rounded-2xl shadow-xs p-8 text-center text-sm text-slate-500">
+                      Belum ada berita atau pengumuman desa yang dipublikasikan.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {latestNews.map((n: any, idx: number) => (
+                        <article
+                          key={n.id}
+                          onClick={() => setSelectedNews(n)}
+                          className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition-all"
+                        >
+                          <img
+                            src={resolveAssetUrl(n.coverUrl, NEWS_IMAGES[idx % NEWS_IMAGES.length])}
+                            alt={n.title}
+                            className="h-52 w-full object-cover"
+                          />
+                          <div className="p-5 space-y-2">
+                            <span className="px-2.5 py-0.5 rounded bg-sky-50 text-[#0069b6] text-xs font-bold">
+                              {n.category}
+                            </span>
+                            <h2 className="text-lg font-extrabold text-slate-900">{n.title}</h2>
+                            <p className="text-sm text-slate-600 line-clamp-3">{n.excerpt}</p>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
             </section>
@@ -1967,46 +2070,52 @@ export const PublicPortal: React.FC<{
                   Katalog Produk UMKM Warga {village.name}
                 </p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {umkm.map((item: any, idx: number) => (
-                  <div
-                    key={item.id}
-                    className="bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between"
-                  >
-                    <div>
-                      <img
-                        src={UMKM_IMAGES[idx % UMKM_IMAGES.length]}
-                        alt={item.name}
-                        className="h-52 w-full object-cover"
-                      />
-                      <div className="p-5 space-y-1.5">
-                        <span className="px-2.5 py-0.5 rounded bg-sky-50 text-[#0069b6] text-xs font-bold">
-                          {item.category}
+              {umkm.length === 0 ? (
+                <div className="bg-white rounded-2xl shadow-xs p-8 text-center text-sm text-slate-500">
+                  Belum ada produk UMKM warga yang ditambahkan pada katalog desa ini.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {umkm.map((item: any, idx: number) => (
+                    <div
+                      key={item.id}
+                      className="bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between"
+                    >
+                      <div>
+                        <img
+                          src={resolveAssetUrl(item.imageUrl, UMKM_IMAGES[idx % UMKM_IMAGES.length])}
+                          alt={item.name}
+                          className="h-52 w-full object-cover"
+                        />
+                        <div className="p-5 space-y-1.5">
+                          <span className="px-2.5 py-0.5 rounded bg-sky-50 text-[#0069b6] text-xs font-bold">
+                            {item.category}
+                          </span>
+                          <h2 className="text-lg font-extrabold text-slate-900">{item.name}</h2>
+                          <p className="text-sm text-slate-600">{item.description}</p>
+                          <div className="text-xs text-slate-500">Penjual: {item.sellerName}</div>
+                        </div>
+                      </div>
+                      <div className="p-5 pt-0 flex items-center justify-between">
+                        <span className="text-lg font-extrabold font-mono text-[#0069b6]">
+                          {formatRp(item.price)} / {item.unit}
                         </span>
-                        <h2 className="text-lg font-extrabold text-slate-900">{item.name}</h2>
-                        <p className="text-sm text-slate-600">{item.description}</p>
-                        <div className="text-xs text-slate-500">Penjual: {item.sellerName}</div>
+                        <a
+                          href={`https://wa.me/${String(item.sellerPhone).replace(/\D/g, '')}?text=${encodeURIComponent(
+                            `Halo ${item.sellerName}, saya ingin memesan ${item.name}.`
+                          )}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="h-10 px-4 rounded-xl bg-[#0078cd] text-white text-xs font-bold inline-flex items-center gap-1.5"
+                        >
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>Pesan WA</span>
+                        </a>
                       </div>
                     </div>
-                    <div className="p-5 pt-0 flex items-center justify-between">
-                      <span className="text-lg font-extrabold font-mono text-[#0069b6]">
-                        {formatRp(item.price)} / {item.unit}
-                      </span>
-                      <a
-                        href={`https://wa.me/${String(item.sellerPhone).replace(/\D/g, '')}?text=${encodeURIComponent(
-                          `Halo ${item.sellerName}, saya ingin memesan ${item.name}.`
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="h-10 px-4 rounded-xl bg-[#0078cd] text-white text-xs font-bold inline-flex items-center gap-1.5"
-                      >
-                        <ShoppingBag className="w-3.5 h-3.5" />
-                        <span>Pesan WA</span>
-                      </a>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </section>
           )}
 
@@ -2054,6 +2163,11 @@ export const PublicPortal: React.FC<{
                 {ppidCreated && (
                   <div className="p-3 rounded-xl bg-emerald-50 text-emerald-900">
                     Tiket PPID: <strong className="font-mono">{ppidCreated.ticketCode}</strong>
+                  </div>
+                )}
+                {ppidSubmitErr && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+                    {ppidSubmitErr}
                   </div>
                 )}
                 <form onSubmit={handleSubmitPpid} className="space-y-3">
@@ -2117,6 +2231,11 @@ export const PublicPortal: React.FC<{
                 {complaintCreated && (
                   <div className="p-3.5 rounded-xl bg-emerald-50 text-sm text-emerald-950">
                     Tiket Pengaduan: <strong className="font-mono">{complaintCreated.ticketCode}</strong>
+                  </div>
+                )}
+                {complaintSubmitErr && (
+                  <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-800">
+                    {complaintSubmitErr}
                   </div>
                 )}
                 <form onSubmit={handleSubmitComplaint} className="space-y-3.5 text-sm">
@@ -2281,7 +2400,7 @@ export const PublicPortal: React.FC<{
               </div>
             </div>
             <p className="text-sky-100 leading-relaxed">
-              {village.address || 'Jl. Brawijaya Nomor 143 Sugihwaras Kode Pos 62194'}
+              {village.address || 'Alamat kantor balai desa belum dilengkapi.'}
             </p>
           </div>
 
