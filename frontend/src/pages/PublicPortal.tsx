@@ -190,10 +190,12 @@ function calcPercent(part: number, total: number): number {
 }
 
 export const PublicPortal: React.FC<{
+  villageSlug?: string;
   onOpenAdmin: () => void;
   onBackToPlatform?: () => void;
+  onTabChange?: (tab: PublicTab) => void;
   initialTab?: string;
-}> = ({ onOpenAdmin, onBackToPlatform, initialTab }) => {
+}> = ({ villageSlug = 'sugihwaras', onOpenAdmin, onBackToPlatform, onTabChange, initialTab }) => {
   const [tab, setTab] = useState<PublicTab>(() => {
     const valid = NAV_ITEMS.some((i) => i.id === initialTab);
     return valid ? (initialTab as PublicTab) : 'beranda';
@@ -274,7 +276,10 @@ export const PublicPortal: React.FC<{
     try {
       setLoading(true);
       setError(null);
-      const [villageData, docs] = await Promise.all([api.getPublicVillage(), api.getPublicPpid()]);
+      const [villageData, docs] = await Promise.all([
+        api.getPublicVillage(villageSlug),
+        api.getPublicPpid(undefined, villageSlug),
+      ]);
       setData(villageData);
       setPpidDocs(docs || []);
     } catch (err: any) {
@@ -286,14 +291,14 @@ export const PublicPortal: React.FC<{
 
   useEffect(() => {
     void loadBootstrap();
-  }, []);
+  }, [villageSlug]);
 
   const handleCheckBansos = async (e: React.FormEvent) => {
     e.preventDefault();
     if (bansosQuery.trim().length < 3) return;
     setBansosLoading(true);
     try {
-      const res = await api.checkBansos(bansosQuery.trim());
+      const res = await api.checkBansos(bansosQuery.trim(), villageSlug);
       setBansosResults(res);
     } catch {
       setBansosResults([]);
@@ -433,6 +438,7 @@ export const PublicPortal: React.FC<{
     if (sub) setInfoSub(sub);
     setSelectedNews(null);
     setMobileMenu(false);
+    onTabChange?.(nextTab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

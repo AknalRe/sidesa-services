@@ -22,7 +22,7 @@ import { ReneoSidesaLogo } from '../components/ReneoSidesaLogo';
 import { api } from '../services/api';
 
 interface LandingPageProps {
-  onOpenVillagePortal: (initialTab?: string) => void;
+  onOpenVillagePortal: (initialTab?: string, slug?: string) => void;
   onOpenAdmin: () => void;
 }
 
@@ -670,9 +670,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
               <div className="flex items-center gap-4">
                 <img src={BOJONEGORO_CREST} alt="Lambang Kabupaten" className="w-16 h-16 object-contain shrink-0" />
                 <div>
-                  <span className="px-3 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 text-xs font-extrabold">
-                    PORTAL DESA AKTIF · LIVE DEMO
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-3 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 text-xs font-extrabold">
+                      PORTAL DESA AKTIF · LIVE DEMO
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-md bg-white/10 font-mono text-xs text-sky-200">
+                      /desa/{village.slug || 'sugihwaras'}
+                    </span>
+                  </div>
                   <h3 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">
                     Website Resmi {village.name}
                   </h3>

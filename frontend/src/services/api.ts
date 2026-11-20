@@ -1,21 +1,48 @@
 import axios from 'axios';
 
 const client = axios.create({
-  baseURL: './api',
+  baseURL: '/api',
   withCredentials: true,
 });
 
 export const api = {
-  // Public Village Portal
-  getPublicVillage: async () => (await client.get('/public/village')).data.data,
-  getPublicInfografis: async (year?: number) =>
-    (await client.get('/public/infografis', { params: year ? { year } : undefined })).data.data,
-  checkBansos: async (q: string) => (await client.get('/public/bansos/check', { params: { q } })).data.data,
-  getPublicNews: async () => (await client.get('/public/berita')).data.data,
-  getPublicNewsDetail: async (slug: string) => (await client.get(`/public/berita/${slug}`)).data.data,
-  getPublicUmkm: async () => (await client.get('/public/belanja')).data.data,
-  getPublicPpid: async (category?: string) =>
-    (await client.get('/public/ppid', { params: category ? { category } : undefined })).data.data,
+  // Public Village Portal (supports multi-village slug e.g. /desa/sugihwaras)
+  getPublicVillage: async (villageSlug?: string) =>
+    (await client.get('/public/village', { params: villageSlug ? { village: villageSlug } : undefined })).data.data,
+  getPublicInfografis: async (year?: number, villageSlug?: string) =>
+    (
+      await client.get('/public/infografis', {
+        params: {
+          ...(year ? { year } : {}),
+          ...(villageSlug ? { village: villageSlug } : {}),
+        },
+      })
+    ).data.data,
+  checkBansos: async (q: string, villageSlug?: string) =>
+    (
+      await client.get('/public/bansos/check', {
+        params: { q, ...(villageSlug ? { village: villageSlug } : {}) },
+      })
+    ).data.data,
+  getPublicNews: async (villageSlug?: string) =>
+    (await client.get('/public/berita', { params: villageSlug ? { village: villageSlug } : undefined })).data.data,
+  getPublicNewsDetail: async (slug: string, villageSlug?: string) =>
+    (
+      await client.get(`/public/berita/${slug}`, {
+        params: villageSlug ? { village: villageSlug } : undefined,
+      })
+    ).data.data,
+  getPublicUmkm: async (villageSlug?: string) =>
+    (await client.get('/public/belanja', { params: villageSlug ? { village: villageSlug } : undefined })).data.data,
+  getPublicPpid: async (category?: string, villageSlug?: string) =>
+    (
+      await client.get('/public/ppid', {
+        params: {
+          ...(category ? { category } : {}),
+          ...(villageSlug ? { village: villageSlug } : {}),
+        },
+      })
+    ).data.data,
   submitPpidRequest: async (payload: Record<string, any>) =>
     (await client.post('/public/ppid/request', payload)).data.data,
   submitComplaint: async (payload: Record<string, any>) =>
