@@ -54,8 +54,21 @@ function formatRp(n: number): string {
   return `Rp ${Number(n || 0).toLocaleString('id-ID')}`;
 }
 
-export const PublicPortal: React.FC<{ onOpenAdmin: () => void }> = ({ onOpenAdmin }) => {
-  const [tab, setTab] = useState<PublicTab>('beranda');
+export const PublicPortal: React.FC<{
+  onOpenAdmin: () => void;
+  onBackToPlatform?: () => void;
+  initialTab?: string;
+}> = ({ onOpenAdmin, onBackToPlatform, initialTab }) => {
+  const [tab, setTab] = useState<PublicTab>(() => {
+    const valid = NAV_ITEMS.some((i) => i.id === initialTab);
+    return valid ? (initialTab as PublicTab) : 'beranda';
+  });
+
+  useEffect(() => {
+    if (initialTab && NAV_ITEMS.some((i) => i.id === initialTab)) {
+      setTab(initialTab as PublicTab);
+    }
+  }, [initialTab]);
   const [infoSub, setInfoSub] = useState<InfografisSubTab>('penduduk');
   const [mobileMenu, setMobileMenu] = useState(false);
 
@@ -283,6 +296,16 @@ export const PublicPortal: React.FC<{ onOpenAdmin: () => void }> = ({ onOpenAdmi
           </nav>
 
           <div className="flex items-center gap-2 shrink-0">
+            {onBackToPlatform && (
+              <button
+                type="button"
+                onClick={onBackToPlatform}
+                className="h-9 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+              >
+                <span>&larr;</span>
+                <span className="hidden sm:inline">Platform SIDesa</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={onOpenAdmin}

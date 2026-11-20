@@ -52,7 +52,10 @@ function formatRp(n: number): string {
   return `Rp ${Number(n || 0).toLocaleString('id-ID')}`;
 }
 
-export const AdminPanel: React.FC<{ onBackToPortal: () => void }> = ({ onBackToPortal }) => {
+export const AdminPanel: React.FC<{
+  onBackToPortal: () => void;
+  onBackToLanding?: () => void;
+}> = ({ onBackToPortal, onBackToLanding }) => {
   const [auth, setAuth] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authForm, setAuthForm] = useState({ name: '', email: '', password: '', villageName: '' });
@@ -164,9 +167,16 @@ export const AdminPanel: React.FC<{ onBackToPortal: () => void }> = ({ onBackToP
               {auth?.initialized ? 'Masuk ke Back-Office' : 'Buat Akun Admin Desa'}
             </button>
           </form>
-          <button type="button" onClick={onBackToPortal} className="w-full text-xs text-emerald-700 font-semibold hover:underline">
-            &larr; Kembali ke Portal Publik Desa
-          </button>
+          <div className="flex items-center justify-between gap-2 pt-1">
+            {onBackToLanding && (
+              <button type="button" onClick={onBackToLanding} className="text-xs text-slate-600 font-semibold hover:underline">
+                &larr; Beranda Platform SIDesa
+              </button>
+            )}
+            <button type="button" onClick={onBackToPortal} className="text-xs text-emerald-700 font-semibold hover:underline ml-auto">
+              Lihat Website Desa &rarr;
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -210,6 +220,15 @@ export const AdminPanel: React.FC<{ onBackToPortal: () => void }> = ({ onBackToP
             <Globe className="w-3.5 h-3.5" />
             <span>Lihat Website Desa</span>
           </button>
+          {onBackToLanding && (
+            <button
+              type="button"
+              onClick={onBackToLanding}
+              className="flex-1 h-9 px-3 rounded-lg border border-slate-700 hover:bg-slate-800 text-xs font-semibold text-slate-200 inline-flex items-center justify-center gap-1.5"
+            >
+              <span>Beranda Platform</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={async () => {
