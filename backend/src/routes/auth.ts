@@ -293,8 +293,8 @@ export default async function authRouter(fastify: FastifyInstance) {
     const plan = selectedPlan || {
       code: 'PRO',
       name: 'Paket Desa Digital Pro',
-      priceMonthly: 250000,
-      priceYearly: 2500000,
+      priceMonthly: 750000,
+      priceYearly: 7500000,
     };
     const totalAmount = calculateSubscriptionAmount(plan, durationMonths);
 
@@ -503,8 +503,8 @@ export default async function authRouter(fastify: FastifyInstance) {
     const plan = selectedPlan || {
       code: 'PRO',
       name: 'Paket Desa Digital Pro',
-      priceMonthly: 250000,
-      priceYearly: 2500000,
+      priceMonthly: 750000,
+      priceYearly: 7500000,
     };
     const totalAmount = calculateSubscriptionAmount(plan, durationMonths);
 

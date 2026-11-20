@@ -334,6 +334,14 @@ export async function ensureDatabaseSchema(): Promise<void> {
     WHERE slug = 'pohjejer' AND (kode_desa IS NULL OR kode_desa = '');
   `);
 
+  // Perbarui tangga harga default lama ke skala baru (mulai KKN Rp 250rb/bln) tanpa menimpa harga kustom Superadmin
+  await queryClient.unsafe(`
+    UPDATE subscription_plans SET price_monthly = 250000, price_yearly = 2500000 WHERE code = 'KKN' AND price_monthly = 49000;
+    UPDATE subscription_plans SET price_monthly = 450000, price_yearly = 4500000 WHERE code = 'STARTER' AND price_monthly = 150000;
+    UPDATE subscription_plans SET price_monthly = 750000, price_yearly = 7500000 WHERE code = 'PRO' AND price_monthly = 250000;
+    UPDATE subscription_plans SET price_monthly = 1250000, price_yearly = 12500000 WHERE code = 'ENTERPRISE' AND price_monthly = 450000;
+  `);
+
   await seedDefaultPlansAndSettings();
   await seedDesaPohjejerIfMissing();
 }
@@ -348,8 +356,8 @@ async function seedDefaultPlansAndSettings(): Promise<void> {
       name: 'Paket Mahasiswa KKN',
       description:
         'Harga khusus program Kuliah Kerja Nyata (KKN) mahasiswa aktif. Wajib melampirkan NIM, Perguruan Tinggi, dan verifikasi PDDikti.',
-      priceMonthly: 49000,
-      priceYearly: 490000,
+      priceMonthly: 250000,
+      priceYearly: 2500000,
       featuresJson: JSON.stringify([
         'Khusus Mahasiswa Aktif KKN (Wajib NIM & Cek PDDikti)',
         'Website Resmi Profil Desa (/desa/nama-desa)',
@@ -372,8 +380,8 @@ async function seedDefaultPlansAndSettings(): Promise<void> {
           code: 'STARTER',
           name: 'Paket Desa Mandiri',
           description: 'Cocok untuk desa yang baru memulai digitalisasi website profil desa & pelayanan surat.',
-          priceMonthly: 150000,
-          priceYearly: 1500000,
+          priceMonthly: 450000,
+          priceYearly: 4500000,
           featuresJson: JSON.stringify([
             'Website Resmi Profil Desa (/desa/nama-desa)',
             'CMS Berita, Pengumuman & Galeri Desa',
@@ -389,8 +397,8 @@ async function seedDefaultPlansAndSettings(): Promise<void> {
           code: 'PRO',
           name: 'Paket Desa Digital Pro',
           description: 'Paket lengkap dengan PPID, Cek Bansos, PBB-P2, Lapak UMKM, WebGIS, dan Notifikasi WhatsApp.',
-          priceMonthly: 250000,
-          priceYearly: 2500000,
+          priceMonthly: 750000,
+          priceYearly: 7500000,
           featuresJson: JSON.stringify([
             'Semua fitur Paket Desa Mandiri',
             'Notifikasi WhatsApp Otomatis Status Surat & Pengaduan',
@@ -406,8 +414,8 @@ async function seedDefaultPlansAndSettings(): Promise<void> {
           code: 'ENTERPRISE',
           name: 'Paket Desa Prioritas / Custom Domain',
           description: 'Dukungan penuh domain .desa.id, pendampingan migrasi data kependudukan, dan SLA prioritas.',
-          priceMonthly: 450000,
-          priceYearly: 4500000,
+          priceMonthly: 1250000,
+          priceYearly: 12500000,
           featuresJson: JSON.stringify([
             'Semua fitur Paket Desa Digital Pro',
             'Integrasi Custom Domain (.desa.id)',

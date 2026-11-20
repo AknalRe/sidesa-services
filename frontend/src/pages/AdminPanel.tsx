@@ -278,7 +278,7 @@ export const AdminPanel: React.FC<{
 
   const calcPlanPrice = (planCode: string, months: number): number => {
     const p = publicPlans.find((x) => x.code === planCode) || publicPlans[0];
-    if (!p) return months === 12 ? 2500000 : months * 250000;
+    if (!p) return months === 12 ? 7500000 : months * 750000;
     if (months === 12) return p.priceYearly;
     if (months === 24) return Math.round(p.priceYearly * 2 * 0.9);
     if (months === 6) return Math.round(p.priceMonthly * 6 * 0.95);
