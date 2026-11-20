@@ -320,6 +320,13 @@ export async function ensureDatabaseSchema(): Promise<void> {
       AND NOT EXISTS (SELECT 1 FROM village_users WHERE village_id = 'default-village');
   `);
 
+  // Pastikan logo Desa Pohjejer menggunakan PNG transparan (tanpa background putih)
+  await queryClient.unsafe(`
+    UPDATE villages
+    SET logo_url = '/assets/sidesa/pohjejer-logo.png'
+    WHERE slug = 'pohjejer' AND logo_url = '/assets/sidesa/pohjejer-logo.jpg';
+  `);
+
   await seedDefaultPlansAndSettings();
   await seedDesaPohjejerIfMissing();
 }
@@ -475,7 +482,7 @@ export async function seedDesaPohjejerIfMissing(): Promise<void> {
     }),
     mapLat: -7.6194,
     mapLng: 112.4822,
-    logoUrl: '/assets/sidesa/pohjejer-logo.jpg',
+    logoUrl: '/assets/sidesa/pohjejer-logo.png',
     heroImageUrl: '/assets/sidesa/pohjejer-hero.jpg',
     officialStatsJson: JSON.stringify({
       source: 'Profil Kecamatan Gondang 2024 (Data Administrasi & Penduduk 2023)',

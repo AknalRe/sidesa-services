@@ -8,7 +8,7 @@ export interface StudentIdentityInput {
 export interface StudentVerificationResult {
   checked: boolean;
   verified: boolean;
-  status: 'AKTIF' | 'NON_AKTIF' | 'NOT_FOUND' | 'MANUAL_REVIEW';
+  status: 'AKTIF' | 'NON_AKTIF' | 'VALIDATION_ERROR' | 'MANUAL_REVIEW';
   message: string;
   matchedRecord?: {
     nama?: string;
@@ -55,59 +55,75 @@ export async function verifyStudentPddikti(input: StudentIdentityInput): Promise
     return {
       checked: false,
       verified: false,
-      status: 'NOT_FOUND',
-      message: 'NIM, Nama Lengkap Mahasiswa, dan Perguruan Tinggi wajib diisi untuk Paket Mahasiswa KKN.',
+      status: 'VALIDATION_ERROR',
+      message: 'Lengkapi NIM, Nama Lengkap Mahasiswa, dan Nama Perguruan Tinggi terlebih dahulu.',
     };
   }
 
-  const query = encodeURIComponent(`${nim} ${studentName}`);
+  const queries = [encodeURIComponent(`${nim} ${studentName}`), encodeURIComponent(nim)];
   const normNim = normalize(nim);
   const normName = normalize(studentName);
   const normUni = normalize(university);
 
   // 1. Coba API PDDikti terbaru (kemdiktisaintek.go.id)
-  const v2Data = await fetchJsonWithTimeout(`https://api-pddikti.kemdiktisaintek.go.id/pencarian/mhs/${query}`);
-  if (Array.isArray(v2Data) && v2Data.length > 0) {
-    const match = v2Data.find((item: any) => {
-      const itemNim = normalize(item?.nim || '');
-      const itemName = normalize(item?.nama || '');
-      const itemPt = normalize(item?.nama_pt || '');
-      return itemNim === normNim && (itemName.includes(normName.slice(0, 6)) || itemPt.includes(normUni.slice(0, 5)));
-    });
+  for (const query of queries) {
+    const v2Data = await fetchJsonWithTimeout(`https://api-pddikti.kemdiktisaintek.go.id/pencarian/mhs/${query}`);
+    if (Array.isArray(v2Data) && v2Data.length > 0) {
+      const match = v2Data.find((item: any) => {
+        const itemNim = normalize(item?.nim || '');
+        const itemName = normalize(item?.nama || '');
+        const itemPt = normalize(item?.nama_pt || '');
+        return itemNim === normNim && (itemName.includes(normName.slice(0, 5)) || itemPt.includes(normUni.slice(0, 4)));
+      });
 
-    if (match) {
-      let statusMhs = 'Terdaftar di PDDikti';
-      let isInactive = false;
+      if (match) {
+        let statusMhs = 'Aktif / Terdaftar di PDDikti';
+        let isInactive = false;
 
-      if (match.id) {
-        const detail = await fetchJsonWithTimeout(
-          `https://api-pddikti.kemdiktisaintek.go.id/mhs/detail/${encodeURIComponent(match.id)}`
-        );
-        const st = String(
-          detail?.status_saat_ini || detail?.dataumum?.ket_keluar || detail?.status || ''
-        ).trim();
-        if (st) {
-          statusMhs = st;
-          const lower = st.toLowerCase();
-          if (
-            lower.includes('lulus') ||
-            lower.includes('keluar') ||
-            lower.includes('drop out') ||
-            lower.includes('non-aktif') ||
-            lower.includes('non aktif') ||
-            lower.includes('mengundurkan')
-          ) {
-            isInactive = true;
+        if (match.id) {
+          const detail = await fetchJsonWithTimeout(
+            `https://api-pddikti.kemdiktisaintek.go.id/mhs/detail/${encodeURIComponent(match.id)}`
+          );
+          const st = String(
+            detail?.status_saat_ini || detail?.dataumum?.ket_keluar || detail?.status || ''
+          ).trim();
+          if (st) {
+            statusMhs = st;
+            const lower = st.toLowerCase();
+            if (
+              lower.includes('lulus') ||
+              lower.includes('keluar') ||
+              lower.includes('drop out') ||
+              lower.includes('non-aktif') ||
+              lower.includes('non aktif') ||
+              lower.includes('mengundurkan')
+            ) {
+              isInactive = true;
+            }
           }
         }
-      }
 
-      if (isInactive) {
+        if (isInactive) {
+          return {
+            checked: true,
+            verified: false,
+            status: 'NON_AKTIF',
+            message: `Data mahasiswa pada PDDikti berstatus "${statusMhs}". Paket KKN hanya berlaku untuk mahasiswa aktif.`,
+            matchedRecord: {
+              nama: match.nama,
+              nim: match.nim,
+              perguruanTinggi: match.nama_pt,
+              prodi: match.nama_prodi || studyProgram,
+              statusMahasiswa: statusMhs,
+            },
+          };
+        }
+
         return {
           checked: true,
-          verified: false,
-          status: 'NON_AKTIF',
-          message: `Data mahasiswa pada PDDikti berstatus "${statusMhs}". Paket KKN hanya berlaku untuk mahasiswa aktif.`,
+          verified: true,
+          status: 'AKTIF',
+          message: `Terverifikasi di PDDikti: ${match.nama} (${match.nim}) — ${match.nama_pt} (${statusMhs}).`,
           matchedRecord: {
             nama: match.nama,
             nim: match.nim,
@@ -117,25 +133,11 @@ export async function verifyStudentPddikti(input: StudentIdentityInput): Promise
           },
         };
       }
-
-      return {
-        checked: true,
-        verified: true,
-        status: 'AKTIF',
-        message: `Terverifikasi di PDDikti: ${match.nama} (${match.nim}) — ${match.nama_pt} (${statusMhs}).`,
-        matchedRecord: {
-          nama: match.nama,
-          nim: match.nim,
-          perguruanTinggi: match.nama_pt,
-          prodi: match.nama_prodi || studyProgram,
-          statusMahasiswa: statusMhs,
-        },
-      };
     }
   }
 
   // 2. Fallback API PDDikti frontend lama (kemdikbud.go.id)
-  const v1Data = await fetchJsonWithTimeout(`https://api-frontend.kemdikbud.go.id/hit_mhs/${query}`);
+  const v1Data = await fetchJsonWithTimeout(`https://api-frontend.kemdikbud.go.id/hit_mhs/${queries[0]}`);
   const listV1: any[] = Array.isArray(v1Data?.mahasiswa) ? v1Data.mahasiswa : [];
   if (listV1.length > 0) {
     const match = listV1.find((m: any) => {

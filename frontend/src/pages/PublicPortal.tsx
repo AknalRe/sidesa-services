@@ -724,6 +724,13 @@ export const PublicPortal: React.FC<{
                       type="button"
                       disabled={claimStudentChecking}
                       onClick={async () => {
+                        if (!claimForm.studentNim.trim() || !(claimForm.studentName || claimForm.name).trim() || !claimForm.studentUniversity.trim()) {
+                          setClaimStudentCheck({
+                            status: 'VALIDATION_ERROR',
+                            message: 'Lengkapi NIM, Nama Lengkap Mahasiswa, dan Nama Perguruan Tinggi terlebih dahulu sebelum mengecek PDDikti.',
+                          });
+                          return;
+                        }
                         setClaimStudentChecking(true);
                         try {
                           const res = await api.verifyStudent({
@@ -777,15 +784,24 @@ export const PublicPortal: React.FC<{
                   </div>
                   {claimStudentCheck && (
                     <div
-                      className={`p-2 rounded-lg text-[11px] font-semibold ${
+                      className={`p-2.5 rounded-lg text-[11px] space-y-0.5 ${
                         claimStudentCheck.status === 'AKTIF'
-                          ? 'bg-emerald-100 text-emerald-900'
+                          ? 'bg-emerald-100 text-emerald-950 border border-emerald-200'
                           : claimStudentCheck.status === 'NON_AKTIF'
-                            ? 'bg-rose-100 text-rose-800'
-                            : 'bg-amber-100 text-amber-900'
+                            ? 'bg-rose-50 text-rose-800 border border-rose-200'
+                            : 'bg-amber-50 text-amber-900 border border-amber-200'
                       }`}
                     >
-                      [{claimStudentCheck.status}] {claimStudentCheck.message}
+                      <div className="font-extrabold">
+                        {claimStudentCheck.status === 'AKTIF'
+                          ? 'Terverifikasi Aktif di PDDikti'
+                          : claimStudentCheck.status === 'NON_AKTIF'
+                            ? 'Status Mahasiswa Tidak Aktif'
+                            : claimStudentCheck.status === 'VALIDATION_ERROR'
+                              ? 'Data Identitas Belum Lengkap'
+                              : 'Menunggu Verifikasi KTM oleh Superadmin'}
+                      </div>
+                      <div className="font-medium leading-relaxed">{claimStudentCheck.message}</div>
                     </div>
                   )}
                 </div>
@@ -2277,26 +2293,22 @@ export const PublicPortal: React.FC<{
 
           <div className="lg:col-span-3 space-y-2.5">
             <div className="text-base font-extrabold text-white">Hubungi Kami</div>
-            {village.phone && (
-              <div className="flex items-center gap-2 text-sky-100 font-mono">
-                <Phone className="w-4 h-4 text-sky-300" />
-                <span>{village.phone}</span>
-              </div>
-            )}
-            {village.email && (
-              <div className="flex items-center gap-2 text-sky-100">
-                <Mail className="w-4 h-4 text-sky-300" />
-                <span>{village.email}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2 text-sky-100 font-mono text-xs">
+              <Phone className="w-4 h-4 text-sky-300 shrink-0" />
+              <span>{village.phone || '08xx-xxxx-xxxx'}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sky-100 text-xs">
+              <Mail className="w-4 h-4 text-sky-300 shrink-0" />
+              <span>{village.email || `pemdes@${village.slug || 'desa'}.desa.id`}</span>
+            </div>
           </div>
 
           <div className="lg:col-span-3 space-y-2.5">
             <div className="text-base font-extrabold text-white">Nomor Telepon Penting</div>
-            <ul className="space-y-1 text-sky-100 text-xs">
-              <li>Ambulans Desa Sugihwaras: 0812-3456-7890</li>
-              <li>Bidan Desa / Polindes: 0813-3522-0811</li>
-              <li>Bhabinkamtibmas / Babinsa: 0812-3522-0110</li>
+            <ul className="space-y-1 text-sky-100 text-xs font-mono">
+              <li>Ambulans {village.name}: 08xx-xxxx-xxxx</li>
+              <li>Bidan Desa / Polindes: 08xx-xxxx-xxxx</li>
+              <li>Bhabinkamtibmas / Babinsa: 08xx-xxxx-xxxx</li>
             </ul>
           </div>
 
@@ -2329,7 +2341,7 @@ export const PublicPortal: React.FC<{
 
         <div className="border-t border-white/10 px-4 sm:px-8 lg:px-14 xl:px-20 py-4 flex flex-wrap items-center justify-between gap-2 text-xs text-sky-200">
           <span>&copy; 2026 Pemerintah {village.name} — Ditenagai oleh Reneo SIDesa</span>
-          <span>Kode Wilayah Kemendagri: {village.kodeDesa || '35.22.08.2005'}</span>
+          <span>Kode Wilayah Kemendagri: {village.kodeDesa || 'Menunggu konfirmasi resmi'}</span>
         </div>
       </footer>
     </div>

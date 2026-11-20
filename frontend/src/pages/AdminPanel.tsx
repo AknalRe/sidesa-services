@@ -500,6 +500,13 @@ export const AdminPanel: React.FC<{
                         type="button"
                         disabled={studentChecking}
                         onClick={async () => {
+                          if (!authForm.studentNim.trim() || !(authForm.studentName || authForm.name).trim() || !authForm.studentUniversity.trim()) {
+                            setStudentCheck({
+                              status: 'VALIDATION_ERROR',
+                              message: 'Lengkapi NIM, Nama Lengkap Mahasiswa, dan Nama Perguruan Tinggi terlebih dahulu sebelum mengecek PDDikti.',
+                            });
+                            return;
+                          }
                           setStudentChecking(true);
                           try {
                             const res = await api.verifyStudent({
@@ -553,15 +560,24 @@ export const AdminPanel: React.FC<{
                     </div>
                     {studentCheck && (
                       <div
-                        className={`p-2.5 rounded-lg text-[11px] font-semibold ${
+                        className={`p-2.5 rounded-lg text-[11px] space-y-0.5 ${
                           studentCheck.status === 'AKTIF'
-                            ? 'bg-emerald-100 text-emerald-900'
+                            ? 'bg-emerald-100 text-emerald-950 border border-emerald-200'
                             : studentCheck.status === 'NON_AKTIF'
-                              ? 'bg-rose-100 text-rose-800'
-                              : 'bg-amber-100 text-amber-900'
+                              ? 'bg-rose-50 text-rose-800 border border-rose-200'
+                              : 'bg-amber-50 text-amber-900 border border-amber-200'
                         }`}
                       >
-                        [{studentCheck.status}] {studentCheck.message}
+                        <div className="font-extrabold">
+                          {studentCheck.status === 'AKTIF'
+                            ? 'Terverifikasi Aktif di PDDikti'
+                            : studentCheck.status === 'NON_AKTIF'
+                              ? 'Status Mahasiswa Tidak Aktif'
+                              : studentCheck.status === 'VALIDATION_ERROR'
+                                ? 'Data Identitas Belum Lengkap'
+                                : 'Menunggu Verifikasi KTM oleh Superadmin'}
+                        </div>
+                        <div className="font-medium leading-relaxed">{studentCheck.message}</div>
                       </div>
                     )}
                   </div>
