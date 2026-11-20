@@ -364,8 +364,7 @@ export default async function adminRouter(fastify: FastifyInstance) {
         const [village] = await db.select().from(villages).where(eq(villages.id, vid)).limit(1);
         void sendWahaNotification(
           existing.reporterPhone,
-          `*${village?.name || 'Pemerintah Desa'} — Pengaduan*\nTiket *${updated.ticketCode}* kini berstatus *${updated.status}*.${
-            updated.responseText ? `\nTanggapan: ${updated.responseText}` : ''
+          `*${village?.name || 'Pemerintah Desa'} — Pengaduan*\nTiket *${updated.ticketCode}* kini berstatus *${updated.status}*.${updated.responseText ? `\nTanggapan: ${updated.responseText}` : ''
           }`
         );
       }

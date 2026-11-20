@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 440" fill="none">
+  <rect width="720" height="440" rx="12" fill="#F8FAFC"/>
+  <rect width="720" height="48" rx="12" fill="#0069B6"/>
+  <rect y="36" width="720" height="12" fill="#0069B6"/>
+  <text x="24" y="29" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Pelayanan Persuratan Mandiri — Permendagri No. 109/2019</text>
+  <rect x="20" y="68" width="380" height="352" rx="8" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <text x="40" y="96" fill="#0B2A57" font-family="system-ui, sans-serif" font-size="14" font-weight="800">Antrean Permohonan Surat Warga</text>
+  <rect x="40" y="114" width="340" height="72" rx="8" fill="#F8FAFC" stroke="#CBD5E1"/>
+  <text x="54" y="136" fill="#0069B6" font-family="monospace" font-size="11" font-weight="700">SRT-2611-8421A · SKTM</text>
+  <text x="54" y="156" fill="#0F172A" font-family="system-ui, sans-serif" font-size="12" font-weight="700">Siti Aminah (NIK 352213...0002)</text>
+  <text x="54" y="174" fill="#64748B" font-family="system-ui, sans-serif" font-size="11">Keperluan: Beasiswa Pendidikan Anak</text>
+  <rect x="294" y="128" width="72" height="24" rx="5" fill="#10B981"/>
+  <text x="309" y="144" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="10" font-weight="700">SELESAI</text>
+  <rect x="40" y="198" width="340" height="72" rx="8" fill="#F8FAFC" stroke="#CBD5E1"/>
+  <text x="54" y="220" fill="#0069B6" font-family="monospace" font-size="11" font-weight="700">SRT-2611-9104B · DOMISILI</text>
+  <text x="54" y="240" fill="#0F172A" font-family="system-ui, sans-serif" font-size="12" font-weight="700">Slamet Raharjo (NIK 352213...0001)</text>
+  <text x="54" y="258" fill="#64748B" font-family="system-ui, sans-serif" font-size="11">Keperluan: Administrasi Perbankan</text>
+  <rect x="294" y="212" width="72" height="24" rx="5" fill="#0069B6"/>
+  <text x="311" y="228" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="10" font-weight="700">PROSES</text>
+  <rect x="40" y="282" width="340" height="72" rx="8" fill="#F8FAFC" stroke="#CBD5E1"/>
+  <text x="54" y="304" fill="#0069B6" font-family="monospace" font-size="11" font-weight="700">SRT-2611-9350C · SKU UMKM</text>
+  <text x="54" y="324" fill="#0F172A" font-family="system-ui, sans-serif" font-size="12" font-weight="700">Ahmad Fauzi (NIK 352213...0005)</text>
+  <text x="54" y="342" fill="#64748B" font-family="system-ui, sans-serif" font-size="11">Keperluan: Keterangan Usaha Tani</text>
+  <rect x="294" y="296" width="72" height="24" rx="5" fill="#F59E0B"/>
+  <text x="307" y="312" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="10" font-weight="700">ANTRIAN</text>
+  <rect x="420" y="68" width="280" height="352" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="456" y="102" fill="#0F172A" font-family="system-ui, sans-serif" font-size="11" font-weight="800">PEMERINTAH DESA SUGIHWARAS</text>
+  <text x="466" y="118" fill="#64748B" font-family="system-ui, sans-serif" font-size="10">SURAT KETERANGAN TIDAK MAMPU</text>
+  <line x1="444" y1="128" x2="676" y2="128" stroke="#0F172A" stroke-width="2"/>
+  <text x="488" y="146" fill="#0069B6" font-family="monospace" font-size="10">No: 470/014/412.2005/2026</text>
+  <rect x="444" y="164" width="232" height="8" rx="2" fill="#E2E8F0"/>
+  <rect x="444" y="182" width="196" height="8" rx="2" fill="#E2E8F0"/>
+  <rect x="444" y="200" width="220" height="8" rx="2" fill="#E2E8F0"/>
+  <rect x="444" y="226" width="232" height="8" rx="2" fill="#E2E8F0"/>
+  <rect x="444" y="244" width="184" height="8" rx="2" fill="#E2E8F0"/>
+  <rect x="444" y="286" width="110" height="44" rx="6" fill="#ECFDF5" stroke="#A7F3D0"/>
+  <text x="456" y="306" fill="#065F46" font-family="system-ui, sans-serif" font-size="9" font-weight="700">NOTIFIKASI WA</text>
+  <text x="456" y="320" fill="#047857" font-family="system-ui, sans-serif" font-size="9">Terkirim Otomatis</text>
+  <rect x="572" y="294" width="104" height="36" rx="6" fill="#0069B6"/>
+  <text x="592" y="316" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="11" font-weight="700">Cetak Surat</text>
+</svg>

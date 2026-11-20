@@ -246,16 +246,22 @@ export const AdminPanel: React.FC<{
     e.preventDefault();
     setAuthErr(null);
     try {
-      if (!auth?.initialized) {
+      if (authMode === 'login') {
+        await api.login({ email: authForm.email.trim(), password: authForm.password });
+      } else if (!auth?.initialized) {
         await api.setupAdmin(authForm);
-      } else if (authMode === 'register') {
-        await api.registerVillage(authForm);
       } else {
-        await api.login({ email: authForm.email, password: authForm.password });
+        await api.registerVillage(authForm);
       }
       await checkAuth();
     } catch (err: any) {
-      setAuthErr(err?.response?.data?.error || 'Autentikasi gagal.');
+      const msg = err?.response?.data?.error || 'Autentikasi gagal.';
+      if (err?.response?.status === 409 || msg.toLowerCase().includes('sudah diinisialisasi')) {
+        setAuthMode('login');
+        setAuthErr('Akun admin desa sudah terdaftar. Silakan masukkan email dan kata sandi Anda.');
+      } else {
+        setAuthErr(msg);
+      }
     }
   };
 
@@ -268,57 +274,72 @@ export const AdminPanel: React.FC<{
   }
 
   if (!auth?.authenticated) {
-    const isRegister = !auth?.initialized || authMode === 'register';
+    const isRegister = authMode === 'register';
+    const currentHost =
+      typeof window !== 'undefined' && window.location.host ? window.location.host : 'panel.reneo.my.id';
     return (
       <div className="min-h-screen bg-[#F6F6F6] flex items-center justify-center p-4">
-        <div className="max-w-lg w-full bg-white border border-slate-200 rounded-2xl shadow-md p-6 sm:p-8 space-y-5">
-          <div className="flex items-center gap-3">
-            <ReneoSidesaLogo className="w-11 h-11 shrink-0" />
-            <div>
-              <h1 className="text-lg font-extrabold text-slate-900">
-                {!auth?.initialized
-                  ? 'Setup Awal Admin Reneo SIDesa'
-                  : authMode === 'register'
-                    ? 'Daftarkan Desa Baru di SaaS SIDesa'
-                    : 'Masuk Back-Office Perangkat Desa'}
-              </h1>
-              <p className="text-xs text-slate-500">
-                CMS Website Profil Desa, Artikel Berita, Kependudukan, Persuratan &amp; APBDes
-              </p>
+        <div className="max-w-md w-full bg-white border border-slate-200 rounded-xl shadow-xs p-5 sm:p-6 space-y-5">
+          {/* Header seperti Reneo CRM */}
+          <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <ReneoSidesaLogo className="w-7 h-7 shrink-0" />
+              <span className="text-xs font-bold text-slate-900 truncate">Reneo SIDesa</span>
             </div>
+            <span className="text-[11px] font-mono text-slate-500 truncate">{currentHost}</span>
           </div>
 
-          {auth?.initialized && (
-            <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100 text-xs font-bold">
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthMode('login');
-                  setAuthErr(null);
-                }}
-                className={`py-2 rounded-lg transition-colors ${
-                  authMode === 'login' ? 'bg-white text-[#0069b6] shadow-2xs' : 'text-slate-600'
-                }`}
-              >
-                Masuk Akun Desa
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthMode('register');
-                  setAuthErr(null);
-                }}
-                className={`py-2 rounded-lg transition-colors ${
-                  authMode === 'register' ? 'bg-white text-[#0069b6] shadow-2xs' : 'text-slate-600'
-                }`}
-              >
-                + Daftarkan Desa Baru
-              </button>
-            </div>
-          )}
+          {/* Tab Switcher — SELALU tampil (Masuk & Daftar) seperti Reneo CRM */}
+          <div className="flex p-1 bg-slate-100 rounded-lg text-xs font-medium">
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('login');
+                setAuthErr(null);
+              }}
+              className={`flex-1 py-2 px-3 rounded-md transition-colors text-center ${
+                authMode === 'login'
+                  ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Masuk ke Akun
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('register');
+                setAuthErr(null);
+              }}
+              className={`flex-1 py-2 px-3 rounded-md transition-colors text-center ${
+                authMode === 'register'
+                  ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              {auth?.initialized ? 'Daftar Desa Baru' : 'Daftar / Setup Awal'}
+            </button>
+          </div>
+
+          <div className="min-w-0">
+            <h1 className="text-base font-extrabold text-slate-900">
+              {authMode === 'login'
+                ? 'Masuk Back-Office Perangkat Desa'
+                : auth?.initialized
+                  ? 'Daftarkan Desa Baru di Reneo SIDesa'
+                  : 'Setup Awal Admin Reneo SIDesa'}
+            </h1>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              {authMode === 'login'
+                ? 'Masukkan email dan kata sandi perangkat desa untuk mengelola website profil desa, kependudukan, persuratan, dan APBDes.'
+                : auth?.initialized
+                  ? 'Daftarkan desa Anda untuk mendapatkan website resmi desa (/desa/nama-desa) dan ruang kerja Back-Office terpisah.'
+                  : 'Buat akun admin pertama untuk mulai mengelola CMS Website Profil Desa, Artikel Berita, Kependudukan, dan APBDes.'}
+            </p>
+          </div>
 
           {authErr && (
-            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium">
+            <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium">
               {authErr}
             </div>
           )}
@@ -335,29 +356,29 @@ export const AdminPanel: React.FC<{
                       placeholder="Contoh: Desa Sugihwaras"
                       value={authForm.villageName}
                       onChange={(e) => setAuthForm({ ...authForm, villageName: e.target.value })}
-                      className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm"
+                      className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-[#0069b6]"
                     />
                   </div>
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Slug Path URL (/desa/...) *</label>
+                    <label className="block font-bold text-slate-700 mb-1">Slug URL (/desa/...) *</label>
                     <input
                       type="text"
                       placeholder="Contoh: sugihwaras"
                       value={authForm.slug}
                       onChange={(e) => setAuthForm({ ...authForm, slug: e.target.value })}
-                      className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-sm"
+                      className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono text-sm focus:outline-none focus:border-[#0069b6]"
                     />
                   </div>
                 </div>
-                {authMode === 'register' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {auth?.initialized && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <input
                       type="text"
                       required
                       placeholder="Kecamatan *"
                       value={authForm.district}
                       onChange={(e) => setAuthForm({ ...authForm, district: e.target.value })}
-                      className="h-10 px-3 rounded-xl border border-slate-300 text-sm"
+                      className="h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-[#0069b6]"
                     />
                     <input
                       type="text"
@@ -365,14 +386,14 @@ export const AdminPanel: React.FC<{
                       placeholder="Kabupaten *"
                       value={authForm.regency}
                       onChange={(e) => setAuthForm({ ...authForm, regency: e.target.value })}
-                      className="h-10 px-3 rounded-xl border border-slate-300 text-sm"
+                      className="h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-[#0069b6]"
                     />
                     <input
                       type="text"
-                      placeholder="Kode Kemendagri"
+                      placeholder="Kode Desa"
                       value={authForm.kodeDesa}
                       onChange={(e) => setAuthForm({ ...authForm, kodeDesa: e.target.value })}
-                      className="h-10 px-3 rounded-xl border border-slate-300 font-mono text-sm"
+                      className="h-10 px-3 rounded-lg border border-slate-300 font-mono text-sm focus:outline-none focus:border-[#0069b6]"
                     />
                   </div>
                 )}
@@ -384,7 +405,7 @@ export const AdminPanel: React.FC<{
                     placeholder="Nama Lengkap Perangkat Desa"
                     value={authForm.name}
                     onChange={(e) => setAuthForm({ ...authForm, name: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-[#0069b6]"
                   />
                 </div>
               </>
@@ -398,7 +419,7 @@ export const AdminPanel: React.FC<{
                 placeholder="admin@desa.id"
                 value={authForm.email}
                 onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
-                className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm"
+                className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-[#0069b6]"
               />
             </div>
             <div>
@@ -406,42 +427,71 @@ export const AdminPanel: React.FC<{
               <input
                 type="password"
                 required
+                minLength={6}
                 placeholder="Minimal 6 karakter"
                 value={authForm.password}
                 onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
-                className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm"
+                className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-[#0069b6]"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full h-11 rounded-xl bg-[#0069b6] hover:bg-[#005a9e] text-white text-sm font-bold shadow-xs"
+              className="w-full h-10 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white text-sm font-bold transition-colors"
             >
-              {!auth?.initialized
-                ? 'Buat Akun Admin Desa'
-                : authMode === 'register'
-                  ? 'Daftarkan Desa & Buat Website Desa'
-                  : 'Masuk ke Back-Office Desa'}
+              {authMode === 'login'
+                ? 'Masuk ke Back-Office Desa'
+                : auth?.initialized
+                  ? 'Daftarkan Desa & Buat Website'
+                  : 'Simpan & Buat Akun Admin'}
             </button>
           </form>
 
-          <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
-            {onBackToLanding && (
+          <div className="pt-3 border-t border-slate-100 flex flex-col gap-2 text-center">
+            {authMode === 'login' ? (
               <button
                 type="button"
-                onClick={onBackToLanding}
-                className="text-xs text-slate-600 font-bold hover:underline"
+                onClick={() => {
+                  setAuthMode('register');
+                  setAuthErr(null);
+                }}
+                className="text-xs text-[#0069b6] hover:text-[#0B2A57] font-semibold transition-colors"
               >
-                &larr; Beranda Platform SIDesa
+                {auth?.initialized
+                  ? 'Belum punya akun? Daftarkan desa baru di sini'
+                  : 'Belum setup akun? Daftar / Setup awal di sini'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode('login');
+                  setAuthErr(null);
+                }}
+                className="text-xs text-[#0069b6] hover:text-[#0B2A57] font-semibold transition-colors"
+              >
+                Sudah punya akun perangkat desa? Masuk di sini
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => onBackToPortal(auth?.village?.slug || 'sugihwaras')}
-              className="text-xs text-[#0069b6] font-bold hover:underline ml-auto"
-            >
-              Lihat Website Desa &rarr;
-            </button>
+
+            <div className="flex items-center justify-between gap-2 pt-1">
+              {onBackToLanding && (
+                <button
+                  type="button"
+                  onClick={onBackToLanding}
+                  className="text-xs text-slate-500 hover:text-slate-800 font-medium"
+                >
+                  &larr; Beranda Platform SIDesa
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => onBackToPortal(auth?.village?.slug || 'sugihwaras')}
+                className="text-xs text-slate-500 hover:text-[#0069b6] font-medium ml-auto"
+              >
+                Lihat Website Desa &rarr;
+              </button>
+            </div>
           </div>
         </div>
       </div>

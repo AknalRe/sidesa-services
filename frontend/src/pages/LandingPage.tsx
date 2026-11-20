@@ -11,14 +11,14 @@ import {
 } from 'lucide-react';
 import { ReneoSidesaLogo } from '../components/ReneoSidesaLogo';
 import { api } from '../services/api';
+import { sidesaAsset } from '../lib/assets';
 
 interface LandingPageProps {
   onOpenVillagePortal: (initialTab?: string, slug?: string) => void;
   onOpenAdmin: () => void;
 }
 
-const DEFAULT_CREST =
-  'https://cdn.digitaldesa.com/uploads/profil/35.22.09.2024/common/300_bojonegorokab.png';
+const DEFAULT_CREST = sidesaAsset('crest-default.svg');
 
 const HERO_SLIDES = [
   {
@@ -26,24 +26,24 @@ const HERO_SLIDES = [
     title: 'Transformasi Digital Pemerintahan dan Pelayanan Publik Desa',
     subtitle:
       'Satu sistem terintegrasi untuk mengelola administrasi kependudukan, pelayanan persuratan warga, transparansi anggaran APBDes, hingga portal resmi profil desa.',
-    bgImage: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/bg/bg-landing-test.webp',
-    fgImage: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/bg/bg-hero1.webp',
+    bgImage: sidesaAsset('hero-village.jpg'),
+    fgImage: sidesaAsset('preview-webprofil.svg'),
   },
   {
     category: 'Pelayanan Persuratan & Portal Warga',
     title: 'Percepat Pelayanan Surat Warga dan Keterbukaan Informasi Desa',
     subtitle:
       'Setiap desa memiliki portal resmi yang terhubung langsung dengan database kependudukan Permendagri 47/2016, format surat Permendagri 109/2019, PPID, dan katalog UMKM.',
-    bgImage: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/bg/bg-landing2.webp',
-    fgImage: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/preview-fitur/webprofil.webp',
+    bgImage: sidesaAsset('news-musyawarah.jpg'),
+    fgImage: sidesaAsset('preview-pelayanan.svg'),
   },
   {
     category: 'Anjungan Mandiri & Pemetaan Wilayah',
     title: 'Cetak Surat Mandiri dan Pemetaan Potensi Wilayah Desa',
     subtitle:
       'Dukung pelayanan cepat di balai desa serta tampilkan peta lokasi fasilitas umum, batas wilayah, dan potensi ekonomi desa secara terukur.',
-    bgImage: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/bg/bg-anjungan.webp',
-    fgImage: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/bg/anjungan.webp',
+    bgImage: sidesaAsset('news-pertanian.jpg'),
+    fgImage: sidesaAsset('preview-anjungan.svg'),
   },
 ];
 
@@ -55,7 +55,7 @@ const FEATURE_TABS = [
     title: 'Tata Kelola Buku Administrasi & Database Kependudukan',
     description:
       'Kelola buku induk penduduk, Kartu Keluarga, mutasi warga, struktur perangkat desa (SOTK), kehadiran aparatur, hingga buku tamu dalam satu basis data terpusat.',
-    image: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/preview-fitur/administrasi.webp',
+    image: sidesaAsset('preview-administrasi.svg'),
     points: [
       'Database kependudukan terstruktur per Dusun, RT, dan RW',
       'Rekap statistik demografi otomatis (pendidikan, pekerjaan, umur, wajib pilih)',
@@ -70,7 +70,7 @@ const FEATURE_TABS = [
     title: 'Pengajuan & Cetak Surat Keterangan Warga Lebih Cepat',
     description:
       'Warga dapat mengajukan permohonan surat dari portal desa dan melacak statusnya; perangkat desa memverifikasi NIK dan langsung mencetak surat bernomor resmi.',
-    image: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/preview-fitur/pelayanan.webp',
+    image: sidesaAsset('preview-pelayanan.svg'),
     points: [
       'Format surat standar pemerintahan desa (SKTM, Domisili, SKU, Pengantar)',
       'Pengajuan surat mandiri oleh warga lengkap dengan Kode Lacak',
@@ -85,7 +85,7 @@ const FEATURE_TABS = [
     title: 'Portal Resmi Desa, Infografis APBDes, PPID & Lapak UMKM',
     description:
       'Hadirkan portal resmi desa dengan halaman profil, infografis demografi, realisasi APBDes, cek penerima Bansos, dokumen PPID, berita kegiatan, dan katalog UMKM.',
-    image: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/preview-fitur/webprofil.webp',
+    image: sidesaAsset('preview-webprofil.svg'),
     points: [
       'Beranda desa dengan berita kegiatan, Jelajahi Desa, dan Sambutan Kepala Desa',
       'Infografis Penduduk, APBDes, Cek Bansos, IDM, Stunting, dan SDGs',
@@ -100,7 +100,7 @@ const FEATURE_TABS = [
     title: 'Pelacakan PBB-P2 per Dusun & Transparansi Bantuan Sosial',
     description:
       'Pantau ketetapan serta pelunasan Pajak Bumi dan Bangunan (PBB-P2) tingkat desa sekaligus sediakan pengecekan penerima bantuan sosial bagi masyarakat.',
-    image: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/preview-fitur/perpajakan.webp',
+    image: sidesaAsset('preview-perpajakan.svg'),
     points: [
       'Rekap ketetapan dan status pelunasan PBB-P2 per wajib pajak dan dusun',
       'Pencatatan pagu anggaran dan realisasi Pendapatan & Belanja APBDes',
@@ -115,7 +115,7 @@ const FEATURE_TABS = [
     title: 'Pemetaan Wilayah Desa (WebGIS) & Direktori Lokasi Penting',
     description:
       'Tampilkan peta wilayah desa, lokasi fasilitas pemerintahan, kesehatan, pendidikan, serta potensi pertanian dan wisata desa secara interaktif.',
-    image: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/bg/bg-webgis.webp',
+    image: sidesaAsset('preview-webgis.svg'),
     points: [
       'Peta lokasi Balai Desa, Polindes, Sekolah, Pasar Desa, dan Wisata',
       'Direktori potensi unggulan pertanian, perkebunan, dan ekonomi warga',
@@ -128,7 +128,7 @@ const FEATURE_TABS = [
 const BENEFIT_ROWS = [
   {
     topic: 'Jangkauan Informasi Desa',
-    icon: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/icon/globe.svg',
+    icon: sidesaAsset('benefit-globe.svg'),
     without:
       'Informasi kegiatan, laporan anggaran APBDes, dan potensi produk desa hanya tertempel di papan pengumuman kantor balai desa.',
     withSidesa:
@@ -136,7 +136,7 @@ const BENEFIT_ROWS = [
   },
   {
     topic: 'Kecepatan Pelayanan Surat',
-    icon: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/icon/click.svg',
+    icon: sidesaAsset('benefit-surat.svg'),
     without:
       'Warga harus mengantre di kantor desa sementara perangkat mengetik ulang data NIK dan format surat satu per satu secara manual.',
     withSidesa:
@@ -144,7 +144,7 @@ const BENEFIT_ROWS = [
   },
   {
     topic: 'Transparansi & Akuntabilitas',
-    icon: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/icon/blt.svg',
+    icon: sidesaAsset('benefit-transparansi.svg'),
     without:
       'Masyarakat sulit mengakses rincian realisasi APBDes, daftar penerima bantuan sosial, maupun dokumen informasi publik (PPID).',
     withSidesa:
@@ -152,7 +152,7 @@ const BENEFIT_ROWS = [
   },
   {
     topic: 'Efisiensi Kerja Perangkat Desa',
-    icon: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/icon/headphone.svg',
+    icon: sidesaAsset('benefit-efisiensi.svg'),
     without:
       'Perangkat desa harus merekap ulang data penduduk dan laporan keuangan berkali-kali karena tersebar di banyak file terpisah.',
     withSidesa:
@@ -164,42 +164,42 @@ const STATIC_PORTFOLIO_VILLAGES = [
   {
     slug: 'sugihwaras',
     name: 'Desa Sugihwaras',
-    logoUrl: DEFAULT_CREST,
+    logoUrl: sidesaAsset('crest-default.svg'),
   },
   {
     slug: 'sugihwaras',
     name: 'Desa Senga Selatan',
-    logoUrl: DEFAULT_CREST,
+    logoUrl: sidesaAsset('crest-kab-2.svg'),
   },
   {
     slug: 'sugihwaras',
     name: 'Desa Cawet',
-    logoUrl: DEFAULT_CREST,
+    logoUrl: sidesaAsset('crest-kab-3.svg'),
   },
   {
     slug: 'sugihwaras',
     name: 'Desa Pasamai',
-    logoUrl: DEFAULT_CREST,
+    logoUrl: sidesaAsset('crest-kab-4.svg'),
   },
   {
     slug: 'sugihwaras',
     name: 'Desa Salumukanan',
-    logoUrl: DEFAULT_CREST,
+    logoUrl: sidesaAsset('crest-kab-2.svg'),
   },
   {
     slug: 'sugihwaras',
     name: 'Desa Sebawang',
-    logoUrl: DEFAULT_CREST,
+    logoUrl: sidesaAsset('crest-kab-3.svg'),
   },
   {
     slug: 'sugihwaras',
     name: 'Desa Suban Ayam',
-    logoUrl: DEFAULT_CREST,
+    logoUrl: sidesaAsset('crest-kab-4.svg'),
   },
   {
     slug: 'sugihwaras',
     name: 'Desa Balantang',
-    logoUrl: DEFAULT_CREST,
+    logoUrl: sidesaAsset('crest-default.svg'),
   },
 ];
 
@@ -453,22 +453,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
               {
                 title: 'Pemerintahan Desa',
                 sub: '32 Buku Administrasi (Permendagri 47/2016), Kependudukan, SOTK & Absensi Aparatur',
-                icon: 'https://cdn.digitaldesa.com/statics/profil/icon/profil.svg',
+                icon: sidesaAsset('icon-profil.svg'),
               },
               {
                 title: 'Pelayanan Publik',
                 sub: 'Layanan Persuratan Mandiri (Permendagri 109/2019), PBB-P2, & Transparansi Bansos',
-                icon: 'https://cdn.digitaldesa.com/statics/profil/icon/ppid.svg',
+                icon: sidesaAsset('icon-ppid.svg'),
               },
               {
                 title: 'Publikasi & Website Desa',
                 sub: 'Website Profil Desa, Infografis APBDes, PPID (UU KIP), Berita & Lapak UMKM',
-                icon: 'https://cdn.digitaldesa.com/statics/profil/icon/infografis.svg',
+                icon: sidesaAsset('icon-infografis.svg'),
               },
               {
                 title: 'Pemantauan & Indeks Desa',
                 sub: 'WebGIS Peta Wilayah Desa, Indeks Desa Membangun (IDM), SDGs & Data Stunting',
-                icon: 'https://cdn.digitaldesa.com/statics/profil/icon/infografis/idm.svg',
+                icon: sidesaAsset('icon-idm.svg'),
               },
             ].map((p) => (
               <div key={p.title} className="bg-white border border-slate-200 rounded-xl p-5 flex items-start gap-4">

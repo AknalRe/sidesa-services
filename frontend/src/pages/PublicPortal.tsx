@@ -26,7 +26,7 @@ import {
   X,
 } from 'lucide-react';
 import { api } from '../services/api';
-import { ReneoSidesaLogo } from '../components/ReneoSidesaLogo';
+import { sidesaAsset } from '../lib/assets';
 
 type PublicTab =
   | 'beranda'
@@ -42,8 +42,7 @@ type PublicTab =
 
 type InfografisSubTab = 'penduduk' | 'apbdes' | 'bansos' | 'indeks';
 
-const BOJONEGORO_CREST =
-  'https://cdn.digitaldesa.com/uploads/profil/35.22.09.2024/common/300_bojonegorokab.png';
+const DEFAULT_VILLAGE_CREST = sidesaAsset('crest-default.svg');
 
 const HERO_SLIDES = [
   {
@@ -51,27 +50,25 @@ const HERO_SLIDES = [
     title: 'Website Resmi Desa Sugihwaras',
     subtitle:
       'Sumber informasi terbaru tentang pemerintahan, pelayanan warga, transparansi anggaran, dan potensi Desa Sugihwaras, Kecamatan Kepohbaru, Kabupaten Bojonegoro.',
-    image:
-      'https://cdn.digitaldesa.com/uploads/profil/35.22.09.2024/berita/29ac04c99ac6977a17584e511f07072a.jpeg',
+    image: sidesaAsset('hero-village.jpg'),
     ctaLabel: 'Jelajahi Profil Desa',
     targetTab: 'profil' as PublicTab,
   },
   {
     eyebrow: 'Kegiatan Kemasyarakatan',
-    title: 'Sinergi Terjalin Melalui Pertemuan Rutin dan Tahlil Bersama di Desa Sugihwaras',
+    title: 'Sinergi Terjalin Melalui Pertemuan Rutin dan Musyawarah Warga Desa',
     subtitle:
       'Pertemuan rutin perangkat desa dan tokoh masyarakat memperkuat kebersamaan, musyawarah mufakat, serta gotong royong warga di seluruh dusun.',
-    image:
-      'https://cdn.digitaldesa.com/uploads/profil/35.22.09.2024/berita/50f000f2b0725caecd8f9937c7b85e07.jpeg',
+    image: sidesaAsset('news-musyawarah.jpg'),
     ctaLabel: 'Baca Berita Desa',
     targetTab: 'berita' as PublicTab,
   },
   {
     eyebrow: 'Ketahanan Pangan & Pertanian',
-    title: 'Sosialisasi AUTP dan Penyusunan Programa Pertanian di Desa Sugihwaras',
+    title: 'Penguatan Programa Pertanian dan Irigasi Lahan Produktif Desa',
     subtitle:
-      'Pemerintah Desa Sugihwaras bersama penyuluh pertanian mendorong perlindungan usaha tani padi dan peningkatan hasil panen kelompok tani.',
-    image: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/bg/bg-landing-test.webp',
+      'Pemerintah Desa bersama penyuluh pertanian mendorong perlindungan usaha tani padi dan peningkatan hasil panen kelompok tani.',
+    image: sidesaAsset('news-pertanian.jpg'),
     ctaLabel: 'Lihat Potensi Desa',
     targetTab: 'peta' as PublicTab,
   },
@@ -86,45 +83,45 @@ const JELAJAHI_ITEMS: Array<{
   {
     id: 'profil',
     label: 'Profil Desa',
-    iconUrl: 'https://cdn.digitaldesa.com/statics/profil/icon/profil.svg',
+    iconUrl: sidesaAsset('icon-profil.svg'),
   },
   {
     id: 'infografis',
     infoSub: 'penduduk',
     label: 'Infografis',
-    iconUrl: 'https://cdn.digitaldesa.com/statics/profil/icon/infografis.svg',
+    iconUrl: sidesaAsset('icon-infografis.svg'),
   },
   {
     id: 'infografis',
     infoSub: 'indeks',
     label: 'IDM',
-    iconUrl: 'https://cdn.digitaldesa.com/statics/profil/icon/infografis/idm.svg',
+    iconUrl: sidesaAsset('icon-idm.svg'),
   },
   {
     id: 'ppid',
     label: 'PPID',
-    iconUrl: 'https://cdn.digitaldesa.com/statics/profil/icon/ppid.svg',
+    iconUrl: sidesaAsset('icon-ppid.svg'),
   },
   {
     id: 'berita',
     label: 'Berita',
-    iconUrl: 'https://cdn.digitaldesa.com/statics/profil/icon/berita.svg',
+    iconUrl: sidesaAsset('icon-berita.svg'),
   },
   {
     id: 'belanja',
     label: 'Belanja',
-    iconUrl: 'https://cdn.digitaldesa.com/statics/profil/icon/belanja.svg',
+    iconUrl: sidesaAsset('icon-belanja.svg'),
   },
   {
     id: 'infografis',
     infoSub: 'bansos',
     label: 'Bansos',
-    iconUrl: 'https://cdn.digitaldesa.com/statics/profil/icon/infografis/bansos.svg',
+    iconUrl: sidesaAsset('icon-bansos.svg'),
   },
   {
     id: 'layanan',
     label: 'Layanan Surat',
-    iconUrl: 'https://cdn.digitaldesa.com/statics/profil/icon/galeri.svg',
+    iconUrl: sidesaAsset('icon-surat.svg'),
   },
 ];
 
@@ -142,41 +139,39 @@ const NAV_ITEMS: Array<{ id: PublicTab; label: string }> = [
 ];
 
 const NEWS_IMAGES = [
-  'https://cdn.digitaldesa.com/uploads/profil/35.22.09.2024/berita/29ac04c99ac6977a17584e511f07072a.jpeg',
-  'https://cdn.digitaldesa.com/uploads/profil/35.22.09.2024/berita/50f000f2b0725caecd8f9937c7b85e07.jpeg',
-  'https://cdn.digitaldesa.com/statics/landing/homepage/media/success-story/pasamai.webp',
-  'https://cdn.digitaldesa.com/statics/landing/homepage/media/success-story/cawet.webp',
+  sidesaAsset('news-musyawarah.jpg'),
+  sidesaAsset('news-pertanian.jpg'),
+  sidesaAsset('hero-village.jpg'),
+  sidesaAsset('umkm-desa.jpg'),
 ];
 
 const UMKM_IMAGES = [
-  'https://cdn.digitaldesa.com/statics/landing/homepage/media/success-story/suban-ayam.webp',
-  'https://cdn.digitaldesa.com/statics/landing/homepage/media/success-story/balantang.webp',
-  'https://cdn.digitaldesa.com/statics/landing/homepage/media/success-story/mananggu.webp',
-  'https://cdn.digitaldesa.com/statics/landing/homepage/media/success-story/sebawang.webp',
+  sidesaAsset('umkm-desa.jpg'),
+  sidesaAsset('news-pertanian.jpg'),
+  sidesaAsset('hero-village.jpg'),
+  sidesaAsset('news-musyawarah.jpg'),
 ];
 
 const GALLERY_PHOTOS = [
   {
-    title: 'Pertemuan Rutin Perangkat & Tokoh Masyarakat Desa Sugihwaras',
+    title: 'Pertemuan Rutin Perangkat & Tokoh Masyarakat Desa',
     date: '18 Nov 2026',
-    image:
-      'https://cdn.digitaldesa.com/uploads/profil/35.22.09.2024/berita/29ac04c99ac6977a17584e511f07072a.jpeg',
+    image: sidesaAsset('news-musyawarah.jpg'),
   },
   {
     title: 'Sosialisasi Programa Pertanian & Ketahanan Pangan Kelompok Tani',
     date: '12 Nov 2026',
-    image:
-      'https://cdn.digitaldesa.com/uploads/profil/35.22.09.2024/berita/50f000f2b0725caecd8f9937c7b85e07.jpeg',
+    image: sidesaAsset('news-pertanian.jpg'),
   },
   {
-    title: 'Pelayanan Administrasi & Musyawarah Pembangunan Desa',
+    title: 'Pelayanan Administrasi & Balai Desa Terpadu',
     date: '05 Nov 2026',
-    image: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/success-story/senga-selatan.webp',
+    image: sidesaAsset('hero-village.jpg'),
   },
   {
-    title: 'Pemberdayaan UMKM & Kelompok Wanita Tani Desa Sugihwaras',
+    title: 'Pemberdayaan UMKM & Kelompok Wanita Tani Desa',
     date: '28 Okt 2026',
-    image: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/success-story/salumukanan.webp',
+    image: sidesaAsset('umkm-desa.jpg'),
   },
 ];
 
@@ -398,8 +393,8 @@ export const PublicPortal: React.FC<{
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F6F6F6] text-base text-slate-700">
         <div className="flex items-center gap-3">
-          <img src={BOJONEGORO_CREST} alt="Lambang Kabupaten" className="w-10 h-10 object-contain animate-pulse" />
-          <span className="font-bold">Memuat Website Resmi Desa Sugihwaras...</span>
+          <img src={DEFAULT_VILLAGE_CREST} alt="Lambang Desa" className="w-10 h-10 object-contain animate-pulse" />
+          <span className="font-bold">Memuat Website Resmi Desa...</span>
         </div>
       </div>
     );
@@ -423,7 +418,7 @@ export const PublicPortal: React.FC<{
   }
 
   const { village, officials, demographics, apbdes, indicator, latestNews, umkm, places, letterTypes } = data;
-  const villageLogo = village.logoUrl || BOJONEGORO_CREST;
+  const villageLogo = village.logoUrl || DEFAULT_VILLAGE_CREST;
   const dynamicSlides = [
     {
       eyebrow: 'Selamat Datang',
@@ -473,7 +468,7 @@ export const PublicPortal: React.FC<{
 
   return (
     <div className="min-h-screen w-full bg-[#F6F6F6] text-slate-900 flex flex-col">
-      {/* FULL-WIDTH TOP NAVBAR (Identik dengan sugihwaras.digitaldesa.id) */}
+      {/* FULL-WIDTH TOP NAVBAR */}
       <header className="sticky top-0 z-40 w-full bg-[#0069b6] text-white shadow-md">
         <div className="w-full px-4 sm:px-8 lg:px-12 py-2.5 flex items-center justify-between gap-4">
           <button
@@ -648,7 +643,7 @@ export const PublicPortal: React.FC<{
             </div>
           </section>
 
-          {/* 2. JELAJAHI DESA (Full-Width 50/50 Grid seperti sugihwaras.digitaldesa.id) */}
+          {/* 2. JELAJAHI DESA */}
           <section className="w-full px-4 sm:px-8 lg:px-14 xl:px-20">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
               <div className="lg:col-span-5 space-y-4">
@@ -689,7 +684,7 @@ export const PublicPortal: React.FC<{
               <div className="lg:col-span-4 flex flex-col items-center justify-center">
                 <div className="w-56 h-56 sm:w-64 sm:h-64 rounded-full bg-white shadow-lg p-6 flex items-center justify-center border-4 border-sky-100">
                   <img
-                    src={BOJONEGORO_CREST}
+                    src={villageLogo}
                     alt={`Lambang ${village.name}`}
                     className="w-40 h-40 sm:w-44 sm:h-44 object-contain"
                   />
@@ -787,7 +782,7 @@ export const PublicPortal: React.FC<{
             </div>
           </section>
 
-          {/* 6. ADMINISTRASI PENDUDUK (2x3 Counter Bars seperti sugihwaras.digitaldesa.id) */}
+          {/* 6. ADMINISTRASI PENDUDUK */}
           <section className="w-full px-4 sm:px-8 lg:px-14 xl:px-20 space-y-5">
             <div>
               <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-[#099cff] uppercase leading-tight">
@@ -834,7 +829,7 @@ export const PublicPortal: React.FC<{
             </div>
           </section>
 
-          {/* 7. APB DESA (2-Column Financial Section seperti sugihwaras.digitaldesa.id) */}
+          {/* 7. APB DESA */}
           <section className="w-full px-4 sm:px-8 lg:px-14 xl:px-20">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
               <div className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left space-y-3">
@@ -975,7 +970,7 @@ export const PublicPortal: React.FC<{
             </div>
           </section>
 
-          {/* 9. POTENSI DESA & WISATA DESA (seperti sugihwaras.digitaldesa.id) */}
+          {/* 9. POTENSI DESA & WISATA DESA */}
           <section className="w-full px-4 sm:px-8 lg:px-14 xl:px-20 space-y-6">
             <div>
               <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-[#099cff] uppercase leading-tight">
@@ -990,7 +985,7 @@ export const PublicPortal: React.FC<{
             {/* Full-Width Dark/Photo Wisata & Potensi Banner */}
             <div className="relative rounded-xl overflow-hidden bg-slate-900 text-white shadow-lg">
               <img
-                src="https://cdn.digitaldesa.com/statics/landing/homepage/media/bg/bg-landing-test.webp"
+                src={sidesaAsset('news-pertanian.jpg')}
                 alt="Potensi & Wisata Desa"
                 className="absolute inset-0 w-full h-full object-cover opacity-35"
               />
@@ -1225,7 +1220,7 @@ export const PublicPortal: React.FC<{
                   >
                     <div className="pt-8 pb-4 px-6 flex flex-col items-center justify-center">
                       <div className="w-32 h-32 rounded-full bg-white/20 border-4 border-white/40 flex items-center justify-center">
-                        <img src={BOJONEGORO_CREST} alt={o.name} className="w-20 h-20 object-contain" />
+                        <img src={o.photoUrl || villageLogo} alt={o.name} className="w-20 h-20 object-contain" />
                       </div>
                     </div>
                     <div className="bg-[#0069b6] p-4 text-center space-y-0.5">
@@ -1956,12 +1951,12 @@ export const PublicPortal: React.FC<{
         </main>
       )}
 
-      {/* FULL-WIDTH VILLAGE FOOTER (seperti sugihwaras.digitaldesa.id) */}
+      {/* FULL-WIDTH VILLAGE FOOTER */}
       <footer className="w-full bg-[#003865] text-white mt-auto">
         <div className="w-full px-4 sm:px-8 lg:px-14 xl:px-20 py-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 text-sm">
           <div className="lg:col-span-4 space-y-3">
             <div className="flex items-center gap-3">
-              <img src={BOJONEGORO_CREST} alt="Lambang Kabupaten" className="w-14 h-14 object-contain" />
+              <img src={villageLogo} alt={`Lambang ${village.name}`} className="w-14 h-14 object-contain" />
               <div>
                 <div className="text-lg font-extrabold">Pemerintah {village.name}</div>
                 <div className="text-xs text-sky-200">
