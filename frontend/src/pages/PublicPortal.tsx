@@ -204,7 +204,6 @@ export const PublicPortal: React.FC<{
   const [mobileMenu, setMobileMenu] = useState(false);
   const [slideIdx, setSlideIdx] = useState(0);
   const [poiFilter, setPoiFilter] = useState<string>('ALL');
-  const [visitorOpen, setVisitorOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -585,38 +584,38 @@ export const PublicPortal: React.FC<{
             {/* Left / Right Carousel Arrows */}
             <button
               type="button"
-              onClick={() => setSlideIdx((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
+              onClick={() => setSlideIdx((prev) => (prev - 1 + dynamicSlides.length) % dynamicSlides.length)}
               aria-label="Slide sebelumnya"
-              className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/35 hover:bg-black/60 text-white flex items-center justify-center transition-colors"
+              className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-lg bg-black/40 hover:bg-black/65 text-white flex items-center justify-center transition-colors"
             >
-              <ChevronLeft className="w-6 h-6" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               type="button"
-              onClick={() => setSlideIdx((prev) => (prev + 1) % HERO_SLIDES.length)}
+              onClick={() => setSlideIdx((prev) => (prev + 1) % dynamicSlides.length)}
               aria-label="Slide berikutnya"
-              className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/35 hover:bg-black/60 text-white flex items-center justify-center transition-colors"
+              className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-lg bg-black/40 hover:bg-black/65 text-white flex items-center justify-center transition-colors"
             >
-              <ChevronRight className="w-6 h-6" />
+              <ChevronRight className="w-5 h-5" />
             </button>
 
             {/* Centered Hero Text */}
             <div className="relative z-10 h-full w-full px-6 sm:px-14 lg:px-24 flex flex-col items-center justify-center text-center text-white">
               <div className="max-w-4xl space-y-3">
-                <p className="text-lg sm:text-2xl font-bold text-sky-300 drop-shadow">
+                <p className="text-base sm:text-xl font-bold text-sky-300">
                   {activeSlide.eyebrow}
                 </p>
-                <h1 className="text-3xl sm:text-5xl lg:text-[54px] font-extrabold tracking-tight leading-[1.12] drop-shadow-md">
+                <h1 className="text-3xl sm:text-5xl lg:text-[50px] font-extrabold tracking-tight leading-[1.12]">
                   {activeSlide.title}
                 </h1>
-                <p className="text-sm sm:text-lg lg:text-xl text-slate-100 max-w-3xl mx-auto leading-relaxed drop-shadow">
+                <p className="text-sm sm:text-lg text-slate-100 max-w-3xl mx-auto leading-relaxed">
                   {activeSlide.subtitle}
                 </p>
                 <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
                   <button
                     type="button"
                     onClick={() => navigateTab(activeSlide.targetTab)}
-                    className="h-12 px-7 rounded-full bg-[#099cff] hover:bg-[#0078cd] text-white text-sm sm:text-base font-bold inline-flex items-center gap-2 shadow-lg transition-colors"
+                    className="h-11 px-6 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white text-sm font-bold inline-flex items-center gap-2 transition-colors"
                   >
                     <span>{activeSlide.ctaLabel}</span>
                     <ArrowRight className="w-4 h-4" />
@@ -624,7 +623,7 @@ export const PublicPortal: React.FC<{
                   <button
                     type="button"
                     onClick={() => navigateTab('layanan')}
-                    className="h-12 px-7 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-xs border border-white/40 text-white text-sm sm:text-base font-bold inline-flex items-center gap-2 transition-colors"
+                    className="h-11 px-6 rounded-lg bg-white/15 hover:bg-white/25 border border-white/35 text-white text-sm font-bold inline-flex items-center gap-2 transition-colors"
                   >
                     <FileText className="w-4 h-4" />
                     <span>Ajukan Surat Online</span>
@@ -632,16 +631,16 @@ export const PublicPortal: React.FC<{
                 </div>
               </div>
 
-              {/* Slide Dots */}
+              {/* Slide Indicators */}
               <div className="absolute bottom-6 flex items-center gap-2">
-                {HERO_SLIDES.map((_, idx) => (
+                {dynamicSlides.map((_, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => setSlideIdx(idx)}
                     aria-label={`Pilih slide ${idx + 1}`}
-                    className={`h-2.5 rounded-full transition-all ${
-                      idx === slideIdx % HERO_SLIDES.length ? 'w-9 bg-[#099cff]' : 'w-2.5 bg-white/50'
+                    className={`h-1.5 rounded-sm transition-all ${
+                      idx === slideIdx % dynamicSlides.length ? 'w-8 bg-[#099cff]' : 'w-3 bg-white/50'
                     }`}
                   />
                 ))}
@@ -813,12 +812,7 @@ export const PublicPortal: React.FC<{
                   key={stat.label}
                   className="h-20 sm:h-24 rounded-xl overflow-hidden shadow-xs bg-white grid grid-cols-12 items-center"
                 >
-                  <div
-                    className="col-span-5 h-full flex items-center justify-center text-white text-2xl sm:text-4xl font-extrabold font-mono"
-                    style={{
-                      background: 'linear-gradient(163deg, #0078cd 0%, #3baefe 100%)',
-                    }}
-                  >
+                  <div className="col-span-5 h-full flex items-center justify-center bg-[#0069b6] text-white text-2xl sm:text-4xl font-extrabold font-mono">
                     {Number(stat.value || 0).toLocaleString('id-ID')}
                   </div>
                   <div className="col-span-7 px-6 text-lg sm:text-2xl font-extrabold text-slate-700">
@@ -844,7 +838,7 @@ export const PublicPortal: React.FC<{
           <section className="w-full px-4 sm:px-8 lg:px-14 xl:px-20">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
               <div className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left space-y-3">
-                <div className="w-44 h-44 rounded-3xl bg-sky-100 flex items-center justify-center">
+                <div className="w-44 h-44 rounded-xl bg-sky-100 flex items-center justify-center">
                   <Wallet className="w-24 h-24 text-[#0078cd]" />
                 </div>
                 <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-[#099cff] uppercase">
@@ -957,12 +951,7 @@ export const PublicPortal: React.FC<{
                         <span>Dilihat {(idx + 1) * 42} kali</span>
                       </div>
                     </div>
-                    <div
-                      className="px-3 py-1.5 rounded-xl text-white font-bold text-center leading-tight"
-                      style={{
-                        background: 'linear-gradient(163deg, #0078cd 0%, #3baefe 100%)',
-                      }}
-                    >
+                    <div className="px-3 py-1.5 rounded-lg bg-[#0069b6] text-white font-bold text-center leading-tight">
                       {new Date(n.publishedAt).toLocaleDateString('id-ID', {
                         day: '2-digit',
                         month: 'short',
@@ -999,7 +988,7 @@ export const PublicPortal: React.FC<{
             </div>
 
             {/* Full-Width Dark/Photo Wisata & Potensi Banner */}
-            <div className="relative rounded-3xl overflow-hidden bg-slate-900 text-white shadow-lg">
+            <div className="relative rounded-xl overflow-hidden bg-slate-900 text-white shadow-lg">
               <img
                 src="https://cdn.digitaldesa.com/statics/landing/homepage/media/bg/bg-landing-test.webp"
                 alt="Potensi & Wisata Desa"
@@ -1017,7 +1006,7 @@ export const PublicPortal: React.FC<{
                   <button
                     type="button"
                     onClick={() => navigateTab('peta')}
-                    className="mt-2 h-11 px-6 rounded-full bg-[#099cff] hover:bg-[#0078cd] text-white text-sm font-bold inline-flex items-center gap-2"
+                    className="mt-2 h-11 px-6 rounded-lg bg-[#099cff] hover:bg-[#0078cd] text-white text-sm font-bold inline-flex items-center gap-2 transition-colors"
                   >
                     <span>LIHAT POTENSI &amp; WISATA LEBIH BANYAK</span>
                     <ArrowRight className="w-4 h-4" />
@@ -1299,10 +1288,7 @@ export const PublicPortal: React.FC<{
                         key={s.label}
                         className="h-20 rounded-xl overflow-hidden shadow-xs bg-white grid grid-cols-12 items-center"
                       >
-                        <div
-                          className="col-span-5 h-full flex items-center justify-center text-white text-2xl font-extrabold font-mono"
-                          style={{ background: 'linear-gradient(163deg, #0078cd 0%, #3baefe 100%)' }}
-                        >
+                        <div className="col-span-5 h-full flex items-center justify-center bg-[#0069b6] text-white text-2xl font-extrabold font-mono">
                           {s.value}
                         </div>
                         <div className="col-span-7 px-5 text-lg font-extrabold text-slate-700">{s.label}</div>
@@ -1442,7 +1428,7 @@ export const PublicPortal: React.FC<{
                               </div>
                             </div>
                             <div className="text-right">
-                              <span className="px-3 py-1 rounded-full bg-sky-50 text-[#0069b6] font-bold">
+                              <span className="px-2.5 py-1 rounded-md bg-sky-50 text-[#0069b6] font-bold">
                                 {b.program} · {b.status}
                               </span>
                               <div className="text-xs font-mono text-slate-500 mt-1">
@@ -1969,54 +1955,6 @@ export const PublicPortal: React.FC<{
           )}
         </main>
       )}
-
-      {/* FLOATING QUICK WIDGETS (Kunjungan Website & Pengaduan seperti sugihwaras.digitaldesa.id) */}
-      <div className="fixed bottom-5 left-5 z-30">
-        {visitorOpen ? (
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-4 w-60 space-y-2 text-xs">
-            <div className="flex items-center justify-between font-extrabold text-slate-800">
-              <span>Kunjungan Website</span>
-              <button type="button" onClick={() => setVisitorOpen(false)} className="text-slate-400 hover:text-slate-700">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="divide-y divide-slate-100">
-              {[
-                ['Hari Ini', '48'],
-                ['Kemarin', '112'],
-                ['Minggu Ini', '645'],
-                ['Bulan Ini', '2.840'],
-                ['Total Kunjungan', '19.420'],
-              ].map(([k, v]) => (
-                <div key={k} className="py-1 flex justify-between">
-                  <span className="text-slate-500">{k}</span>
-                  <span className="font-mono font-bold text-[#0069b6]">{v}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setVisitorOpen(true)}
-            className="h-11 px-4 rounded-full bg-[#0069b6] hover:bg-[#005a9e] text-white text-xs font-bold shadow-lg inline-flex items-center gap-2"
-          >
-            <Eye className="w-4 h-4" />
-            <span>Kunjungan Website</span>
-          </button>
-        )}
-      </div>
-
-      <div className="fixed bottom-5 right-5 z-30">
-        <button
-          type="button"
-          onClick={() => navigateTab('pengaduan')}
-          className="h-11 px-5 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold shadow-lg inline-flex items-center gap-2"
-        >
-          <MessageSquareWarning className="w-4 h-4" />
-          <span>Pengaduan Warga</span>
-        </button>
-      </div>
 
       {/* FULL-WIDTH VILLAGE FOOTER (seperti sugihwaras.digitaldesa.id) */}
       <footer className="w-full bg-[#003865] text-white mt-auto">
