@@ -11,3 +11,11 @@ export function getAppPrefix(): string {
 export function sidesaAsset(filename: string): string {
   return `${getAppPrefix()}/assets/sidesa/${filename}`;
 }
+
+export function resolveAssetUrl(url?: string | null, fallback?: string): string {
+  if (!url) return fallback || '';
+  if (url.startsWith('/assets/')) {
+    return `${getAppPrefix()}${url}`;
+  }
+  return url;
+}

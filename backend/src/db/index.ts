@@ -42,6 +42,7 @@ export async function ensureDatabaseSchema(): Promise<void> {
       map_lng DOUBLE PRECISION DEFAULT 112.0125,
       logo_url TEXT,
       hero_image_url TEXT,
+      official_stats_json TEXT,
       status TEXT NOT NULL DEFAULT 'ACTIVE',
       is_claimed BOOLEAN NOT NULL DEFAULT TRUE,
       license_status TEXT NOT NULL DEFAULT 'ACTIVE',
@@ -66,6 +67,8 @@ export async function ensureDatabaseSchema(): Promise<void> {
 
     ALTER TABLE village_users ALTER COLUMN village_id DROP NOT NULL;
     ALTER TABLE villages ADD COLUMN IF NOT EXISTS is_claimed BOOLEAN NOT NULL DEFAULT TRUE;
+    ALTER TABLE villages ADD COLUMN IF NOT EXISTS official_stats_json TEXT;
+    ALTER TABLE subscription_invoices ADD COLUMN IF NOT EXISTS student_identity_json TEXT;
 
     CREATE TABLE IF NOT EXISTS officials (
       id TEXT PRIMARY KEY,
@@ -313,64 +316,91 @@ export async function ensureDatabaseSchema(): Promise<void> {
   `);
 
   await seedDefaultPlansAndSettings();
+  await seedDesaPohjejerIfMissing();
 }
 
 async function seedDefaultPlansAndSettings(): Promise<void> {
+  // Pastikan Paket Mahasiswa KKN selalu ada (termasuk pada database yang sudah terlanjur di-seed sebelumnya)
+  await db
+    .insert(schema.subscriptionPlans)
+    .values({
+      id: 'plan-kkn',
+      code: 'KKN',
+      name: 'Paket Mahasiswa KKN',
+      description:
+        'Harga khusus program Kuliah Kerja Nyata (KKN) mahasiswa aktif. Wajib melampirkan NIM, Perguruan Tinggi, dan verifikasi PDDikti.',
+      priceMonthly: 49000,
+      priceYearly: 490000,
+      featuresJson: JSON.stringify([
+        'Khusus Mahasiswa Aktif KKN (Wajib NIM & Cek PDDikti)',
+        'Website Resmi Profil Desa (/desa/nama-desa)',
+        'CMS Profil, Berita KKN, Potensi Desa & Galeri',
+        'Infografis Penduduk, APBDes & Direktori UMKM',
+        'Dapat dialihkan/diperpanjang ke Perangkat Desa setelah KKN',
+      ]),
+      active: true,
+      sortOrder: 0,
+    })
+    .onConflictDoNothing({ target: schema.subscriptionPlans.code });
+
   const [{ total }] = await db.select({ total: count() }).from(schema.subscriptionPlans);
-  if (total === 0) {
-    await db.insert(schema.subscriptionPlans).values([
-      {
-        id: 'plan-starter',
-        code: 'STARTER',
-        name: 'Paket Desa Mandiri',
-        description: 'Cocok untuk desa yang baru memulai digitalisasi website profil desa & pelayanan surat.',
-        priceMonthly: 150000,
-        priceYearly: 1500000,
-        featuresJson: JSON.stringify([
-          'Website Resmi Profil Desa (/desa/nama-desa)',
-          'CMS Berita, Pengumuman & Galeri Desa',
-          'Database Penduduk & Statistik Demografi',
-          'Pelayanan Pengajuan Surat Mandiri Warga',
-          'Transparansi Infografis APBDes & SOTK',
-        ]),
-        active: true,
-        sortOrder: 1,
-      },
-      {
-        id: 'plan-pro',
-        code: 'PRO',
-        name: 'Paket Desa Digital Pro',
-        description: 'Paket lengkap dengan PPID, Cek Bansos, PBB-P2, Lapak UMKM, WebGIS, dan Notifikasi WhatsApp.',
-        priceMonthly: 250000,
-        priceYearly: 2500000,
-        featuresJson: JSON.stringify([
-          'Semua fitur Paket Desa Mandiri',
-          'Notifikasi WhatsApp Otomatis Status Surat & Pengaduan',
-          'Portal PPID (UU KIP) & Pengaduan Warga Online',
-          'Katalog Beli Dari Desa (UMKM) & Peta WebGIS',
-          'Modul PBB-P2, Cek Bansos, IDM, SDGs & Stunting',
-        ]),
-        active: true,
-        sortOrder: 2,
-      },
-      {
-        id: 'plan-enterprise',
-        code: 'ENTERPRISE',
-        name: 'Paket Desa Prioritas / Custom Domain',
-        description: 'Dukungan penuh domain .desa.id, pendampingan migrasi data kependudukan, dan SLA prioritas.',
-        priceMonthly: 450000,
-        priceYearly: 4500000,
-        featuresJson: JSON.stringify([
-          'Semua fitur Paket Desa Digital Pro',
-          'Integrasi Custom Domain (.desa.id)',
-          'Pendampingan Migrasi Data Kependudukan & APBDes',
-          'Backup Harian Terjadwal & SLA Prioritas',
-          'Multi-Operator Perangkat Desa (Kades, Sekdes, Kaur)',
-        ]),
-        active: true,
-        sortOrder: 3,
-      },
-    ]);
+  if (total <= 1) {
+    await db
+      .insert(schema.subscriptionPlans)
+      .values([
+        {
+          id: 'plan-starter',
+          code: 'STARTER',
+          name: 'Paket Desa Mandiri',
+          description: 'Cocok untuk desa yang baru memulai digitalisasi website profil desa & pelayanan surat.',
+          priceMonthly: 150000,
+          priceYearly: 1500000,
+          featuresJson: JSON.stringify([
+            'Website Resmi Profil Desa (/desa/nama-desa)',
+            'CMS Berita, Pengumuman & Galeri Desa',
+            'Database Penduduk & Statistik Demografi',
+            'Pelayanan Pengajuan Surat Mandiri Warga',
+            'Transparansi Infografis APBDes & SOTK',
+          ]),
+          active: true,
+          sortOrder: 1,
+        },
+        {
+          id: 'plan-pro',
+          code: 'PRO',
+          name: 'Paket Desa Digital Pro',
+          description: 'Paket lengkap dengan PPID, Cek Bansos, PBB-P2, Lapak UMKM, WebGIS, dan Notifikasi WhatsApp.',
+          priceMonthly: 250000,
+          priceYearly: 2500000,
+          featuresJson: JSON.stringify([
+            'Semua fitur Paket Desa Mandiri',
+            'Notifikasi WhatsApp Otomatis Status Surat & Pengaduan',
+            'Portal PPID (UU KIP) & Pengaduan Warga Online',
+            'Katalog Beli Dari Desa (UMKM) & Peta WebGIS',
+            'Modul PBB-P2, Cek Bansos, IDM, SDGs & Stunting',
+          ]),
+          active: true,
+          sortOrder: 2,
+        },
+        {
+          id: 'plan-enterprise',
+          code: 'ENTERPRISE',
+          name: 'Paket Desa Prioritas / Custom Domain',
+          description: 'Dukungan penuh domain .desa.id, pendampingan migrasi data kependudukan, dan SLA prioritas.',
+          priceMonthly: 450000,
+          priceYearly: 4500000,
+          featuresJson: JSON.stringify([
+            'Semua fitur Paket Desa Digital Pro',
+            'Integrasi Custom Domain (.desa.id)',
+            'Pendampingan Migrasi Data Kependudukan & APBDes',
+            'Backup Harian Terjadwal & SLA Prioritas',
+            'Multi-Operator Perangkat Desa (Kades, Sekdes, Kaur)',
+          ]),
+          active: true,
+          sortOrder: 3,
+        },
+      ])
+      .onConflictDoNothing({ target: schema.subscriptionPlans.code });
   }
 
   const defaultSettings: Array<[string, string]> = [
@@ -398,6 +428,218 @@ export function calculateSubscriptionAmount(
   if (m === 24) return Math.round(plan.priceYearly * 2 * 0.9); // Diskon tambahan 10% untuk 2 tahun
   if (m === 6) return Math.round(plan.priceMonthly * 6 * 0.95); // Diskon 5% untuk 6 bulan
   return plan.priceMonthly * m;
+}
+
+export async function seedDesaPohjejerIfMissing(): Promise<void> {
+  const existing = await db
+    .select()
+    .from(schema.villages)
+    .where(eq(schema.villages.slug, 'pohjejer'))
+    .limit(1);
+  if (existing.length > 0) return;
+
+  const vid = 'village-pohjejer';
+  await db.insert(schema.villages).values({
+    id: vid,
+    name: 'Desa Pohjejer',
+    slug: 'pohjejer',
+    kodeDesa: null,
+    district: 'Gondang',
+    regency: 'Mojokerto',
+    province: 'Jawa Timur',
+    postalCode: '61372',
+    headName: 'Belum dikonfirmasi oleh Pemerintah Desa',
+    headTitle: 'Kepala Desa',
+    headGreeting:
+      'Selamat datang di portal informasi Desa Pohjejer, Kecamatan Gondang, Kabupaten Mojokerto, Jawa Timur. Data profil, kependudukan, dan potensi wilayah pada halaman ini merujuk pada Profil Kecamatan Gondang 2024 (data administrasi 2023) dan sedang dalam tahap penyempurnaan bersama Pemerintah Desa Pohjejer.',
+    vision: 'Dokumen visi resmi sedang dalam tahap konfirmasi Pemerintah Desa Pohjejer.',
+    mission:
+      '1. Penyajian informasi wilayah administratif (6 Dusun, 6 RW, 17 RT) dan kependudukan bersumber resmi.\n2. Penguatan potensi perdagangan, Pasar Desa, Pujasera, jasa, dan pertanian melalui BUMDes Pohjejer.\n3. Keterbukaan informasi publik dan pelayanan administrasi warga secara bertahap.',
+    history:
+      'Desa Pohjejer terletak di Kecamatan Gondang, Kabupaten Mojokerto, Provinsi Jawa Timur. Berdasarkan Profil Kecamatan Gondang 2024 (data 2023), wilayah administratif Desa Pohjejer terdiri dari 6 dusun, 6 RW, dan 17 RT dengan jumlah penduduk 4.050 jiwa (8,96% dari total penduduk Kecamatan Gondang). Naskah sejarah resmi desa menunggu verifikasi langsung dari Pemerintah Desa Pohjejer.',
+    address: 'Jl. Raya Pohjejer No.56, Pohjejer, Gondang, Mojokerto, Jawa Timur 61372',
+    phone: '',
+    email: '',
+    website: '',
+    areaKm2: 0,
+    boundariesJson: JSON.stringify({
+      north: 'Perlu konfirmasi peta desa',
+      east: 'Perlu konfirmasi peta desa',
+      south: 'Perlu konfirmasi peta desa',
+      west: 'Perlu konfirmasi peta desa',
+    }),
+    mapLat: -7.6194,
+    mapLng: 112.4822,
+    logoUrl: '/assets/sidesa/pohjejer-logo.jpg',
+    heroImageUrl: '/assets/sidesa/pohjejer-hero.jpg',
+    officialStatsJson: JSON.stringify({
+      source: 'Profil Kecamatan Gondang 2024 (Data Administrasi & Penduduk 2023)',
+      totalResidents: 4050,
+      dusunCount: 6,
+      rwCount: 6,
+      rtCount: 17,
+      districtSharePct: 8.96,
+      densityPerKm2: 2596.15,
+      sexRatio: 97,
+      religionBreakdown: [
+        { label: 'Islam', total: 3898 },
+        { label: 'Kristen Protestan', total: 56 },
+        { label: 'Katolik', total: 14 },
+        { label: 'Hindu', total: 0 },
+        { label: 'Buddha', total: 0 },
+        { label: 'Konghucu', total: 0 },
+      ],
+      religionTotalNote:
+        'Total rincian agama tercatat 3.968 jiwa (selisih 82 jiwa dari jumlah penduduk 4.050 jiwa pada tabel sumber 2023; menunggu klarifikasi sumber resmi).',
+    }),
+    status: 'ACTIVE',
+    isClaimed: false,
+    licenseStatus: 'UNCLAIMED',
+    licensePlan: 'Belum Diklaim',
+    licenseExpiresAt: null,
+  });
+
+  // Fasilitas publik & potensi wilayah berdasarkan Master Data Desa Pohjejer (dengan label status sumber yang jujur)
+  await db.insert(schema.villagePlaces).values([
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'POI',
+      title: 'Balai Desa Pohjejer',
+      category: 'Pemerintahan',
+      description: 'Kantor pelayanan pemerintahan dan administrasi Desa Pohjejer (alamat perlu konfirmasi kantor desa).',
+      address: 'Jl. Raya Pohjejer No.56, Pohjejer, Gondang, Mojokerto 61372',
+      lat: -7.6194,
+      lng: 112.4822,
+      imageUrl: '/assets/sidesa/pohjejer-hero.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'POTENSI',
+      title: 'Pasar Desa Pohjejer',
+      category: 'Perdagangan & BUMDes',
+      description:
+        'Pusat perdagangan desa dengan estimasi area ±5.023 m² dan ±230 unit kios pasar (data sementara pemetaan potensi; menunggu validasi terkini).',
+      address: 'Pohjejer, Gondang, Mojokerto 61372',
+      imageUrl: '/assets/sidesa/pohjejer-pasar.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'POTENSI',
+      title: 'Pujasera Pohjejer',
+      category: 'Kuliner & UMKM',
+      description:
+        'Area pujasera ±2.800 m² dengan sekitar 40 stan kuliner & UMKM (data historis pemberitaan 2023; perlu cek kondisi terkini).',
+      address: 'Pohjejer, Gondang, Mojokerto',
+      imageUrl: '/assets/sidesa/pohjejer-pasar.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'POI',
+      title: 'Subterminal Pohjejer',
+      category: 'Transportasi & Jasa',
+      description:
+        'Kawasan subterminal desa ±2.500 m² dan ±218 kios terminal (data sementara pemetaan potensi; perlu validasi).',
+      address: 'Pohjejer, Gondang, Mojokerto',
+      imageUrl: '/assets/sidesa/pohjejer-hero.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'POI',
+      title: 'SDN Pohjejer',
+      category: 'Pendidikan',
+      description: 'Sekolah Dasar Negeri Pohjejer (sumber: Dinas Pendidikan Kabupaten Mojokerto; cocokkan dengan data terbaru).',
+      address: 'Jl. Komando Hayamwuruk No.25, Pohjejer, Gondang',
+      imageUrl: '/assets/sidesa/pohjejer-hero.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'POTENSI',
+      title: 'Lahan Pertanian & Sungai Pikatan',
+      category: 'Pertanian & Sumber Daya',
+      description:
+        'Lahan pertanian ±53 ha dengan komoditas utama padi, jagung, dan tebu serta aliran Sungai Pikatan ±1,5 km (data sementara; perlu validasi).',
+      address: 'Wilayah Pertanian Desa Pohjejer, Gondang',
+      imageUrl: '/assets/sidesa/pohjejer-pertanian.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'POI',
+      title: 'Polindes & 6 Unit Posyandu',
+      category: 'Kesehatan',
+      description:
+        'Tercatat 1 unit Polindes dan 6 unit Posyandu pada dokumen pemetaan potensi (perlu validasi status, nama, dan alamat resmi).',
+      address: 'Desa Pohjejer, Gondang, Mojokerto',
+      imageUrl: '/assets/sidesa/pohjejer-hero.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'GALERI',
+      title: 'Suasana Balai Desa & Jalan Utama Desa Pohjejer',
+      category: 'Profil Wilayah',
+      description: 'Dokumentasi visual kawasan Desa Pohjejer, Kecamatan Gondang, Kabupaten Mojokerto.',
+      imageUrl: '/assets/sidesa/pohjejer-hero.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'GALERI',
+      title: 'Sentra Pasar Desa & Pujasera Pohjejer',
+      category: 'Ekonomi Desa',
+      description: 'Ilustrasi kawasan perdagangan pasar desa dan pujasera Pohjejer.',
+      imageUrl: '/assets/sidesa/pohjejer-pasar.jpg',
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      kind: 'GALERI',
+      title: 'Lahan Pertanian Padi, Jagung, Tebu & Sungai Pikatan',
+      category: 'Potensi Pertanian',
+      description: 'Kawasan pertanian produktif dan aliran Sungai Pikatan di Desa Pohjejer.',
+      imageUrl: '/assets/sidesa/pohjejer-pertanian.jpg',
+    },
+  ]);
+
+  // Artikel bersumber jelas (tidak mengarang data 2026)
+  await db.insert(schema.newsArticles).values([
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      slug: 'profil-wilayah-dan-kependudukan-desa-pohjejer-data-2023',
+      title: 'Profil Wilayah & Kependudukan Desa Pohjejer (Sumber: Profil Kecamatan Gondang 2024)',
+      category: 'Data Wilayah',
+      excerpt:
+        'Berdasarkan Profil Kecamatan Gondang 2024 (data 2023), Desa Pohjejer terdiri dari 6 dusun, 6 RW, dan 17 RT dengan jumlah penduduk 4.050 jiwa.',
+      content:
+        'Berdasarkan dokumen Profil Kecamatan Gondang 2024 yang merujuk pada data administrasi dan kependudukan tahun 2023, Desa Pohjejer di Kecamatan Gondang, Kabupaten Mojokerto, Provinsi Jawa Timur memiliki wilayah administratif yang terdiri atas 6 dusun, 6 RW, dan 17 RT.\n\nJumlah penduduk tercatat sebanyak 4.050 jiwa atau sekitar 8,96% dari total penduduk Kecamatan Gondang, dengan kepadatan penduduk 2.596,15 jiwa/km² dan rasio jenis kelamin (sex ratio) sebesar 97.\n\nRincian penduduk menurut agama pada data 2023 mencatat 3.898 jiwa beragama Islam, 56 jiwa Kristen Protestan, dan 14 jiwa Katolik (total rincian 3.968 jiwa; selisih 82 jiwa dari angka total penduduk 4.050 jiwa menunggu klarifikasi resmi Pemerintah Desa / Dukcapil).',
+      coverUrl: '/assets/sidesa/pohjejer-hero.jpg',
+      authorName: 'Tim Persiapan Data Desa Pohjejer',
+      views: 1,
+    },
+    {
+      id: crypto.randomUUID(),
+      villageId: vid,
+      slug: 'arah-pengembangan-bumdes-pasar-dan-pujasera-desa-pohjejer',
+      title: 'Penguatan BUMDes serta Potensi Perdagangan, Pujasera, dan Pertanian Desa Pohjejer',
+      category: 'Potensi & BUMDes',
+      excerpt:
+        'Publikasi akademik (Jurnal Abdikarya 2025) dan pemberitaan daerah mencatat potensi strategis Desa Pohjejer pada sektor pasar desa, pujasera, jasa, dan pertanian.',
+      content:
+        'Desa Pohjejer memiliki posisi strategis di Kecamatan Gondang, Kabupaten Mojokerto dengan keberadaan fasilitas Pasar Desa, Subterminal, Pujasera, serta hamparan lahan pertanian komoditas padi, jagung, dan tebu yang dialiri Sungai Pikatan.\n\nPublikasi akademik Jurnal Abdikarya (2025) mengenai penguatan BUMDes Pohjejer menyoroti pengembangan sektor wisata, perdagangan, jasa, dan pertanian. Catatan penting: angka target PADes maupun rincian luas pasar/kios dari dokumen pemetaan potensi berstatus data referensi/sementara dan bukan laporan realisasi APBDes tahun 2026 sebelum diverifikasi langsung oleh Pemerintah Desa Pohjejer.',
+      coverUrl: '/assets/sidesa/pohjejer-pasar.jpg',
+      authorName: 'Tim Persiapan Data Desa Pohjejer',
+      views: 1,
+    },
+  ]);
+
+  console.log('[SIDesa DB] Seeded Desa Pohjejer (Kec. Gondang, Kab. Mojokerto) — status UNCLAIMED & PUBLIC');
 }
 
 export async function getDefaultVillage() {

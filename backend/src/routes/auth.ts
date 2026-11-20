@@ -11,6 +11,7 @@ import {
   villageUsers,
 } from '../db/schema';
 import { slugifyTitle } from '../lib/helpers';
+import { verifyStudentPddikti } from '../services/pddikti.service';
 
 export const SESSION_COOKIE = 'sidesa_session';
 
@@ -221,6 +222,10 @@ export default async function authRouter(fastify: FastifyInstance) {
       planCode?: string;
       durationMonths?: number;
       paymentMethod?: string;
+      studentNim?: string;
+      studentName?: string;
+      studentUniversity?: string;
+      studentProgram?: string;
     };
   }>('/register-village', async (req, reply) => {
     const villageName = String(req.body?.villageName || '').trim();
@@ -232,6 +237,32 @@ export default async function authRouter(fastify: FastifyInstance) {
       return reply.status(400).send({
         success: false,
         error: 'Nama desa, nama perangkat admin, email, dan kata sandi (minimal 6 karakter) wajib diisi.',
+      });
+    }
+
+    const planCode = String(req.body?.planCode || 'PRO').toUpperCase();
+    let studentIdentityJson: string | null = null;
+    if (planCode === 'KKN') {
+      const nim = String(req.body?.studentNim || '').trim();
+      const studentName = String(req.body?.studentName || name).trim();
+      const university = String(req.body?.studentUniversity || '').trim();
+      const studyProgram = String(req.body?.studentProgram || '').trim();
+      if (!nim || !studentName || !university) {
+        return reply.status(400).send({
+          success: false,
+          error: 'Paket Mahasiswa KKN wajib menyertakan NIM, Nama Mahasiswa, dan Perguruan Tinggi.',
+        });
+      }
+      const verification = await verifyStudentPddikti({ nim, studentName, university, studyProgram });
+      if (verification.status === 'NON_AKTIF') {
+        return reply.status(400).send({ success: false, error: verification.message });
+      }
+      studentIdentityJson = JSON.stringify({
+        nim,
+        studentName,
+        university,
+        studyProgram,
+        verification,
       });
     }
 
@@ -247,7 +278,6 @@ export default async function authRouter(fastify: FastifyInstance) {
       finalSlug = `${baseSlug}-${Date.now().toString(36).slice(-4)}`;
     }
 
-    const planCode = String(req.body?.planCode || 'PRO').toUpperCase();
     const durationMonths = [1, 6, 12, 24].includes(Number(req.body?.durationMonths))
       ? Number(req.body?.durationMonths)
       : 12;
@@ -340,6 +370,7 @@ export default async function authRouter(fastify: FastifyInstance) {
         amount: totalAmount,
         status: 'UNPAID',
         paymentMethod,
+        studentIdentityJson,
       })
       .returning();
 
@@ -368,6 +399,10 @@ export default async function authRouter(fastify: FastifyInstance) {
       planCode?: string;
       durationMonths?: number;
       paymentMethod?: string;
+      studentNim?: string;
+      studentName?: string;
+      studentUniversity?: string;
+      studentProgram?: string;
     };
   }>('/claim-village', async (req, reply) => {
     const villageSlug = String(req.body?.villageSlug || '').trim();
@@ -379,6 +414,32 @@ export default async function authRouter(fastify: FastifyInstance) {
       return reply.status(400).send({
         success: false,
         error: 'Desa, nama perangkat desa, email, dan kata sandi (minimal 6 karakter) wajib diisi.',
+      });
+    }
+
+    const planCode = String(req.body?.planCode || 'PRO').toUpperCase();
+    let studentIdentityJson: string | null = null;
+    if (planCode === 'KKN') {
+      const nim = String(req.body?.studentNim || '').trim();
+      const studentName = String(req.body?.studentName || name).trim();
+      const university = String(req.body?.studentUniversity || '').trim();
+      const studyProgram = String(req.body?.studentProgram || '').trim();
+      if (!nim || !studentName || !university) {
+        return reply.status(400).send({
+          success: false,
+          error: 'Paket Mahasiswa KKN wajib menyertakan NIM, Nama Mahasiswa, dan Perguruan Tinggi.',
+        });
+      }
+      const verification = await verifyStudentPddikti({ nim, studentName, university, studyProgram });
+      if (verification.status === 'NON_AKTIF') {
+        return reply.status(400).send({ success: false, error: verification.message });
+      }
+      studentIdentityJson = JSON.stringify({
+        nim,
+        studentName,
+        university,
+        studyProgram,
+        verification,
       });
     }
 
@@ -398,7 +459,6 @@ export default async function authRouter(fastify: FastifyInstance) {
       return reply.status(409).send({ success: false, error: 'Email tersebut sudah terdaftar. Silakan gunakan email lain.' });
     }
 
-    const planCode = String(req.body?.planCode || 'PRO').toUpperCase();
     const durationMonths = [1, 6, 12, 24].includes(Number(req.body?.durationMonths))
       ? Number(req.body?.durationMonths)
       : 12;
@@ -452,6 +512,7 @@ export default async function authRouter(fastify: FastifyInstance) {
         amount: totalAmount,
         status: 'UNPAID',
         paymentMethod,
+        studentIdentityJson,
       })
       .returning();
 

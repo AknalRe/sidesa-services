@@ -26,7 +26,7 @@ import {
   X,
 } from 'lucide-react';
 import { api } from '../services/api';
-import { sidesaAsset } from '../lib/assets';
+import { resolveAssetUrl, sidesaAsset } from '../lib/assets';
 
 type PublicTab =
   | 'beranda'
@@ -265,7 +265,13 @@ export const PublicPortal: React.FC<{
     planCode: 'PRO',
     durationMonths: 12,
     paymentMethod: 'TRANSFER_BANK',
+    studentNim: '',
+    studentName: '',
+    studentUniversity: '',
+    studentProgram: '',
   });
+  const [claimStudentCheck, setClaimStudentCheck] = useState<any>(null);
+  const [claimStudentChecking, setClaimStudentChecking] = useState(false);
   const [claimSubmitting, setClaimSubmitting] = useState(false);
   const [claimErr, setClaimErr] = useState<string | null>(null);
 
@@ -467,13 +473,21 @@ export const PublicPortal: React.FC<{
   }
 
   const { village, officials, demographics, apbdes, indicator, latestNews, umkm, places, letterTypes } = data;
-  const villageLogo = village.logoUrl || DEFAULT_VILLAGE_CREST;
+  const villageLogo = resolveAssetUrl(village.logoUrl, DEFAULT_VILLAGE_CREST);
+  const mapLat = Number(village.mapLat || -7.6194);
+  const mapLng = Number(village.mapLng || 112.4822);
+  const mapEmbedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${(mapLng - 0.02).toFixed(4)}%2C${(
+    mapLat - 0.015
+  ).toFixed(4)}%2C${(mapLng + 0.02).toFixed(4)}%2C${(mapLat + 0.015).toFixed(4)}&layer=mapnik&marker=${mapLat.toFixed(
+    4
+  )}%2C${mapLng.toFixed(4)}`;
+  const officialStats = village.officialStats || null;
   const dynamicSlides = [
     {
       eyebrow: 'Selamat Datang',
       title: `Website Resmi ${village.name}`,
       subtitle: `Sumber informasi terbaru tentang pemerintahan, pelayanan warga, transparansi anggaran, dan potensi ${village.name}, Kecamatan ${village.district}, Kabupaten ${village.regency}.`,
-      image: village.heroImageUrl || HERO_SLIDES[0].image,
+      image: resolveAssetUrl(village.heroImageUrl, HERO_SLIDES[0].image),
       ctaLabel: 'Jelajahi Profil Desa',
       targetTab: 'profil' as PublicTab,
     },
@@ -482,7 +496,7 @@ export const PublicPortal: React.FC<{
           eyebrow: n.category || 'Berita Desa',
           title: n.title,
           subtitle: n.excerpt || String(n.content || '').slice(0, 180),
-          image: n.coverUrl || NEWS_IMAGES[idx % NEWS_IMAGES.length],
+          image: resolveAssetUrl(n.coverUrl, NEWS_IMAGES[idx % NEWS_IMAGES.length]),
           ctaLabel: 'Baca Artikel Berita',
           targetTab: 'berita' as PublicTab,
         }))
@@ -498,7 +512,7 @@ export const PublicPortal: React.FC<{
       ? dynamicGallery.map((g: any, i: number) => ({
           title: g.title,
           date: g.category || 'Dokumentasi Desa',
-          image: g.imageUrl || GALLERY_PHOTOS[i % GALLERY_PHOTOS.length].image,
+          image: resolveAssetUrl(g.imageUrl, GALLERY_PHOTOS[i % GALLERY_PHOTOS.length].image),
         }))
       : GALLERY_PHOTOS;
   const missionList = String(village.mission || '')
@@ -701,6 +715,81 @@ export const PublicPortal: React.FC<{
                   </span>
                 </div>
               </div>
+
+              {claimForm.planCode === 'KKN' && (
+                <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-extrabold text-emerald-950">Identitas Mahasiswa KKN (Wajib PDDikti)</span>
+                    <button
+                      type="button"
+                      disabled={claimStudentChecking}
+                      onClick={async () => {
+                        setClaimStudentChecking(true);
+                        try {
+                          const res = await api.verifyStudent({
+                            nim: claimForm.studentNim,
+                            studentName: claimForm.studentName || claimForm.name,
+                            university: claimForm.studentUniversity,
+                            studyProgram: claimForm.studentProgram,
+                          });
+                          setClaimStudentCheck(res);
+                        } finally {
+                          setClaimStudentChecking(false);
+                        }
+                      }}
+                      className="px-2.5 py-1 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-bold"
+                    >
+                      {claimStudentChecking ? 'Mengecek...' : 'Cek Status Aktif PDDikti'}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      required
+                      placeholder="NIM Mahasiswa *"
+                      value={claimForm.studentNim}
+                      onChange={(e) => setClaimForm({ ...claimForm, studentNim: e.target.value })}
+                      className="h-9 px-3 rounded-lg border border-emerald-300 bg-white font-mono"
+                    />
+                    <input
+                      type="text"
+                      required
+                      placeholder="Nama Sesuai KTM / PDDikti *"
+                      value={claimForm.studentName}
+                      onChange={(e) => setClaimForm({ ...claimForm, studentName: e.target.value })}
+                      className="h-9 px-3 rounded-lg border border-emerald-300 bg-white"
+                    />
+                    <input
+                      type="text"
+                      required
+                      placeholder="Perguruan Tinggi / Universitas *"
+                      value={claimForm.studentUniversity}
+                      onChange={(e) => setClaimForm({ ...claimForm, studentUniversity: e.target.value })}
+                      className="h-9 px-3 rounded-lg border border-emerald-300 bg-white"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Program Studi"
+                      value={claimForm.studentProgram}
+                      onChange={(e) => setClaimForm({ ...claimForm, studentProgram: e.target.value })}
+                      className="h-9 px-3 rounded-lg border border-emerald-300 bg-white"
+                    />
+                  </div>
+                  {claimStudentCheck && (
+                    <div
+                      className={`p-2 rounded-lg text-[11px] font-semibold ${
+                        claimStudentCheck.status === 'AKTIF'
+                          ? 'bg-emerald-100 text-emerald-900'
+                          : claimStudentCheck.status === 'NON_AKTIF'
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-amber-100 text-amber-900'
+                      }`}
+                    >
+                      [{claimStudentCheck.status}] {claimStudentCheck.message}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -935,7 +1024,7 @@ export const PublicPortal: React.FC<{
             <div className="w-full h-[420px] sm:h-[500px] rounded-2xl overflow-hidden shadow-md bg-white relative">
               <iframe
                 title={`Peta Wilayah ${village.name}`}
-                src="https://www.openstreetmap.org/export/embed.html?bbox=112.0020%2C-7.2160%2C112.0420%2C-7.1860&amp;layer=mapnik&amp;marker=-7.2010%2C112.0220"
+                src={mapEmbedUrl}
                 className="w-full h-full border-0"
                 loading="lazy"
               />
@@ -1002,14 +1091,24 @@ export const PublicPortal: React.FC<{
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                { label: 'Penduduk', value: demographics.totalResidents },
-                { label: 'Laki-Laki', value: demographics.male },
-                { label: 'Kepala Keluarga', value: demographics.totalHouseholds },
-                { label: 'Perempuan', value: demographics.female },
-                { label: 'Wajib Pilih', value: demographics.voters },
-                { label: 'Wilayah Dusun', value: (demographics.byDusun || []).length || 3 },
-              ].map((stat) => (
+              {(demographics.totalResidents === 0 && officialStats
+                ? [
+                    { label: 'Penduduk (Data 2023)', value: officialStats.totalResidents },
+                    { label: 'Wilayah Dusun', value: officialStats.dusunCount },
+                    { label: 'Rukun Warga (RW)', value: officialStats.rwCount },
+                    { label: 'Rukun Tetangga (RT)', value: officialStats.rtCount },
+                    { label: 'Sex Ratio (Data 2023)', value: officialStats.sexRatio },
+                    { label: 'Islam (Rincian Agama 2023)', value: officialStats.religionBreakdown?.[0]?.total || 0 },
+                  ]
+                : [
+                    { label: 'Penduduk', value: demographics.totalResidents },
+                    { label: 'Laki-Laki', value: demographics.male },
+                    { label: 'Kepala Keluarga', value: demographics.totalHouseholds },
+                    { label: 'Perempuan', value: demographics.female },
+                    { label: 'Wajib Pilih', value: demographics.voters },
+                    { label: 'Wilayah Dusun', value: (demographics.byDusun || []).length || 3 },
+                  ]
+              ).map((stat) => (
                 <div
                   key={stat.label}
                   className="h-20 sm:h-24 rounded-xl overflow-hidden shadow-xs bg-white grid grid-cols-12 items-center"
@@ -1129,7 +1228,7 @@ export const PublicPortal: React.FC<{
                   <div>
                     <div className="relative h-56 w-full overflow-hidden bg-slate-200">
                       <img
-                        src={n.coverUrl || NEWS_IMAGES[idx % NEWS_IMAGES.length]}
+                        src={resolveAssetUrl(n.coverUrl, NEWS_IMAGES[idx % NEWS_IMAGES.length])}
                         alt={n.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
@@ -1222,7 +1321,7 @@ export const PublicPortal: React.FC<{
                       className="bg-white/10 backdrop-blur-xs border border-white/20 rounded-2xl overflow-hidden flex flex-col justify-between"
                     >
                       <img
-                        src={NEWS_IMAGES[(idx + 2) % NEWS_IMAGES.length]}
+                        src={resolveAssetUrl(pl.imageUrl, NEWS_IMAGES[(idx + 2) % NEWS_IMAGES.length])}
                         alt={pl.title}
                         className="h-40 w-full object-cover"
                       />

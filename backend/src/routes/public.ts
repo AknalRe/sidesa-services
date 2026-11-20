@@ -26,6 +26,7 @@ import {
   summarizeApbdes,
 } from '../lib/helpers';
 import { buildLetterStatusMessage, sendWahaNotification } from '../services/wahaNotify.service';
+import { verifyStudentPddikti } from '../services/pddikti.service';
 
 async function resolvePublicVillage(slug?: string) {
   if (slug) {
@@ -100,6 +101,19 @@ export default async function publicRouter(fastify: FastifyInstance) {
     };
   });
 
+  // Verifikasi status mahasiswa aktif PDDikti untuk Paket Mahasiswa KKN
+  fastify.post<{
+    Body: { nim: string; studentName: string; university: string; studyProgram?: string };
+  }>('/verify-student', async (req) => {
+    const result = await verifyStudentPddikti({
+      nim: req.body?.nim || '',
+      studentName: req.body?.studentName || '',
+      university: req.body?.university || '',
+      studyProgram: req.body?.studyProgram || '',
+    });
+    return { success: true, data: result };
+  });
+
   // Complete public village portal bootstrap (Beranda + Profil + SOTK + Ringkasan)
   fastify.get<{ Querystring: { village?: string } }>('/village', async (req, reply) => {
     const village = await resolvePublicVillage(req.query.village);
@@ -135,10 +149,19 @@ export default async function publicRouter(fastify: FastifyInstance) {
       }
     }
 
+    let officialStats: any = null;
+    if (village.officialStatsJson) {
+      try {
+        officialStats = JSON.parse(village.officialStatsJson);
+      } catch {
+        // ignore
+      }
+    }
+
     return {
       success: true,
       data: {
-        village: { ...village, boundaries },
+        village: { ...village, boundaries, officialStats },
         officials: officialList,
         demographics: aggregateDemographics(residentList),
         apbdes: summarizeApbdes(apbdesList),

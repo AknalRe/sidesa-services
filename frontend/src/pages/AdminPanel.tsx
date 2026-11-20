@@ -87,7 +87,13 @@ export const AdminPanel: React.FC<{
     planCode: 'PRO',
     durationMonths: 12,
     paymentMethod: 'TRANSFER_BANK',
+    studentNim: '',
+    studentName: '',
+    studentUniversity: '',
+    studentProgram: '',
   });
+  const [studentCheck, setStudentCheck] = useState<any>(null);
+  const [studentChecking, setStudentChecking] = useState(false);
   const [authErr, setAuthErr] = useState<string | null>(null);
   const [managedVillage, setManagedVillage] = useState<any | null>(null);
   const [billingData, setBillingData] = useState<any>(null);
@@ -483,6 +489,83 @@ export const AdminPanel: React.FC<{
                     </span>
                   </div>
                 </div>
+
+                {authForm.planCode === 'KKN' && (
+                  <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-extrabold text-emerald-950">
+                        Identitas Mahasiswa KKN (Wajib Validasi PDDikti)
+                      </span>
+                      <button
+                        type="button"
+                        disabled={studentChecking}
+                        onClick={async () => {
+                          setStudentChecking(true);
+                          try {
+                            const res = await api.verifyStudent({
+                              nim: authForm.studentNim,
+                              studentName: authForm.studentName || authForm.name,
+                              university: authForm.studentUniversity,
+                              studyProgram: authForm.studentProgram,
+                            });
+                            setStudentCheck(res);
+                          } finally {
+                            setStudentChecking(false);
+                          }
+                        }}
+                        className="px-2.5 py-1 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-bold"
+                      >
+                        {studentChecking ? 'Mengecek...' : 'Cek Status Aktif PDDikti'}
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        required
+                        placeholder="NIM Mahasiswa *"
+                        value={authForm.studentNim}
+                        onChange={(e) => setAuthForm({ ...authForm, studentNim: e.target.value })}
+                        className="h-9 px-3 rounded-lg border border-emerald-300 bg-white font-mono text-xs"
+                      />
+                      <input
+                        type="text"
+                        required
+                        placeholder="Nama Sesuai KTM / PDDikti *"
+                        value={authForm.studentName}
+                        onChange={(e) => setAuthForm({ ...authForm, studentName: e.target.value })}
+                        className="h-9 px-3 rounded-lg border border-emerald-300 bg-white text-xs"
+                      />
+                      <input
+                        type="text"
+                        required
+                        placeholder="Nama Perguruan Tinggi / Universitas *"
+                        value={authForm.studentUniversity}
+                        onChange={(e) => setAuthForm({ ...authForm, studentUniversity: e.target.value })}
+                        className="h-9 px-3 rounded-lg border border-emerald-300 bg-white text-xs"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Program Studi (mis. Informatika)"
+                        value={authForm.studentProgram}
+                        onChange={(e) => setAuthForm({ ...authForm, studentProgram: e.target.value })}
+                        className="h-9 px-3 rounded-lg border border-emerald-300 bg-white text-xs"
+                      />
+                    </div>
+                    {studentCheck && (
+                      <div
+                        className={`p-2.5 rounded-lg text-[11px] font-semibold ${
+                          studentCheck.status === 'AKTIF'
+                            ? 'bg-emerald-100 text-emerald-900'
+                            : studentCheck.status === 'NON_AKTIF'
+                              ? 'bg-rose-100 text-rose-800'
+                              : 'bg-amber-100 text-amber-900'
+                        }`}
+                      >
+                        [{studentCheck.status}] {studentCheck.message}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>

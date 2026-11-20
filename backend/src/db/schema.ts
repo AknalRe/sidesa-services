@@ -36,6 +36,7 @@ export const villages = pgTable('villages', {
   mapLng: doublePrecision('map_lng').default(112.0125),
   logoUrl: text('logo_url'),
   heroImageUrl: text('hero_image_url'),
+  officialStatsJson: text('official_stats_json'),
   status: text('status').notNull().default('ACTIVE'),
   isClaimed: boolean('is_claimed').notNull().default(true),
   licenseStatus: text('license_status').notNull().default('ACTIVE'),
@@ -331,6 +332,7 @@ export const subscriptionInvoices = pgTable('subscription_invoices', {
   paymentMethod: text('payment_method').notNull().default('TRANSFER_BANK'), // TRANSFER_BANK | QRIS | VIRTUAL_ACCOUNT
   paymentReference: text('payment_reference'),
   paymentNote: text('payment_note'),
+  studentIdentityJson: text('student_identity_json'),
   paidAt: timestamp('paid_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });

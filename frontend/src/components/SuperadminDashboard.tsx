@@ -519,10 +519,31 @@ export const SuperadminDashboard: React.FC<{
                           <div className="text-slate-500">{inv.durationMonths} Bulan</div>
                         </td>
                         <td className="py-3 px-4 font-mono font-bold text-[#0069b6]">{formatRp(inv.amount)}</td>
-                        <td className="py-3 px-4 text-[11px] text-slate-600">
+                        <td className="py-3 px-4 text-[11px] text-slate-600 space-y-1">
                           <div>{inv.paymentMethod}</div>
                           {inv.paymentReference && <div className="font-mono">Ref: {inv.paymentReference}</div>}
                           {inv.paymentNote && <div className="text-slate-500">{inv.paymentNote}</div>}
+                          {inv.studentIdentityJson &&
+                            (() => {
+                              try {
+                                const st = JSON.parse(inv.studentIdentityJson);
+                                return (
+                                  <div className="p-2 rounded bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-0.5">
+                                    <div className="font-bold">
+                                      KKN: {st.studentName} ({st.nim})
+                                    </div>
+                                    <div>
+                                      {st.university} {st.studyProgram ? `· ${st.studyProgram}` : ''}
+                                    </div>
+                                    <div className="font-mono text-[10px]">
+                                      PDDikti: {st.verification?.status || 'MANUAL_REVIEW'}
+                                    </div>
+                                  </div>
+                                );
+                              } catch {
+                                return null;
+                              }
+                            })()}
                         </td>
                         <td className="py-3 px-4">
                           <span

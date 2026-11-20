@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { ReneoSidesaLogo } from '../components/ReneoSidesaLogo';
 import { api } from '../services/api';
-import { sidesaAsset } from '../lib/assets';
+import { resolveAssetUrl, sidesaAsset } from '../lib/assets';
 
 interface LandingPageProps {
   onOpenVillagePortal: (initialTab?: string, slug?: string) => void;
@@ -223,7 +223,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
   const portfolioList = registeredVillages.map((v) => ({
     slug: v.slug,
     name: v.name,
-    logoUrl: v.logoUrl || DEFAULT_CREST,
+    logoUrl: resolveAssetUrl(v.logoUrl, DEFAULT_CREST),
   }));
 
   return (
@@ -583,22 +583,32 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {plans.map((p) => {
                 const isPro = p.code === 'PRO';
+                const isKkn = p.code === 'KKN';
                 const price = billingPeriod === 'yearly' ? p.priceYearly : p.priceMonthly;
                 return (
                   <div
                     key={p.id}
-                    className={`rounded-xl p-6 flex flex-col justify-between space-y-6 bg-white border ${
-                      isPro ? 'border-[#0069b6] ring-1 ring-[#0069b6]' : 'border-slate-200'
+                    className={`rounded-xl p-5 flex flex-col justify-between space-y-5 bg-white border ${
+                      isPro
+                        ? 'border-[#0069b6] ring-1 ring-[#0069b6]'
+                        : isKkn
+                          ? 'border-emerald-500 ring-1 ring-emerald-500'
+                          : 'border-slate-200'
                     }`}
                   >
-                    <div className="space-y-4">
+                    <div className="space-y-3.5">
                       <div className="flex items-center justify-between gap-2">
-                        <h3 className="text-lg font-extrabold text-slate-900">{p.name}</h3>
+                        <h3 className="text-base font-extrabold text-slate-900">{p.name}</h3>
+                        {isKkn && (
+                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[11px] font-bold shrink-0">
+                            Hemat KKN
+                          </span>
+                        )}
                         {isPro && (
-                          <span className="px-2 py-0.5 rounded bg-sky-50 text-[#0069b6] text-[11px] font-bold">
+                          <span className="px-2 py-0.5 rounded bg-sky-50 text-[#0069b6] text-[11px] font-bold shrink-0">
                             Populer
                           </span>
                         )}

@@ -17,6 +17,12 @@ export const api = {
   // Public Village Portal (supports multi-village slug e.g. /desa/nama-desa)
   getPublicVillages: async () => (await client.get('/public/villages')).data.data,
   getPublicPlans: async () => (await client.get('/public/plans')).data.data,
+  verifyStudent: async (payload: {
+    nim: string;
+    studentName: string;
+    university: string;
+    studyProgram?: string;
+  }) => (await client.post('/public/verify-student', payload)).data.data,
   getPublicVillage: async (villageSlug?: string) =>
     (await client.get('/public/village', { params: villageSlug ? { village: villageSlug } : undefined })).data.data,
   getPublicInfografis: async (year?: number, villageSlug?: string) =>
@@ -79,6 +85,10 @@ export const api = {
     planCode?: string;
     durationMonths?: number;
     paymentMethod?: string;
+    studentNim?: string;
+    studentName?: string;
+    studentUniversity?: string;
+    studentProgram?: string;
   }) => (await client.post('/auth/register-village', payload)).data.data,
   claimVillage: async (payload: {
     villageSlug: string;
@@ -90,6 +100,10 @@ export const api = {
     planCode?: string;
     durationMonths?: number;
     paymentMethod?: string;
+    studentNim?: string;
+    studentName?: string;
+    studentUniversity?: string;
+    studentProgram?: string;
   }) => (await client.post('/auth/claim-village', payload)).data.data,
   login: async (payload: { email: string; password: string }) =>
     (await client.post('/auth/login', payload)).data.data,
