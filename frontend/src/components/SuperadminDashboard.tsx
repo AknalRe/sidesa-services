@@ -8,10 +8,12 @@ import {
   Globe,
   LayoutDashboard,
   LogOut,
+  Menu,
   Plus,
   Settings,
   ShieldCheck,
   Trash2,
+  X,
   XCircle,
 } from 'lucide-react';
 import { api } from '../services/api';
@@ -80,6 +82,8 @@ export const SuperadminDashboard: React.FC<{
     void loadAll();
   }, []);
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const flash = (msg: string) => {
     setSavingMsg(msg);
     window.setTimeout(() => setSavingMsg(null), 3500);
@@ -87,20 +91,30 @@ export const SuperadminDashboard: React.FC<{
 
   return (
     <div className="min-h-screen bg-[#F6F6F6] text-slate-900 flex flex-col lg:flex-row">
-      {/* Sidebar Superadmin Platform */}
-      <aside className="w-full lg:w-64 bg-[#0B2A57] text-white flex flex-col shrink-0">
-        <div className="p-4 border-b border-white/10 flex items-center gap-3">
-          <ReneoSidesaLogo className="w-9 h-9 shrink-0" />
-          <div className="min-w-0">
-            <div className="text-sm font-extrabold truncate">Reneo SIDesa</div>
-            <div className="text-[11px] text-emerald-300 font-semibold flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Superadmin Platform</span>
+      {/* Sidebar Superadmin Platform (Compact Sticky Top Bar on Mobile) */}
+      <aside className="sticky top-0 z-30 lg:static w-full lg:w-64 bg-[#0B2A57] text-white flex flex-col shrink-0 shadow-sm lg:shadow-none">
+        <div className="px-3.5 py-2.5 lg:p-4 border-b border-white/10 flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <ReneoSidesaLogo className="w-8 h-8 lg:w-9 lg:h-9 shrink-0" />
+            <div className="min-w-0">
+              <div className="text-sm font-extrabold truncate">Reneo SIDesa</div>
+              <div className="text-[11px] text-emerald-300 font-semibold flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Superadmin Platform</span>
+              </div>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((v) => !v)}
+            aria-label="Menu Superadmin"
+            className="lg:hidden h-9 w-9 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center shrink-0"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
 
-        <nav className="p-3 space-y-1 flex-1 text-xs font-bold">
+        <nav className="px-2.5 py-2 lg:p-3 flex lg:flex-col gap-1 overflow-x-auto scrollbar-none flex-1 text-xs font-bold">
           {(
             [
               ['overview', 'Ringkasan Platform', LayoutDashboard],
@@ -112,15 +126,18 @@ export const SuperadminDashboard: React.FC<{
             <button
               key={id}
               type="button"
-              onClick={() => setTab(id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left transition-colors ${
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setTab(id);
+              }}
+              className={`lg:w-full flex items-center gap-2 px-3 py-2 lg:py-2.5 rounded-lg text-left shrink-0 whitespace-nowrap transition-colors ${
                 tab === id ? 'bg-[#0069b6] text-white' : 'text-slate-200 hover:bg-white/10'
               }`}
             >
               <Icon className="w-4 h-4 shrink-0" />
               <span>{label}</span>
               {id === 'invoices' && overview?.waitingVerificationInvoices > 0 && (
-                <span className="ml-auto px-1.5 py-0.5 rounded bg-amber-500 text-white text-[10px] font-mono">
+                <span className="ml-1 lg:ml-auto px-1.5 py-0.5 rounded bg-amber-500 text-white text-[10px] font-mono">
                   {overview.waitingVerificationInvoices}
                 </span>
               )}
@@ -128,7 +145,11 @@ export const SuperadminDashboard: React.FC<{
           ))}
         </nav>
 
-        <div className="p-3 border-t border-white/10 space-y-2 text-xs">
+        <div
+          className={`${
+            mobileMenuOpen ? 'block' : 'hidden'
+          } lg:block p-3 border-t border-white/10 space-y-2 text-xs bg-[#082147] lg:bg-transparent`}
+        >
           <div className="px-2">
             <div className="font-bold text-white truncate">{user.name}</div>
             <div className="text-[11px] text-slate-300 font-mono truncate">{user.email}</div>
@@ -136,7 +157,10 @@ export const SuperadminDashboard: React.FC<{
           {onBackToLanding && (
             <button
               type="button"
-              onClick={onBackToLanding}
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onBackToLanding();
+              }}
               className="w-full py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 text-slate-100 font-semibold text-left"
             >
               &larr; Beranda Platform
@@ -144,7 +168,10 @@ export const SuperadminDashboard: React.FC<{
           )}
           <button
             type="button"
-            onClick={onLogout}
+            onClick={() => {
+              setMobileMenuOpen(false);
+              onLogout();
+            }}
             className="w-full py-2 px-3 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-white font-bold flex items-center gap-2"
           >
             <LogOut className="w-3.5 h-3.5" />
@@ -154,7 +181,7 @@ export const SuperadminDashboard: React.FC<{
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 overflow-x-auto">
+      <main className="flex-1 min-w-0 p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 overflow-x-auto">
         {savingMsg && (
           <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800">
             {savingMsg}
@@ -367,7 +394,7 @@ export const SuperadminDashboard: React.FC<{
             )}
 
             <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full min-w-[760px] text-left text-xs">
                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase">
                   <tr>
                     <th className="py-3 px-4 font-bold">Desa &amp; URL</th>
@@ -501,7 +528,7 @@ export const SuperadminDashboard: React.FC<{
             </div>
 
             <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full min-w-[760px] text-left text-xs">
                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase">
                   <tr>
                     <th className="py-3 px-4 font-bold">No. Invoice</th>

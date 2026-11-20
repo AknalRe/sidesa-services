@@ -229,15 +229,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
   return (
     <div className="min-h-screen w-full bg-white text-slate-900 flex flex-col">
       {/* FULL-WIDTH TOP NAVBAR */}
-      <header className="sticky top-0 z-40 w-full bg-white border-b border-slate-200">
-        <div className="w-full px-4 sm:px-8 lg:px-14 xl:px-20 h-16 flex items-center justify-between gap-4">
-          <a href="#top" className="flex items-center gap-3 min-w-0">
-            <ReneoSidesaLogo className="w-10 h-10 shrink-0" />
+      <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-xs border-b border-slate-200">
+        <div className="w-full px-3.5 sm:px-8 lg:px-14 xl:px-20 h-14 sm:h-16 flex items-center justify-between gap-2.5 sm:gap-4">
+          <a href="#top" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <ReneoSidesaLogo className="w-8 h-8 sm:w-10 sm:h-10 shrink-0" />
             <div className="min-w-0">
-              <div className="text-base sm:text-lg font-extrabold tracking-tight text-[#0B2A57]">
+              <div className="text-sm sm:text-lg font-extrabold tracking-tight text-[#0B2A57] truncate">
                 Reneo SIDesa
               </div>
-              <div className="text-xs text-slate-500 truncate">
+              <div className="hidden sm:block text-xs text-slate-500 truncate">
                 Platform Sistem Informasi Pemerintahan &amp; Pelayanan Publik Desa
               </div>
             </div>
@@ -261,20 +261,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
             </a>
           </nav>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={onOpenAdmin}
-              className="h-10 px-4 rounded-lg bg-[#0B2A57] hover:bg-slate-900 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 transition-colors"
+              className="h-9 sm:h-10 px-3 sm:px-4 rounded-lg bg-[#0B2A57] hover:bg-slate-900 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-1.5 sm:gap-2 transition-colors"
             >
-              <LogIn className="w-4 h-4" />
-              <span>Back-Office Desa</span>
+              <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="sm:hidden">Back-Office</span>
+              <span className="hidden sm:inline">Back-Office Desa</span>
             </button>
             <button
               type="button"
               onClick={() => setMobileNavOpen((v) => !v)}
               aria-label="Menu navigasi"
-              className="lg:hidden h-10 w-10 rounded-lg border border-slate-200 flex items-center justify-center text-slate-700"
+              className="lg:hidden h-9 w-9 sm:h-10 sm:w-10 rounded-lg border border-slate-200 flex items-center justify-center text-slate-700"
             >
               {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -282,34 +283,41 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
         </div>
 
         {mobileNavOpen && (
-          <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-3 grid grid-cols-2 gap-2">
+          <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-3 grid grid-cols-2 gap-2 shadow-sm">
             <a
               href="#fitur"
               onClick={() => setMobileNavOpen(false)}
-              className="px-3 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-100"
+              className="px-3 py-2.5 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-100"
             >
               Fitur &amp; Modul
             </a>
             <a
               href="#manfaat"
               onClick={() => setMobileNavOpen(false)}
-              className="px-3 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-100"
+              className="px-3 py-2.5 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-100"
             >
               Manfaat
             </a>
             <a
+              href="#paket"
+              onClick={() => setMobileNavOpen(false)}
+              className="px-3 py-2.5 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-100"
+            >
+              Paket &amp; Harga
+            </a>
+            <a
               href="#portofolio"
               onClick={() => setMobileNavOpen(false)}
-              className="px-3 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-100"
+              className="px-3 py-2.5 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-100"
             >
               Desa Pengguna
             </a>
             <a
               href="#faq"
               onClick={() => setMobileNavOpen(false)}
-              className="px-3 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-100"
+              className="px-3 py-2.5 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-100 col-span-2"
             >
-              FAQ
+              Pertanyaan Umum (FAQ)
             </a>
           </div>
         )}
@@ -317,7 +325,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
 
       <main id="top" className="flex-1 w-full">
         {/* 1. FULL-WIDTH HERO */}
-        <section className="relative w-full min-h-[540px] lg:min-h-[600px] bg-[#0B2A57] text-white overflow-hidden flex items-center">
+        <section className="relative w-full min-h-[440px] sm:min-h-[540px] lg:min-h-[600px] bg-[#0B2A57] text-white overflow-hidden flex items-center">
           <img
             src={activeHero.bgImage}
             alt={activeHero.title}
@@ -342,38 +350,38 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
             <ChevronRight className="w-5 h-5" />
           </button>
 
-          <div className="relative z-10 w-full px-4 sm:px-10 lg:px-20 xl:px-28 py-14 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            <div className="lg:col-span-7 space-y-4">
-              <div className="text-xs sm:text-sm font-bold uppercase tracking-wider text-emerald-300">
+          <div className="relative z-10 w-full px-4 sm:px-10 lg:px-20 xl:px-28 py-10 sm:py-14 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+            <div className="lg:col-span-7 space-y-3.5 sm:space-y-4">
+              <div className="text-[11px] sm:text-sm font-bold uppercase tracking-wider text-emerald-300">
                 {activeHero.category}
               </div>
 
-              <h1 className="text-3xl sm:text-5xl lg:text-[48px] font-extrabold tracking-tight leading-[1.15]">
+              <h1 className="text-2xl sm:text-4xl lg:text-[48px] font-extrabold tracking-tight leading-[1.15]">
                 {activeHero.title}
               </h1>
 
-              <p className="text-base sm:text-lg text-slate-200 leading-relaxed max-w-2xl">
+              <p className="text-sm sm:text-lg text-slate-200 leading-relaxed max-w-2xl">
                 {activeHero.subtitle}
               </p>
 
-              <div className="pt-2 flex flex-wrap items-center gap-3">
+              <div className="pt-2 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3">
                 <button
                   type="button"
                   onClick={onOpenAdmin}
-                  className="h-11 px-6 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-extrabold inline-flex items-center gap-2 transition-colors"
+                  className="h-11 px-5 sm:px-6 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-extrabold inline-flex items-center justify-center gap-2 transition-colors"
                 >
                   <span>Kelola &amp; Daftarkan Desa</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
                 <a
                   href="#portofolio"
-                  className="h-11 px-6 rounded-lg bg-white/10 hover:bg-white/20 border border-white/25 text-white text-sm font-bold inline-flex items-center gap-2 transition-colors"
+                  className="h-11 px-5 sm:px-6 rounded-lg bg-white/10 hover:bg-white/20 border border-white/25 text-white text-sm font-bold inline-flex items-center justify-center gap-2 transition-colors"
                 >
                   <span>Lihat Desa Pengguna</span>
                 </a>
               </div>
 
-              <div className="pt-4 flex items-center gap-2">
+              <div className="pt-3 flex items-center gap-2">
                 {HERO_SLIDES.map((s, idx) => (
                   <button
                     key={s.category}
@@ -392,7 +400,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
               <img
                 src={activeHero.fgImage}
                 alt={activeHero.title}
-                className="w-full max-w-lg max-h-[360px] object-contain"
+                className="w-full max-w-xs sm:max-w-md lg:max-w-lg max-h-[240px] sm:max-h-[360px] object-contain"
               />
             </div>
           </div>
@@ -449,14 +457,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
             </p>
           </div>
 
-          {/* Crisp Rectangular Feature Tabs (No Bubble Pills) */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
+          {/* Crisp Rectangular Feature Tabs (Horizontal Scroll on Mobile) */}
+          <div className="flex sm:flex-wrap items-center gap-2 border-b border-slate-200 pb-3 overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
             {FEATURE_TABS.map((f, idx) => (
               <button
                 key={f.id}
                 type="button"
                 onClick={() => setFeatureIdx(idx)}
-                className={`h-10 px-4 rounded-lg text-xs sm:text-sm font-bold transition-colors ${
+                className={`h-10 px-4 rounded-lg text-xs sm:text-sm font-bold transition-colors shrink-0 whitespace-nowrap ${
                   featureIdx === idx
                     ? 'bg-[#0B2A57] text-white'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -467,7 +475,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
             ))}
           </div>
 
-          <div className="bg-[#F6F6F6] border border-slate-200 rounded-xl p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="bg-[#F6F6F6] border border-slate-200 rounded-xl p-4 sm:p-8 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
             <div className="lg:col-span-6 flex items-center justify-center">
               <img
                 src={activeFeature.image}
@@ -528,7 +536,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
                   <p className="text-sm text-slate-600 leading-relaxed">{row.without}</p>
                 </div>
 
-                <div className="lg:col-span-2 flex flex-col items-center justify-center py-1">
+                <div className="hidden lg:flex lg:col-span-2 flex-col items-center justify-center py-1">
                   <div className="w-14 h-14 rounded-xl bg-white border border-slate-200 flex items-center justify-center p-2.5">
                     <img src={row.icon} alt={row.topic} className="w-9 h-9 object-contain" />
                   </div>

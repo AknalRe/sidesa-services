@@ -533,28 +533,28 @@ export const PublicPortal: React.FC<{
     <div className="min-h-screen w-full bg-[#F6F6F6] text-slate-900 flex flex-col">
       {/* FULL-WIDTH TOP NAVBAR */}
       <header className="sticky top-0 z-40 w-full bg-[#0069b6] text-white shadow-md">
-        <div className="w-full px-4 sm:px-8 lg:px-12 py-2.5 flex items-center justify-between gap-4">
+        <div className="w-full px-3.5 sm:px-8 lg:px-12 py-2 sm:py-2.5 flex items-center justify-between gap-2.5 sm:gap-4">
           <button
             type="button"
             onClick={() => navigateTab('beranda')}
-            className="flex items-center gap-3 text-left min-w-0"
+            className="flex items-center gap-2.5 sm:gap-3 text-left min-w-0"
           >
             <img
               src={villageLogo}
               alt={`Lambang ${village.regency}`}
-              className="w-11 h-11 sm:w-14 sm:h-14 object-contain shrink-0 drop-shadow-xs"
+              className="w-9 h-9 sm:w-14 sm:h-14 object-contain shrink-0 drop-shadow-xs"
             />
             <div className="min-w-0 leading-tight">
-              <div className="text-base sm:text-lg lg:text-xl font-extrabold text-white truncate">
+              <div className="text-sm sm:text-lg lg:text-xl font-extrabold text-white truncate">
                 {village.name}
               </div>
-              <div className="text-xs sm:text-sm text-sky-100 truncate">
+              <div className="text-[11px] sm:text-sm text-sky-100 truncate">
                 Kabupaten {village.regency}
               </div>
             </div>
           </button>
 
-          <div className="flex items-center gap-4 lg:gap-7">
+          <div className="flex items-center gap-2 sm:gap-4 lg:gap-7 shrink-0">
             <nav className="hidden xl:flex items-center gap-6">
               {NAV_ITEMS.map((item) => {
                 const active = tab === item.id;
@@ -575,31 +575,32 @@ export const PublicPortal: React.FC<{
               })}
             </nav>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {onBackToPlatform && (
                 <button
                   type="button"
                   onClick={onBackToPlatform}
                   title="Kembali ke Platform SaaS SIDesa"
-                  className="h-9 px-3 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
+                  className="hidden sm:inline-flex h-9 px-3 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-bold items-center gap-1.5 transition-colors"
                 >
                   <span>&larr;</span>
-                  <span className="hidden sm:inline">Platform SIDesa</span>
+                  <span>Platform SIDesa</span>
                 </button>
               )}
               <button
                 type="button"
                 onClick={onOpenAdmin}
-                className="h-9 px-3.5 rounded-lg bg-white text-[#0069b6] hover:bg-sky-50 text-xs font-extrabold inline-flex items-center gap-1.5 shadow-2xs transition-colors"
+                className="h-9 px-2.5 sm:px-3.5 rounded-lg bg-white text-[#0069b6] hover:bg-sky-50 text-xs font-extrabold inline-flex items-center gap-1.5 shadow-2xs transition-colors"
               >
-                <LogIn className="w-3.5 h-3.5" />
+                <LogIn className="w-3.5 h-3.5 shrink-0" />
+                <span className="sm:hidden">Admin</span>
                 <span className="hidden sm:inline">Layanan Mandiri / Admin</span>
               </button>
               <button
                 type="button"
                 onClick={() => setMobileMenu((v) => !v)}
                 aria-label="Menu navigasi"
-                className="xl:hidden h-10 w-10 rounded-lg bg-white/15 flex items-center justify-center text-white"
+                className="xl:hidden h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-white/15 flex items-center justify-center text-white"
               >
                 {mobileMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -608,19 +609,35 @@ export const PublicPortal: React.FC<{
         </div>
 
         {mobileMenu && (
-          <div className="xl:hidden border-t border-white/15 bg-[#005a9e] px-4 py-3 grid grid-cols-2 sm:grid-cols-5 gap-2">
-            {NAV_ITEMS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => navigateTab(item.id)}
-                className={`px-3 py-2 rounded-lg text-sm font-bold text-left ${
-                  tab === item.id ? 'bg-white text-[#0069b6]' : 'text-white hover:bg-white/10'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+          <div className="xl:hidden border-t border-white/15 bg-[#005a9e] px-3.5 py-3 space-y-2.5 shadow-lg">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+              {NAV_ITEMS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => navigateTab(item.id)}
+                  className={`px-3 py-2.5 rounded-lg text-xs sm:text-sm font-bold text-left transition-colors ${
+                    tab === item.id ? 'bg-white text-[#0069b6]' : 'text-white hover:bg-white/10'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            {onBackToPlatform && (
+              <div className="sm:hidden pt-2 border-t border-white/15">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenu(false);
+                    onBackToPlatform();
+                  }}
+                  className="w-full h-9 px-3 rounded-lg bg-white/15 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5"
+                >
+                  <span>&larr; Kembali ke Platform SIDesa</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
       </header>
@@ -628,14 +645,14 @@ export const PublicPortal: React.FC<{
       {/* Banner Klaim Desa jika desa dipublikasikan Superadmin & belum diklaim perangkat desa */}
       {village.isClaimed === false && (
         <div className="w-full bg-[#0B2A57] text-white border-b border-white/10">
-          <div className="w-full px-4 sm:px-8 lg:px-12 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <span>
+          <div className="w-full px-3.5 sm:px-8 lg:px-12 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+            <span className="leading-relaxed">
               Profil <strong>{village.name}</strong> belum diklaim oleh Perangkat Desa resmi. Anda perwakilan pemerintah desa ini?
             </span>
             <button
               type="button"
               onClick={() => setClaimOpen(true)}
-              className="h-8 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold transition-colors"
+              className="w-full sm:w-auto h-9 sm:h-8 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold transition-colors shrink-0"
             >
               Klaim Website Desa &amp; Berlangganan
             </button>
@@ -646,11 +663,11 @@ export const PublicPortal: React.FC<{
       {/* Modal Klaim Website Desa + Pilih Paket & Durasi Langganan */}
       {claimOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/55 flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 bg-black/55 flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto"
           onClick={() => setClaimOpen(false)}
         >
           <div
-            className="bg-white border border-slate-200 rounded-xl shadow-xl max-w-lg w-full p-5 sm:p-6 space-y-4 text-xs"
+            className="bg-white border border-slate-200 rounded-xl shadow-xl max-w-lg w-full my-auto max-h-[92vh] overflow-y-auto p-4 sm:p-6 space-y-4 text-xs"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
@@ -878,22 +895,22 @@ export const PublicPortal: React.FC<{
           BERANDA WEBSITE RESMI DESA (FULL WIDTH)
          ========================================================= */}
       {tab === 'beranda' && (
-        <main className="w-full flex-1 space-y-16 pb-16">
+        <main className="w-full flex-1 space-y-10 sm:space-y-16 pb-12 sm:pb-16">
           {/* 1. FULL-WIDTH HERO CAROUSEL SLIDER */}
-          <section className="relative w-full h-[480px] sm:h-[560px] lg:h-[640px] overflow-hidden bg-slate-900">
+          <section className="relative w-full min-h-[420px] sm:min-h-[540px] lg:h-[620px] overflow-hidden bg-slate-900 flex items-center">
             <img
               src={activeSlide.image}
               alt={activeSlide.title}
               className="absolute inset-0 w-full h-full object-cover object-center transition-all duration-700"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/45 to-black/30" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-black/35" />
 
-            {/* Left / Right Carousel Arrows */}
+            {/* Left / Right Carousel Arrows (hidden on small mobile so text stays unobstructed) */}
             <button
               type="button"
               onClick={() => setSlideIdx((prev) => (prev - 1 + dynamicSlides.length) % dynamicSlides.length)}
               aria-label="Slide sebelumnya"
-              className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-lg bg-black/40 hover:bg-black/65 text-white flex items-center justify-center transition-colors"
+              className="hidden sm:flex absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-lg bg-black/40 hover:bg-black/65 text-white items-center justify-center transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -901,28 +918,28 @@ export const PublicPortal: React.FC<{
               type="button"
               onClick={() => setSlideIdx((prev) => (prev + 1) % dynamicSlides.length)}
               aria-label="Slide berikutnya"
-              className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-lg bg-black/40 hover:bg-black/65 text-white flex items-center justify-center transition-colors"
+              className="hidden sm:flex absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-lg bg-black/40 hover:bg-black/65 text-white items-center justify-center transition-colors"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
 
             {/* Centered Hero Text */}
-            <div className="relative z-10 h-full w-full px-6 sm:px-14 lg:px-24 flex flex-col items-center justify-center text-center text-white">
-              <div className="max-w-4xl space-y-3">
-                <p className="text-base sm:text-xl font-bold text-sky-300">
+            <div className="relative z-10 w-full px-4 sm:px-14 lg:px-24 py-14 sm:py-16 flex flex-col items-center justify-center text-center text-white">
+              <div className="max-w-4xl space-y-2.5 sm:space-y-3">
+                <p className="text-sm sm:text-xl font-bold text-sky-300">
                   {activeSlide.eyebrow}
                 </p>
-                <h1 className="text-3xl sm:text-5xl lg:text-[50px] font-extrabold tracking-tight leading-[1.12]">
+                <h1 className="text-2xl sm:text-5xl lg:text-[50px] font-extrabold tracking-tight leading-[1.14]">
                   {activeSlide.title}
                 </h1>
-                <p className="text-sm sm:text-lg text-slate-100 max-w-3xl mx-auto leading-relaxed">
+                <p className="text-xs sm:text-lg text-slate-100 max-w-3xl mx-auto leading-relaxed">
                   {activeSlide.subtitle}
                 </p>
-                <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
+                <div className="pt-3 sm:pt-4 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-center gap-2.5 sm:gap-3">
                   <button
                     type="button"
                     onClick={() => navigateTab(activeSlide.targetTab)}
-                    className="h-11 px-6 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white text-sm font-bold inline-flex items-center gap-2 transition-colors"
+                    className="h-11 px-5 sm:px-6 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white text-sm font-bold inline-flex items-center justify-center gap-2 transition-colors"
                   >
                     <span>{activeSlide.ctaLabel}</span>
                     <ArrowRight className="w-4 h-4" />
@@ -930,7 +947,7 @@ export const PublicPortal: React.FC<{
                   <button
                     type="button"
                     onClick={() => navigateTab('layanan')}
-                    className="h-11 px-6 rounded-lg bg-white/15 hover:bg-white/25 border border-white/35 text-white text-sm font-bold inline-flex items-center gap-2 transition-colors"
+                    className="h-11 px-5 sm:px-6 rounded-lg bg-white/15 hover:bg-white/25 border border-white/35 text-white text-sm font-bold inline-flex items-center justify-center gap-2 transition-colors"
                   >
                     <FileText className="w-4 h-4" />
                     <span>Ajukan Surat Online</span>
@@ -939,7 +956,7 @@ export const PublicPortal: React.FC<{
               </div>
 
               {/* Slide Indicators */}
-              <div className="absolute bottom-6 flex items-center gap-2">
+              <div className="pt-6 sm:pt-0 sm:absolute sm:bottom-6 flex items-center gap-2">
                 {dynamicSlides.map((_, idx) => (
                   <button
                     key={idx}
@@ -957,31 +974,31 @@ export const PublicPortal: React.FC<{
 
           {/* 2. JELAJAHI DESA */}
           <section className="w-full px-4 sm:px-8 lg:px-14 xl:px-20">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-              <div className="lg:col-span-5 space-y-4">
-                <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-extrabold text-[#099cff] uppercase leading-tight">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 items-center">
+              <div className="lg:col-span-5 space-y-2.5 sm:space-y-4">
+                <h2 className="text-2xl sm:text-4xl lg:text-[44px] font-extrabold text-[#099cff] uppercase leading-tight">
                   JELAJAHI DESA
                 </h2>
-                <p className="text-base sm:text-lg lg:text-xl text-slate-700 leading-relaxed">
+                <p className="text-sm sm:text-lg lg:text-xl text-slate-700 leading-relaxed">
                   Melalui website ini Anda dapat menjelajahi segala hal yang terkait dengan Desa. Aspek pemerintahan,
                   penduduk, demografi, potensi Desa, dan juga berita tentang Desa.
                 </p>
               </div>
 
-              <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
+              <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-5">
                 {JELAJAHI_ITEMS.map((item) => (
                   <button
                     key={item.label}
                     type="button"
                     onClick={() => navigateTab(item.id, item.infoSub)}
-                    className="bg-white rounded-2xl shadow-sm hover:shadow-md p-6 flex flex-col items-center justify-center gap-3.5 text-center transition-all hover:-translate-y-0.5 group"
+                    className="bg-white rounded-2xl shadow-sm hover:shadow-md p-4 sm:p-6 flex flex-col items-center justify-center gap-2.5 sm:gap-3.5 text-center transition-all hover:-translate-y-0.5 group"
                   >
                     <img
                       src={item.iconUrl}
                       alt={item.label}
-                      className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
+                      className="w-12 h-12 sm:w-20 sm:h-20 object-contain"
                     />
-                    <span className="text-sm sm:text-base font-extrabold text-slate-700 group-hover:text-[#0069b6] uppercase">
+                    <span className="text-xs sm:text-base font-extrabold text-slate-700 group-hover:text-[#0069b6] uppercase">
                       {item.label}
                     </span>
                   </button>
@@ -992,29 +1009,29 @@ export const PublicPortal: React.FC<{
 
           {/* 3. SAMBUTAN KEPALA DESA */}
           <section className="w-full px-4 sm:px-8 lg:px-14 xl:px-20">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 items-center">
               <div className="lg:col-span-4 flex flex-col items-center justify-center">
-                <div className="w-56 h-56 sm:w-64 sm:h-64 rounded-full bg-white shadow-lg p-6 flex items-center justify-center border-4 border-sky-100">
+                <div className="w-36 h-36 sm:w-64 sm:h-64 rounded-full bg-white shadow-lg p-4 sm:p-6 flex items-center justify-center border-4 border-sky-100">
                   <img
                     src={villageLogo}
                     alt={`Lambang ${village.name}`}
-                    className="w-40 h-40 sm:w-44 sm:h-44 object-contain"
+                    className="w-24 h-24 sm:w-44 sm:h-44 object-contain"
                   />
                 </div>
               </div>
 
-              <div className="lg:col-span-8 space-y-3">
-                <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-[#099cff] leading-tight">
+              <div className="lg:col-span-8 space-y-2.5 sm:space-y-3 text-center lg:text-left">
+                <h2 className="text-2xl sm:text-4xl lg:text-[42px] font-extrabold text-[#099cff] leading-tight">
                   Sambutan {village.headTitle || 'Kepala Desa'} {village.name}
                 </h2>
-                <div className="text-xl sm:text-2xl font-extrabold text-slate-900">
-                  {village.headName || 'H. Sukamto, S.Sos.'}
+                <div className="text-lg sm:text-2xl font-extrabold text-slate-900">
+                  {village.headName || 'Kepala Desa'}
                 </div>
-                <div className="text-sm font-bold text-slate-600">
+                <div className="text-xs sm:text-sm font-bold text-slate-600">
                   {village.headTitle || 'Kepala Desa'} {village.name} · Kecamatan {village.district}, Kabupaten{' '}
                   {village.regency}
                 </div>
-                <div className="pt-2 text-base sm:text-lg text-slate-700 leading-relaxed space-y-3 max-w-4xl">
+                <div className="pt-2 text-sm sm:text-lg text-slate-700 leading-relaxed space-y-3 max-w-4xl text-left">
                   <p className="font-semibold">Assalamu&apos;alaikum Warahmatullahi Wabarakatuh,</p>
                   <p>{village.headGreeting}</p>
                   <p>
@@ -1029,10 +1046,10 @@ export const PublicPortal: React.FC<{
           {/* 4. PETA DESA (Full-Width Interactive OpenStreetMap) */}
           <section className="w-full px-4 sm:px-8 lg:px-14 xl:px-20 space-y-4">
             <div>
-              <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-[#099cff] uppercase leading-tight">
+              <h2 className="text-2xl sm:text-4xl lg:text-[42px] font-extrabold text-[#099cff] uppercase leading-tight">
                 PETA DESA
               </h2>
-              <p className="text-base sm:text-lg text-slate-700">
+              <p className="text-sm sm:text-lg text-slate-700">
                 Menampilkan Peta Desa Dengan <em>Interest Point</em> {village.name}
               </p>
             </div>
@@ -1043,7 +1060,7 @@ export const PublicPortal: React.FC<{
               lat={village.mapLat}
               lng={village.mapLng}
               places={places}
-              heightClass="h-[420px] sm:h-[500px]"
+              heightClass="h-[300px] sm:h-[460px] lg:h-[500px]"
             />
           </section>
 
@@ -1127,12 +1144,12 @@ export const PublicPortal: React.FC<{
               ).map((stat) => (
                 <div
                   key={stat.label}
-                  className="h-20 sm:h-24 rounded-xl overflow-hidden shadow-xs bg-white grid grid-cols-12 items-center"
+                  className="min-h-[72px] sm:h-24 rounded-xl overflow-hidden shadow-xs bg-white grid grid-cols-12 items-center"
                 >
-                  <div className="col-span-5 h-full flex items-center justify-center bg-[#0069b6] text-white text-2xl sm:text-4xl font-extrabold font-mono">
+                  <div className="col-span-5 h-full flex items-center justify-center bg-[#0069b6] text-white text-xl sm:text-4xl font-extrabold font-mono px-2">
                     {Number(stat.value || 0).toLocaleString('id-ID')}
                   </div>
-                  <div className="col-span-7 px-6 text-lg sm:text-2xl font-extrabold text-slate-700">
+                  <div className="col-span-7 px-3.5 sm:px-6 py-2 text-sm sm:text-xl lg:text-2xl font-extrabold text-slate-700 leading-snug">
                     {stat.label}
                   </div>
                 </div>
@@ -1166,10 +1183,10 @@ export const PublicPortal: React.FC<{
                 </p>
               </div>
 
-              <div className="lg:col-span-7 space-y-4">
-                <div className="bg-white rounded-2xl shadow-xs p-6 space-y-1">
-                  <div className="text-base font-bold text-slate-500">Pendapatan Desa</div>
-                  <div className="text-2xl sm:text-4xl font-extrabold font-mono text-emerald-700">
+              <div className="lg:col-span-7 space-y-3 sm:space-y-4">
+                <div className="bg-white rounded-2xl shadow-xs p-4 sm:p-6 space-y-1">
+                  <div className="text-sm sm:text-base font-bold text-slate-500">Pendapatan Desa</div>
+                  <div className="text-xl sm:text-3xl lg:text-4xl font-extrabold font-mono text-emerald-700 break-words">
                     {formatRp(apbdes.pendapatan?.budget)}
                   </div>
                   <div className="text-xs sm:text-sm text-slate-500">
@@ -1177,9 +1194,9 @@ export const PublicPortal: React.FC<{
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-xs p-6 space-y-1">
-                  <div className="text-base font-bold text-slate-500">Belanja Desa</div>
-                  <div className="text-2xl sm:text-4xl font-extrabold font-mono text-rose-700">
+                <div className="bg-white rounded-2xl shadow-xs p-4 sm:p-6 space-y-1">
+                  <div className="text-sm sm:text-base font-bold text-slate-500">Belanja Desa</div>
+                  <div className="text-xl sm:text-3xl lg:text-4xl font-extrabold font-mono text-rose-700 break-words">
                     {formatRp(apbdes.belanja?.budget)}
                   </div>
                   <div className="text-xs sm:text-sm text-slate-500">
@@ -1187,18 +1204,18 @@ export const PublicPortal: React.FC<{
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-xs p-6 space-y-2">
-                  <div className="text-base font-bold text-slate-500">Pembiayaan &amp; Sisa Lebih Anggaran</div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <div className="bg-white rounded-2xl shadow-xs p-4 sm:p-6 space-y-2">
+                  <div className="text-sm sm:text-base font-bold text-slate-500">Pembiayaan &amp; Sisa Lebih Anggaran</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1">
                     <div>
                       <div className="text-xs text-slate-500">Realisasi Pendapatan</div>
-                      <div className="text-lg font-extrabold font-mono text-slate-800">
+                      <div className="text-base sm:text-lg font-extrabold font-mono text-slate-800 break-words">
                         {formatRp(apbdes.pendapatan?.realized)}
                       </div>
                     </div>
                     <div>
                       <div className="text-xs text-slate-500">Surplus / Defisit Realisasi</div>
-                      <div className="text-lg font-extrabold font-mono text-[#0078cd]">
+                      <div className="text-base sm:text-lg font-extrabold font-mono text-[#0078cd] break-words">
                         {formatRp(apbdes.surplusDeficit)}
                       </div>
                     </div>
@@ -1311,22 +1328,22 @@ export const PublicPortal: React.FC<{
                 alt="Potensi & Wisata Desa"
                 className="absolute inset-0 w-full h-full object-cover opacity-35"
               />
-              <div className="relative z-10 p-8 sm:p-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              <div className="relative z-10 p-5 sm:p-10 lg:p-12 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
                 <div className="lg:col-span-5 space-y-3">
-                  <h3 className="text-3xl sm:text-4xl font-extrabold text-white uppercase">
+                  <h3 className="text-2xl sm:text-4xl font-extrabold text-white uppercase">
                     WISATA &amp; POTENSI DESA
                   </h3>
-                  <p className="text-base sm:text-lg text-slate-200 leading-relaxed">
+                  <p className="text-sm sm:text-lg text-slate-200 leading-relaxed">
                     Layanan yang mempermudah promosi potensi pertanian, produk kreatif, dan destinasi wisata sehingga
                     dapat menarik pengunjung dan meningkatkan kesejahteraan warga {village.name}.
                   </p>
                   <button
                     type="button"
                     onClick={() => navigateTab('peta')}
-                    className="mt-2 h-11 px-6 rounded-lg bg-[#099cff] hover:bg-[#0078cd] text-white text-sm font-bold inline-flex items-center gap-2 transition-colors"
+                    className="w-full sm:w-auto mt-2 h-11 px-5 sm:px-6 rounded-lg bg-[#099cff] hover:bg-[#0078cd] text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 transition-colors"
                   >
                     <span>LIHAT POTENSI &amp; WISATA LEBIH BANYAK</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4 shrink-0" />
                   </button>
                 </div>
 
@@ -1760,8 +1777,8 @@ export const PublicPortal: React.FC<{
                       </div>
                     </div>
                   </div>
-                  <div className="bg-white rounded-2xl shadow-xs overflow-hidden">
-                    <table className="w-full text-left text-sm">
+                  <div className="bg-white rounded-2xl shadow-xs overflow-x-auto">
+                    <table className="w-full min-w-[540px] text-left text-xs sm:text-sm">
                       <thead className="bg-[#0069b6] text-white">
                         <tr>
                           <th className="py-3.5 px-5 font-bold">Kategori</th>

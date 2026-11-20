@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   LogOut,
   MapPin,
+  Menu,
   MessageSquareWarning,
   Newspaper,
   Plus,
@@ -20,6 +21,7 @@ import {
   Trash2,
   Users,
   Wallet,
+  X,
 } from 'lucide-react';
 import { api, setActiveSuperadminVillage } from '../services/api';
 import { ReneoSidesaLogo } from '../components/ReneoSidesaLogo';
@@ -200,6 +202,7 @@ export const AdminPanel: React.FC<{
     description: '',
   });
   const [actionBanner, setActionBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [newPpidDoc, setNewPpidDoc] = useState({
     category: 'BERKALA',
     title: '',
@@ -746,25 +749,39 @@ export const AdminPanel: React.FC<{
 
   return (
     <div className="min-h-screen w-full bg-[#F6F6F6] flex flex-col lg:flex-row">
-      {/* Sidebar */}
-      <aside className="no-print lg:w-64 bg-[#0B2A57] text-slate-200 flex flex-col shrink-0">
-        <div className="p-4 border-b border-white/10 flex items-center gap-3">
-          <ReneoSidesaLogo className="w-9 h-9 shrink-0" />
-          <div className="min-w-0">
-            <div className="text-sm font-extrabold text-white truncate">{village?.name || 'Reneo SIDesa'}</div>
-            <div className="text-[11px] font-mono text-emerald-300 truncate">/desa/{activeSlug}</div>
+      {/* Sidebar (Sticky Compact Bar + Drawer on Mobile, Fixed Left Rail on Desktop) */}
+      <aside className="no-print sticky top-0 z-30 lg:static lg:w-64 bg-[#0B2A57] text-slate-200 flex flex-col shrink-0 shadow-sm lg:shadow-none">
+        <div className="px-3.5 py-2.5 lg:p-4 border-b border-white/10 flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <ReneoSidesaLogo className="w-8 h-8 lg:w-9 lg:h-9 shrink-0" />
+            <div className="min-w-0">
+              <div className="text-sm font-extrabold text-white truncate">{village?.name || 'Reneo SIDesa'}</div>
+              <div className="text-[11px] font-mono text-emerald-300 truncate">/desa/{activeSlug}</div>
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={() => setMobileDrawerOpen((v) => !v)}
+            aria-label="Menu Back-Office"
+            className="lg:hidden h-9 w-9 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center shrink-0"
+          >
+            {mobileDrawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
 
-        <nav className="p-2.5 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-y-auto flex-1">
+        {/* Horizontal Tab Strip on Mobile, Vertical Rail on Desktop */}
+        <nav className="px-2.5 py-2 lg:p-2.5 flex lg:flex-col gap-1 overflow-x-auto scrollbar-none lg:overflow-y-auto flex-1">
           {MENU.map((m) => {
             const Icon = m.icon;
             return (
               <button
                 key={m.id}
                 type="button"
-                onClick={() => void loadTab(m.id)}
-                className={`px-3 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-2.5 shrink-0 transition-colors ${
+                onClick={() => {
+                  setMobileDrawerOpen(false);
+                  void loadTab(m.id);
+                }}
+                className={`px-3 py-2 rounded-lg lg:rounded-xl text-xs font-bold inline-flex items-center gap-2 shrink-0 whitespace-nowrap transition-colors ${
                   tab === m.id ? 'bg-[#0069b6] text-white shadow-xs' : 'text-slate-300 hover:bg-white/10'
                 }`}
               >
@@ -775,20 +792,30 @@ export const AdminPanel: React.FC<{
           })}
         </nav>
 
-        <div className="p-3 border-t border-white/10 flex lg:flex-col gap-2">
+        <div
+          className={`${
+            mobileDrawerOpen ? 'flex' : 'hidden'
+          } lg:flex p-3 border-t border-white/10 flex-col gap-2 bg-[#082147] lg:bg-transparent`}
+        >
           <button
             type="button"
-            onClick={() => onBackToPortal(activeSlug)}
-            className="flex-1 h-9 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-xs font-extrabold text-slate-950 inline-flex items-center justify-center gap-1.5"
+            onClick={() => {
+              setMobileDrawerOpen(false);
+              onBackToPortal(activeSlug);
+            }}
+            className="h-9 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-xs font-extrabold text-slate-950 inline-flex items-center justify-center gap-1.5"
           >
-            <Globe className="w-3.5 h-3.5" />
-            <span>Buka /desa/{activeSlug}</span>
+            <Globe className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Buka /desa/{activeSlug}</span>
           </button>
           {onBackToLanding && (
             <button
               type="button"
-              onClick={onBackToLanding}
-              className="flex-1 h-9 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white inline-flex items-center justify-center gap-1.5"
+              onClick={() => {
+                setMobileDrawerOpen(false);
+                onBackToLanding();
+              }}
+              className="h-9 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white inline-flex items-center justify-center gap-1.5"
             >
               <span>Beranda Platform SaaS</span>
             </button>
@@ -796,19 +823,20 @@ export const AdminPanel: React.FC<{
           <button
             type="button"
             onClick={async () => {
+              setMobileDrawerOpen(false);
               await api.logout();
               await checkAuth();
             }}
             className="h-9 px-3 rounded-xl border border-white/15 hover:bg-white/10 text-xs text-slate-300 inline-flex items-center justify-center gap-1.5"
           >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Keluar ({auth.user?.name})</span>
+            <LogOut className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Keluar ({auth.user?.name})</span>
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 sm:p-8 overflow-y-auto space-y-6">
+      <main className="flex-1 min-w-0 p-3.5 sm:p-6 lg:p-8 overflow-y-auto space-y-5 sm:space-y-6">
         {actionBanner && (
           <div
             className={`no-print p-3.5 rounded-xl border text-xs font-semibold flex items-center justify-between gap-3 ${
