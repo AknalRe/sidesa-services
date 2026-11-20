@@ -711,7 +711,7 @@ export async function seedDesaDlangguIfMissing(): Promise<void> {
     }),
     mapLat: -7.56645,
     mapLng: 112.483986,
-    logoUrl: '/assets/sidesa/pohjejer-logo.png',
+    logoUrl: '/assets/sidesa/dlanggu-logo.png',
     heroImageUrl: '/assets/sidesa/dlanggu-hero.jpg',
     officialStatsJson: JSON.stringify({
       source: 'Profil Administrasi Desa Dlanggu & Data Wilayah Kecamatan Dlanggu (Kab. Mojokerto)',
@@ -744,7 +744,7 @@ export async function seedDesaDlangguIfMissing(): Promise<void> {
     sdgsScore: 0,
     stuntingCases: 0,
     stuntingRate: 0,
-    detailsJson: JSON.stringify([
+    dimensionsJson: JSON.stringify([
       { name: 'Status Desa (Pemkab Mojokerto)', score: 'DESA MANDIRI' },
       { name: 'Pembagian Wilayah', score: '4 Dusun (Dlanggu, Kademangan, Sroyo, Segaran)' },
     ]),
