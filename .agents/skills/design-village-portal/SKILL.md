@@ -1,39 +1,38 @@
 ---
 name: design-village-portal
 description: >-
-  Standar desain UI/UX untuk Portal Resmi Pemerintahan Desa (Website Profil Desa)
-  dan SaaS Sistem Informasi Desa (Reneo SIDesa / DIGIDES benchmark). Menggabungkan
-  prinsip Dieter Rams (design-is), UI Design Audit (design-ui-audit), dan Anti-Slop Reneo.
+  Standar desain UI/UX full-width untuk Portal Resmi Pemerintahan Desa (sugihwaras.digitaldesa.id)
+  dan Platform SaaS Sistem Informasi Desa (digitaldesa.id / Reneo SIDesa). Melarang kotak-kotak
+  SaaS AI slop sempit; mewajibkan layout full-width (w-full), tipografi Outfit, lambang kabupaten,
+  hero fotografi desa full-bleed, dan struktur seksi autentik desa Indonesia.
 ---
 
 # Design Village Portal (Reneo SIDesa)
 
-Gunakan skill ini saat merancang atau memperbarui halaman Portal Resmi Desa (`PublicPortal.tsx`), Beranda SaaS SIDesa (`LandingPage.tsx`), maupun Back-Office Desa (`AdminPanel.tsx`).
+Gunakan skill ini setiap kali merancang atau memperbarui halaman Website Resmi Desa (`PublicPortal.tsx`) maupun Beranda Platform SaaS SIDesa (`LandingPage.tsx`).
 
-## 1. Karakter Visual Website Resmi Desa (Benchmark `sugihwaras.digitaldesa.id`)
+## 1. Aturan Utama: Full-Width & Anti-SaaS-Box-Slop
 
-Website desa yang baik **bukan** dashboard admin kaku yang hanya berisi kotak angka, melainkan **wajah resmi pemerintahan dan kehidupan warga desa**:
-1. **Identitas Resmi Pemerintahan (Civic Authority)**:
-   - Selalu tampilkan strip identitas pemerintah di bagian atas: `Pemerintah Kabupaten · Kecamatan · Nama Desa`, Kode Kemendagri (`35.xx.xx.xxxx`), dan jam layanan kantor desa.
-2. **Alur Cerita Beranda Desa (Vertical Civic Storytelling)**:
-   - **Hero Desa + Sorotan Berita Utama**: Menampilkan sambutan resmi desa, status Indeks Desa Membangun (IDM), tombol layanan cepat warga, serta sorotan berita kegiatan terbaru.
-   - **Menu Cepat "Jelajahi Desa"**: 8 kartu ikon navigasi cepat ke modul utama (*Profil Desa, Pemerintahan/SOTK, Infografis Penduduk, APBDes, Cek Bansos, Layanan Surat, Beli dari Desa/UMKM, PPID & Pengaduan*).
-   - **Sambutan Kepala Desa**: Menampilkan profil Kepala Desa, kutipan sambutan yang hangat dan membumi, serta Visi Desa.
-   - **Aparatur Pemerintah Desa (SOTK)**: Menampilkan jajaran perangkat desa dengan hierarki jelas (Kepala Desa, Sekretaris Desa, Kasi/Kaur, Kepala Dusun).
-   - **Infografis Ringkas (Penduduk & APBDes)**:Dilengkapi progress bar penyerapan anggaran dan grafik distribusi dusun agar warga awam langsung memahami data tanpa membaca tabel rumit.
-   - **WebGIS / Peta Wilayah & Fasilitas Desa**: Menampilkan peta lokasi desa, batas wilayah 4 arah mata angin, serta titik lokasi penting (Balai Desa, Polindes, Sekolah, Pasar/UMKM, Wisata/Pertanian).
-   - **Berita Kegiatan, Potensi Desa & Lapak UMKM ("Beli dari Desa")**: Menghidupkan aktivitas sosial dan ekonomi warga desa.
+1. **Wajib Full-Width (`w-full`, padding horizontal `px-4 sm:px-8 lg:px-14 xl:px-20`)**:
+   - **DILARANG** mengurung seluruh halaman di dalam `max-w-7xl` yang menyisakan ruang kosong lebar di kiri-kanan layar desktop.
+   - Navbar, Hero Jumbotron/Carousel, dan Footer wajib membentang 100% lebar viewport (`w-full`).
+2. **DILARANG Gaya "AI Slop SaaS Kit"**:
+   - Hindari deretan kotak kecil kaku `border border-slate-200 rounded-xl p-4` dengan pill badge kecil dan teks monospace di setiap sudut.
+   - Gunakan kanvas terang `#F6F6F6` khas portal desa (`sugihwaras.digitaldesa.id`), tipografi **Outfit** yang ramah dan tegas (`text-3xl lg:text-[42px] font-extrabold text-[#099cff] uppercase`), serta fotografi/ilustrasi kegiatan desa nyata.
 
-## 2. Aturan Kualitas Visual (Dieter Rams + UI Audit + Anti-Slop)
+## 2. Struktur Wajib Website Resmi Desa (`PublicPortal.tsx` — Benchmark `sugihwaras.digitaldesa.id`)
 
-- **Hirarki 1 Detik**: Setiap halaman memiliki header seksi dengan breadcrumb (`Beranda / Nama Modul`), judul tegas, dan subjudul penjelas.
-- **Palet Warna**:
-  - **Reneo Navy (`#0B2A57`)** untuk strip otoritas pemerintahan, header formal, dan footer resmi.
-  - **Reneo Emerald (`#047857` / `#10B981`)** untuk identitas kemakmuran desa, status aktif, dan progress bar anggaran/demografi.
-  - **Slate Neutrals (`#F8FAFC`, `#FFFFFF`, `#0F172A`, `#475569`)** untuk keterbacaan tinggi (kontras ≥ 4.5:1).
-- **Tipografi**:
-  - Data teknis (NIK, Nomor Surat, Kode Lacak, Kode Desa, Nominal Rupiah APBDes, Koordinat Peta, Skor IDM/SDGs) **wajib** memakai font monospace (`font-mono`).
-- **Bebas Slop**:
-  - Dilarang bulatan traffic-light macOS.
-  - Dilarang ikon `Sparkles`, `Sparkle`, `WandSparkles`, atau klaim palsu.
-  - Dilarang menyembunyikan empty/loading/error state.
+- **Navbar Full-Width (`bg-[#0069b6]`)**: Lambang Kabupaten (`300_bojonegorokab.png`) + Nama Desa & Kabupaten di kiri; menu putih tegas (`Home`, `Profil Desa`, `SOTK`, `Infografis`, `Listing`, `Layanan Surat`, `Berita`, `Belanja`, `PPID`, `Pengaduan`) di kanan.
+- **Hero Full-Screen / Full-Width Carousel (`h-[520px] lg:h-[640px]`)**: Foto lanskap/kegiatan desa full-bleed dengan judul besar di tengah (*"Selamat Datang — Website Resmi Desa Sugihwaras"*).
+- **11 Seksi Beranda Desa Full-Width**:
+  1. **JELAJAHI DESA**: Grid 50/50 (teks pengantar besar di kiri, 8 kartu ikon SVG besar di kanan: *Profil Desa, Infografis, IDM, PPID, Berita, Belanja, Bansos, Layanan Surat*).
+  2. **Sambutan Kepala Desa**: Podium lambang kabupaten/foto Kades bulat besar di kiri + teks sambutan hangat di kanan.
+  3. **PETA DESA**: Peta interaktif OpenStreetMap full-width (`h-[460px]`).
+  4. **SOTK**: 4 kartu potret vertikal perangkat desa (`bg-[#099cff]`) dengan bar nama & jabatan di bawah.
+  5. **Administrasi Penduduk**: Grid 2×3 bar horizontal besar dengan blok angka biru gradient di kiri (`4.115 | Penduduk`, `Laki-Laki`, `Kepala Keluarga`, `Perempuan`, `Wajib Pilih`, `Wilayah Dusun`).
+  6. **APB Desa**: Ilustrasi di kiri + kartu angka besar Pendapatan, Belanja, dan Pembiayaan di kanan.
+  7. **Berita Desa**: 3 kartu berita fotografi besar dengan badge tanggal di sudut kanan bawah.
+  8. **Potensi & Wisata Desa**: Banner fotografi gelap full-width dengan kartu destinasi/potensi desa.
+  9. **Beli Dari Desa**: Katalog foto produk UMKM warga dengan harga & tombol pesan WhatsApp.
+  10. **Galeri Desa**: Grid foto dokumentasi kegiatan warga.
+  11. **Floating Quick Widgets & Footer (`bg-[#003865]`)**: Tombol mengambang `Kunjungan Website` (kiri bawah) dan `Pengaduan Warga` (kanan bawah).

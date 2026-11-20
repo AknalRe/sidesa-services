@@ -2,25 +2,18 @@ import React, { useEffect, useState } from 'react';
 import {
   ArrowRight,
   ArrowUpRight,
-  BarChart3,
-  Building2,
-  Check,
   CheckCircle2,
   ChevronDown,
-  ClipboardCheck,
+  ChevronLeft,
+  ChevronRight,
   FileText,
   Globe,
-  HeartHandshake,
   Landmark,
   LogIn,
   MapPin,
   Menu,
-  MessageSquareWarning,
-  Newspaper,
-  Scale,
-  Search,
   ShieldCheck,
-  ShoppingBag,
+  Smartphone,
   Users,
   Wallet,
   X,
@@ -33,238 +26,197 @@ interface LandingPageProps {
   onOpenAdmin: () => void;
 }
 
-const NAV_LINKS = [
-  { href: '#kenapa-dibuat', label: 'Cerita Kami' },
-  { href: '#ekosistem', label: 'Ekosistem Modul' },
-  { href: '#website-desa', label: 'Contoh Website Desa' },
-  { href: '#perbandingan', label: 'Perbandingan' },
-  { href: '#faq', label: 'FAQ' },
+const BOJONEGORO_CREST =
+  'https://cdn.digitaldesa.com/uploads/profil/35.22.09.2024/common/300_bojonegorokab.png';
+
+const HERO_SLIDES = [
+  {
+    badge: 'Transformasi Digital Desa',
+    title: 'Transformasi Digital Pemerintahan & Pelayanan Desa',
+    subtitle:
+      'Perluas jangkauan informasi, percepat pelayanan administrasi warga, dan hadirkan transparansi anggaran desa dengan sistem informasi desa terintegrasi.',
+    bgImage: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/bg/bg-landing-test.webp',
+    fgImage: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/bg/bg-hero1.webp',
+  },
+  {
+    badge: 'Website Profil & Layanan Mandiri',
+    title: 'Portal Resmi Desa & Pengajuan Surat dari Rumah',
+    subtitle:
+      'Setiap desa memiliki website resmi yang langsung terhubung dengan buku induk penduduk, persuratan Permendagri 109/2019, infografis APBDes, cek Bansos, dan lapak UMKM warga.',
+    bgImage: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/bg/bg-landing2.webp',
+    fgImage: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/preview-fitur/webprofil.webp',
+  },
+  {
+    badge: 'Anjungan Mandiri & WebGIS Desa',
+    title: 'Cetak Surat Mandiri & Pemetaan Potensi Wilayah Desa',
+    subtitle:
+      'Dukung pelayanan cepat di kantor balai desa serta tampilkan peta batas wilayah, fasilitas umum, dan potensi pertanian desa secara interaktif.',
+    bgImage: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/bg/bg-anjungan.webp',
+    fgImage: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/bg/anjungan.webp',
+  },
 ];
 
-const HERO_MODULE_PREVIEWS = [
+const FEATURE_TABS = [
   {
-    id: 'persuratan',
-    label: 'Persuratan Mandiri',
-    regBadge: 'Permendagri No. 109/2019',
-    title: 'Pengajuan & Cetak Surat Desa',
-    statusLabel: 'Siap Cetak · 4 Menit',
-    citizenName: 'Budi Santoso (NIK 352208••••••0001)',
-    citizenSub: 'Dusun Krajan RT 001 / RW 001 · Pengajuan Mandiri',
-    requestSummary: 'Permohonan Surat Keterangan Usaha (SKU) untuk persyaratan modal usaha penggilingan padi.',
-    officialResponse: 'Diverifikasi Kasi Pelayanan · Nomor Surat: 470/018/35.22.08.2005/2026 telah diterbitkan.',
-    metaLeft: 'Kode Lacak: SR-2026-8419',
-    metaMid: 'Pemberitahuan WA Terkirim',
-    metaRight: 'Arsip Buku Surat Otomatis',
-  },
-  {
-    id: 'apbdes',
-    label: 'APBDes & Bansos',
-    regBadge: 'Transparansi Anggaran',
-    title: 'Realisasi APBDes & Cek Bansos',
-    statusLabel: 'Tahun Anggaran 2026',
-    citizenName: 'Ringkasan APBDes & Penyaluran Bantuan',
-    citizenSub: 'Terhubung langsung ke infografis portal publik desa',
-    requestSummary: 'Pendapatan Desa Rp 1.970.000.000 · Realisasi Belanja Pembangunan & Pemberdayaan Rp 1.445.000.000.',
-    officialResponse: 'Warga dapat mengecek status penerima BLT-DD, PKH, dan BPNT menggunakan NIK atau nama lengkap.',
-    metaLeft: 'Realisasi: 80,1%',
-    metaMid: 'PBB-P2 Terpantau per Dusun',
-    metaRight: 'Publikasi Infografis Real-Time',
-  },
-  {
-    id: 'kependudukan',
+    id: 'administrasi',
     label: 'Administrasi Desa',
-    regBadge: 'Permendagri No. 47/2016',
-    title: 'Database Kependudukan & Aparatur',
-    statusLabel: 'Data Terpadu',
-    citizenName: 'Buku Induk Penduduk, KK & Mutasi Warga',
-    citizenSub: 'Rekap otomatis per Dusun, Kelompok Umur, Pendidikan & Pekerjaan',
-    requestSummary: '4.115 Jiwa (1.240 KK) tercatat rapi beserta perangkat desa (SOTK) dan rekap kehadiran harian.',
-    officialResponse: 'Setiap perubahan data penduduk otomatis memperbarui statistik demografi di website resmi desa.',
-    metaLeft: '4 Dusun Terdata',
-    metaMid: 'SOTK & Kehadiran Aparatur',
-    metaRight: 'Indeks Desa & SDGs Terukur',
-  },
-  {
-    id: 'publik',
-    label: 'PPID, Pengaduan & UMKM',
-    regBadge: 'UU KIP No. 14/2008',
-    title: 'Keterbukaan Informasi & Ekonomi Warga',
-    statusLabel: 'Portal Warga Aktif',
-    citizenName: 'Layanan PPID, Aspirasi Warga & Lapak UMKM',
-    citizenSub: 'Satu pintu informasi resmi desa dan promosi produk lokal',
-    requestSummary: 'Dokumen PPID Berkala/Serta-Merta/Setiap Saat dapat diunduh publik; pengaduan warga tercatat dengan kode tiket.',
-    officialResponse: 'Katalog Beli dari Desa menampilkan produk UMKM warga lengkap dengan tombol pesan langsung ke penjual.',
-    metaLeft: 'PPID 3 Kategori Lengkap',
-    metaMid: 'Tiket Pengaduan Terlacak',
-    metaRight: 'Katalog UMKM Tanpa Potongan',
-  },
-];
-
-const VILLAGE_PAIN_POINTS = [
-  {
-    stat: 'Antrean Surat',
-    title: 'Warga harus bolak-balik ke balai desa hanya untuk mengurus surat pengantar',
-    detail:
-      'Ketika permohonan surat masih ditulis tangan atau diketik ulang dari nol di komputer terpisah, perangkat desa kewalahan mencari data NIK dan warga tidak tahu kapan suratnya selesai ditandatangani.',
-  },
-  {
-    stat: 'Data Tercecer',
-    title: 'Buku penduduk, laporan anggaran, dan data penerima bantuan tidak saling terhubung',
-    detail:
-      'Data kependudukan berada di lembar spreadsheet berbeda dengan laporan APBDes, PBB-P2, dan daftar penerima bansos. Saat dibutuhkan untuk laporan kecamatan atau pembaruan profil desa, perangkat harus merekap ulang.',
-  },
-  {
-    stat: 'Minim Akses',
-    title: 'Transparansi anggaran, berita kegiatan, dan produk UMKM desa sulit diakses warga',
-    detail:
-      'Banyak desa memiliki program pembangunan dan produk UMKM unggulan, tetapi hanya terpajang di papan pengumuman kantor desa sehingga warga perantauan maupun pembeli luar daerah tidak dapat melihatnya.',
-  },
-];
-
-const STORY_CHAPTERS = [
-  {
-    number: '01',
-    step: 'Pelayanan desa berawal dari kepercayaan dan kejelasan.',
-    paragraphs: [
-      'Kantor desa adalah tempat pertama yang didatangi warga ketika mengurus dokumen penting, mencari informasi bantuan sosial, atau menyampaikan keluhan lingkungan. Namun perangkat desa sering harus menangani semuanya dengan berkas yang tersebar.',
-      'Kami melihat bahwa digitalisasi desa tidak boleh menambah beban administrasi baru, melainkan harus meringankan pekerjaan harian perangkat desa.',
-    ],
-  },
-  {
-    number: '02',
-    step: 'Website desa seharusnya hidup dari data operasional, bukan diketik dua kali.',
-    paragraphs: [
-      'Banyak website desa berakhir tidak terurus karena perangkat desa harus menginput data penduduk, anggaran, dan berita di dua sistem yang terpisah.',
-      'Saat back-office pemerintahan desa dan portal publik warga terhubung dalam satu sumber data, setiap pembaruan penduduk, realisasi APBDes, maupun berita kegiatan langsung tampil rapi di website resmi desa.',
-    ],
-  },
-  {
-    number: '03',
-    step: 'Mengacu langsung pada standar regulasi pemerintahan desa.',
-    paragraphs: [
-      'Kami menyusun modul administrasi mengacu pada Permendagri No. 47 Tahun 2016, layanan persuratan mengacu pada Permendagri No. 109 Tahun 2019, serta keterbukaan informasi publik sesuai UU KIP.',
-      'Dengan struktur yang sesuai ketentuan, perangkat desa dapat langsung bekerja dengan format yang akrab dan siap dipertanggungjawabkan.',
-    ],
-  },
-  {
-    number: '04',
-    step: 'Mendorong kemandirian warga dan perputaran ekonomi desa.',
-    paragraphs: [
-      'Melalui pengajuan surat mandiri, cek penerima bansos, pelacakan pengaduan, hingga katalog Beli dari Desa untuk produk UMKM warga, portal desa berubah dari sekadar halaman profil menjadi ruang pelayanan dan ekonomi yang aktif.',
-    ],
-  },
-  {
-    number: '05',
-    step: 'Itulah mengapa kami membangun Reneo SIDesa.',
-    paragraphs: [
-      'Reneo SIDesa menyatukan sistem back-office perangkat desa dan portal resmi warga dalam satu platform yang tertib, transparan, dan mudah dipelihara untuk jangka panjang.',
-    ],
-  },
-];
-
-const ECOSYSTEM_PILLARS = [
-  {
-    badge: 'Back-Office Pemerintahan',
     regulation: 'Permendagri No. 47 Tahun 2016',
-    title: 'Administrasi Desa, Kependudukan & Tata Kelola Keuangan',
+    title: 'Tata Kelola 32 Buku Administrasi & Database Kependudukan',
     description:
-      'Kelola buku induk penduduk, Kartu Keluarga, perangkat desa (SOTK), kehadiran aparatur, buku tamu, hingga rincian anggaran APBDes dari satu ruang kerja.',
-    icon: Landmark,
-    items: [
-      'Database penduduk & KK terstruktur per Dusun, RT, dan RW',
-      'Rekap demografi otomatis (umur, pendidikan, pekerjaan, agama, perkawinan)',
-      'Pencatatan Pendapatan, Belanja, dan Pembiayaan APBDes lintas tahun',
-      'Manajemen SOTK perangkat desa, absensi harian aparatur, dan buku tamu',
+      'Kelola buku induk penduduk, Kartu Keluarga, mutasi warga, perangkat desa (SOTK), kehadiran aparatur, hingga buku tamu desa dalam satu database terpusat.',
+    image: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/preview-fitur/administrasi.webp',
+    points: [
+      'Database kependudukan lengkap per Dusun, RT, dan RW',
+      'Rekap statistik demografi otomatis (pendidikan, pekerjaan, umur, wajib pilih)',
+      'Manajemen perangkat desa (SOTK) dan pencatatan kehadiran harian',
+      'Sinkronisasi data Indeks Desa Membangun (IDM) dan SDGs Desa',
     ],
   },
   {
-    badge: 'Pelayanan Publik & Pajak',
+    id: 'pelayanan',
+    label: 'Pelayanan & Persuratan',
     regulation: 'Permendagri No. 109 Tahun 2019',
-    title: 'Persuratan Mandiri, Transparansi Bansos & PBB-P2',
+    title: 'Pengajuan & Cetak Surat Keterangan Warga dalam Hitungan Menit',
     description:
-      'Pangkas waktu tunggu warga di balai desa. Warga dapat mengajukan surat dari rumah dan memantau progresnya menggunakan kode lacak.',
-    icon: FileText,
-    items: [
-      'Pengajuan surat online (SKTM, Domisili, SKU, Pengantar, Keterangan Kelahiran)',
-      'Verifikasi perangkat, penomoran surat resmi, dan cetak surat siap tanda tangan',
-      'Fitur Cek Penerima Bansos (BLT-DD, PKH, BPNT) secara transparan oleh warga',
-      'Pelacakan ketetapan dan status pelunasan Pajak Bumi & Bangunan (PBB-P2)',
+      'Warga dapat mengajukan surat keterangan secara mandiri melalui portal desa dan melacak statusnya; perangkat desa memverifikasi NIK dan langsung mencetak surat bernomor resmi.',
+    image: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/preview-fitur/pelayanan.webp',
+    points: [
+      'Puluhan format surat standar (SKTM, Domisili, SKU, Pengantar, Kelahiran)',
+      'Pengajuan surat mandiri oleh warga lengkap dengan Kode Lacak',
+      'Notifikasi WhatsApp otomatis ke warga saat surat selesai diproses',
+      'Arsip buku register surat keluar tercatat otomatis',
     ],
   },
   {
-    badge: 'Portal Resmi & Keterbukaan',
+    id: 'webprofil',
+    label: 'Website Profil Desa',
     regulation: 'UU KIP No. 14 Tahun 2008',
-    title: 'Website Profil Desa, Infografis, PPID & Pengaduan Warga',
+    title: 'Portal Resmi Desa, Infografis APBDes, PPID & Lapak UMKM',
     description:
-      'Hadirkan portal resmi desa yang selalu mutakhir dengan visualisasi data kependudukan, anggaran, dokumen publik, dan kanal aspirasi masyarakat.',
-    icon: Globe,
-    items: [
-      'Website profil desa lengkap: sejarah, visi-misi, batas wilayah, dan struktur SOTK',
-      'Dashboard infografis interaktif: Demografi Penduduk, APBDes, Bansos, IDM & SDGs',
-      'Portal PPID (Informasi Berkala, Serta-Merta, Setiap Saat) & form permohonan informasi',
-      'Form pengaduan masyarakat online lengkap dengan tiket pelacakan tindak lanjut',
+      'Tampilkan wajah resmi desa di internet lengkap dengan infografis penduduk, realisasi APBDes, cek penerima Bansos, dokumen PPID, berita kegiatan, dan katalog Beli dari Desa.',
+    image: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/preview-fitur/webprofil.webp',
+    points: [
+      'Beranda desa dengan slider berita, Jelajahi Desa, dan Sambutan Kepala Desa',
+      'Infografis Penduduk, APBDes, Cek Bansos, IDM, Stunting, dan SDGs',
+      'Portal PPID (Informasi Berkala, Serta-Merta, Setiap Saat) & Pengaduan Warga',
+      'Katalog Beli Dari Desa untuk memasarkan produk UMKM warga langsung ke pembeli',
     ],
   },
   {
-    badge: 'Ekonomi, Peta & Indeks Desa',
-    regulation: 'IDM · SDGs Desa · WebGIS',
-    title: 'Lapak UMKM Desa, Peta Potensi Wilayah & Indeks Kemajuan',
+    id: 'perpajakan',
+    label: 'Pajak PBB-P2 & Bansos',
+    regulation: 'Transparansi Keuangan & Sosial',
+    title: 'Pelacakan PBB-P2 per Dusun & Transparansi Bantuan Sosial',
     description:
-      'Tampilkan potensi unggulan, destinasi wisata, titik fasilitas desa, serta hubungkan pelaku UMKM desa langsung dengan pembeli.',
-    icon: ShoppingBag,
-    items: [
-      'Katalog Beli dari Desa (UMKM) dengan kontak pemesanan langsung ke penjual warga',
-      'Direktori peta lokasi penting (balai desa, sekolah, poskesdes, wisata, sentra tani)',
-      'Portal berita dan dokumentasi kegiatan desa yang ramah mesin pencari',
-      'Pemantauan skor Indeks Desa Membangun (IDM), SDGs Desa, dan data penanganan stunting',
+      'Pantau target serta realisasi Pajak Bumi dan Bangunan (PBB-P2) tingkat desa sekaligus berikan akses pengecekan penerima bantuan sosial yang transparan bagi masyarakat.',
+    image: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/preview-fitur/perpajakan.webp',
+    points: [
+      'Rekap ketetapan dan status pelunasan PBB-P2 per wajib pajak dan dusun',
+      'Pencatatan anggaran dan realisasi Pendapatan & Belanja APBDes',
+      'Pencarian penerima BLT-DD, PKH, dan BPNT menggunakan NIK atau Nama',
+      'Laporan realisasi otomatis tampil di infografis website desa',
+    ],
+  },
+  {
+    id: 'webgis',
+    label: 'WebGIS & Layanan Warga',
+    regulation: 'Pemetaan & Akses Mobile',
+    title: 'Pemetaan Wilayah Desa (WebGIS) & Akses Mudah dari Ponsel',
+    description:
+      'Visualisasikan batas wilayah desa, lokasi fasilitas umum, potensi pertanian, dan destinasi wisata desa yang nyaman diakses warga dari perangkat mobile maupun komputer.',
+    image: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/bg/bg-webgis.webp',
+    points: [
+      'Peta interaktif lokasi Balai Desa, Polindes, Sekolah, Pasar, dan Wisata',
+      'Direktori potensi unggulan pertanian, perkebunan, dan ekonomi desa',
+      'Antarmuka responsif yang mudah digunakan warga dari ponsel',
+      'Kanal pengaduan warga online lengkap dengan pelacakan tindak lanjut',
     ],
   },
 ];
 
-const COMPARISON_ROWS = [
+const BENEFIT_PARIS = [
   {
-    aspect: 'Pengajuan & Cetak Surat Warga',
-    manual: 'Warga datang membawa fotokopi berkas, perangkat mengetik ulang dari awal di dokumen Word.',
-    sidesa: 'Warga mengajukan mandiri dari portal, perangkat memverifikasi dan langsung mencetak surat bernomor resmi.',
+    topic: 'Jangkauan Informasi Desa',
+    icon: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/icon/globe.svg',
+    without:
+      'Informasi kegiatan, transparansi anggaran APBDes, dan potensi produk desa hanya terbatas pada papan pengumuman di kantor balai desa.',
+    withSidesa:
+      'Website Resmi Desa dapat diakses 24 jam oleh warga lokal, perantauan, maupun masyarakat luas lengkap dengan berita, infografis, dan lapak UMKM.',
   },
   {
-    aspect: 'Publikasi Infografis Penduduk & APBDes',
-    manual: 'Dibuat manual menjadi gambar/poster setiap akhir tahun sehingga sering terlambat diperbarui.',
-    sidesa: 'Grafik demografi, realisasi APBDes, IDM, dan SDGs terbentuk otomatis dari data yang diinput di back-office.',
+    topic: 'Kecepatan Pelayanan Surat',
+    icon: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/icon/click.svg',
+    without:
+      'Warga harus mengantre lama di kantor desa sementara perangkat mengetik ulang data NIK dan format surat satu per satu secara manual.',
+    withSidesa:
+      'Warga mengajukan surat dari ponsel, data NIK terisi otomatis dari database penduduk, dan surat siap dicetak serta ditandatangani dalam hitungan menit.',
   },
   {
-    aspect: 'Transparansi Bansos & PPID',
-    manual: 'Daftar penerima dan dokumen publik hanya ditempel di papan pengumuman kantor desa.',
-    sidesa: 'Warga dapat mengecek status penerima bansos via NIK/Nama dan mengunduh dokumen resmi PPID kapan saja.',
+    topic: 'Transparansi & Akuntabilitas',
+    icon: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/icon/blt.svg',
+    without:
+      'Warga sulit mengetahui rincian realisasi APBDes, daftar penerima bantuan sosial, maupun prosedur permohonan dokumen publik (PPID).',
+    withSidesa:
+      'Infografis APBDes, fitur Cek Penerima Bansos, dan dokumen resmi PPID tersaji terbuka sesuai amanat UU Keterbukaan Informasi Publik.',
   },
   {
-    aspect: 'Penanganan Pengaduan Masyarakat',
-    manual: 'Keluhan masuk lewat pesan pribadi perangkat desa tanpa catatan status tindak lanjut.',
-    sidesa: 'Setiap laporan warga memiliki kode tiket resmi dan tanggapan perangkat desa tercatat transparan.',
+    topic: 'Efisiensi Waktu & Tenaga Perangkat',
+    icon: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/icon/headphone.svg',
+    without:
+      'Perangkat desa harus merekap ulang data penduduk dan laporan keuangan berkali-kali karena tersebar di banyak file spreadsheet berbeda.',
+    withSidesa:
+      'Satu kali input di Back-Office Desa otomatis memperbarui buku administrasi, laporan statistik demografi, dan tampilan Website Resmi Desa.',
+  },
+];
+
+const SUCCESS_VILLAGES = [
+  {
+    name: 'Desa Sugihwaras',
+    region: 'Kec. Kepohbaru, Kab. Bojonegoro, Jawa Timur',
+    highlight: 'Portal Resmi Desa, Layanan Surat Mandiri, Transparansi APBDes & Lapak UMKM',
+    image:
+      'https://cdn.digitaldesa.com/uploads/profil/35.22.09.2024/berita/29ac04c99ac6977a17584e511f07072a.jpeg',
+    isLiveDemo: true,
   },
   {
-    aspect: 'Promosi Produk UMKM Desa',
-    manual: 'Produk warga hanya dipasarkan dari mulut ke mulut di lingkungan sekitar.',
-    sidesa: 'Terpajang di katalog Beli dari Desa lengkap dengan harga, kategori, dan tombol hubungi penjual.',
+    name: 'Desa Senga Selatan',
+    region: 'Kab. Luwu, Sulawesi Selatan',
+    highlight: 'Digitalisasi Administrasi Kependudukan & Pelayanan Persuratan Terpadu',
+    image: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/success-story/senga-selatan.webp',
+    isLiveDemo: false,
+  },
+  {
+    name: 'Desa Cawet',
+    region: 'Kab. Pemalang, Jawa Tengah',
+    highlight: 'Keterbukaan Informasi Publik (PPID) & Promosi Potensi Pertanian Desa',
+    image: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/success-story/cawet.webp',
+    isLiveDemo: false,
+  },
+  {
+    name: 'Desa Pasamai',
+    region: 'Kab. Luwu, Sulawesi Selatan',
+    highlight: 'Integrasi Data Demografi, PBB-P2 & Pemberdayaan Ekonomi Warga',
+    image: 'https://cdn.digitaldesa.com/statics/landing/homepage/media/success-story/pasamai.webp',
+    isLiveDemo: false,
   },
 ];
 
 const FAQ_ITEMS = [
   {
-    q: 'Apa perbedaan antara halaman Platform SIDesa ini dengan Website Resmi Desa?',
-    a: 'Halaman ini adalah beranda platform SaaS Reneo SIDesa (seperti digitaldesa.id) yang menjelaskan ekosistem layanan. Setiap desa memiliki Website Resmi Desa tersendiri (contohnya Desa Sugihwaras) yang menampilkan profil, infografis, layanan surat, PPID, dan UMKM desa tersebut.',
+    q: 'Apa itu Reneo SIDesa?',
+    a: 'Reneo SIDesa adalah platform Sistem Informasi Desa terintegrasi yang memadukan Back-Office Pemerintahan Desa (administrasi kependudukan Permendagri 47/2016, persuratan Permendagri 109/2019, APBDes, Bansos, PBB-P2) dengan Website Resmi Profil Desa untuk pelayanan mandiri masyarakat.',
   },
   {
-    q: 'Bagaimana warga mengajukan surat keterangan tanpa harus mengantre lama?',
-    a: 'Warga cukup membuka menu Layanan Surat di Website Resmi Desa, memilih jenis surat (misalnya SKTM, Domisili, atau SKU), mengisi NIK dan keperluan, lalu menyimpan Kode Lacak. Perangkat desa memverifikasi di Back-Office dan mencetak surat siap tanda tangan.',
+    q: 'Bagaimana cara melihat contoh Website Resmi Desa yang berjalan di platform ini?',
+    a: 'Klik tombol "Lihat Website Desa Sugihwaras" di bagian atas halaman atau pada bagian Implementasi Desa. Anda akan langsung masuk ke Website Resmi Desa Sugihwaras lengkap dengan fitur Jelajahi Desa, Sambutan Kepala Desa, Peta Desa, SOTK, Infografis, Berita, Belanja UMKM, dan PPID.',
   },
   {
-    q: 'Apakah data di Website Resmi Desa otomatis berubah saat perangkat desa memperbarui data di Back-Office?',
-    a: 'Ya. Penduduk, rincian APBDes, penerima bansos, berita, produk UMKM, dokumen PPID, hingga struktur perangkat desa (SOTK) membaca dari satu sumber data yang sama.',
+    q: 'Apakah perubahan data di Back-Office otomatis tampil di Website Resmi Desa?',
+    a: 'Ya. Saat perangkat desa memperbarui data penduduk, rincian anggaran APBDes, berita kegiatan, perangkat SOTK, atau produk UMKM di Back-Office (#/admin), seluruh data dan grafik di Website Resmi Desa (#/desa) langsung ikut diperbarui secara otomatis.',
   },
   {
-    q: 'Apakah warga dapat menerima pemberitahuan WhatsApp saat surat atau pengaduannya selesai diproses?',
-    a: 'Ya. Reneo SIDesa mendukung pengiriman notifikasi WhatsApp otomatis kepada pemohon ketika status pengajuan surat atau tindak lanjut pengaduan diperbarui oleh perangkat desa.',
+    q: 'Apakah mendukung pengajuan surat mandiri dan notifikasi WhatsApp ke warga?',
+    a: 'Ya. Warga dapat mengajukan permohonan surat langsung dari Website Resmi Desa dan memantau progresnya dengan Kode Lacak. Ketika perangkat desa menyetujui surat di Back-Office, sistem dapat mengirimkan pemberitahuan WhatsApp otomatis ke nomor pemohon.',
   },
 ];
 
@@ -274,7 +226,8 @@ function formatRp(n: number): string {
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, onOpenAdmin }) => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [activeHeroIdx, setActiveHeroIdx] = useState(0);
+  const [heroIdx, setHeroIdx] = useState(0);
+  const [featureIdx, setFeatureIdx] = useState(0);
   const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(0);
   const [villageData, setVillageData] = useState<any>(null);
 
@@ -285,630 +238,564 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
       .catch(() => {});
   }, []);
 
-  const activePreview = HERO_MODULE_PREVIEWS[activeHeroIdx] || HERO_MODULE_PREVIEWS[0];
+  useEffect(() => {
+    const t = window.setInterval(() => {
+      setHeroIdx((prev) => (prev + 1) % HERO_SLIDES.length);
+    }, 7000);
+    return () => window.clearInterval(t);
+  }, []);
+
+  const activeHero = HERO_SLIDES[heroIdx % HERO_SLIDES.length];
+  const activeFeature = FEATURE_TABS[featureIdx] || FEATURE_TABS[0];
   const village = villageData?.village || {
     name: 'Desa Sugihwaras',
     district: 'Kepohbaru',
     regency: 'Bojonegoro',
     province: 'Jawa Timur',
-    postalCode: '62194',
-    areaKm2: '6.45',
-    headName: 'H. Sukamto, S.Sos.',
-    headTitle: 'Kepala Desa',
+    kodeDesa: '35.22.08.2005',
   };
-  const demographics = villageData?.demographics || { totalPopulation: 5, totalKK: 3 };
-  const apbdes = villageData?.apbdes || { year: 2026, pendapatan: 1970000000, belanja: 1800000000 };
-  const indicator = villageData?.indicator || { idmScore: '0.7845', idmStatus: 'MAJU', sdgsScore: '76.40' };
+  const demographics = villageData?.demographics || { totalResidents: 5, totalHouseholds: 3 };
+  const apbdes = villageData?.apbdes || {
+    fiscalYear: 2026,
+    pendapatan: { budget: 1970000000 },
+    belanja: { budget: 1800000000 },
+  };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex flex-col">
-      {/* Sticky Top Navbar */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <a href="#top" className="flex items-center gap-2.5 min-w-0">
-            <ReneoSidesaLogo className="w-9 h-9 shrink-0" />
+    <div className="min-h-screen w-full bg-white text-slate-900 flex flex-col">
+      {/* FULL-WIDTH TOP NAVBAR (Gaya Platform DIGIDES) */}
+      <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur border-b border-slate-200 shadow-2xs">
+        <div className="w-full px-4 sm:px-8 lg:px-14 xl:px-20 h-20 flex items-center justify-between gap-4">
+          <a href="#top" className="flex items-center gap-3 min-w-0">
+            <ReneoSidesaLogo className="w-11 h-11 shrink-0" />
             <div className="min-w-0">
-              <div className="text-sm font-bold tracking-tight text-slate-900 flex items-center gap-1.5">
+              <div className="text-lg sm:text-xl font-extrabold tracking-tight text-[#0B2A57] flex items-center gap-2">
                 <span>Reneo SIDesa</span>
-                <span className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-semibold rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
-                  DIGIDES SaaS
+                <span className="hidden sm:inline-block px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Platform Digital Desa
                 </span>
               </div>
-              <div className="text-[11px] text-slate-500 truncate">
-                Platform Sistem Informasi &amp; Pelayanan Publik Desa
+              <div className="text-xs text-slate-500 truncate">
+                Solusi Sistem Informasi Pemerintahan &amp; Pelayanan Publik Desa
               </div>
             </div>
           </a>
 
-          <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-slate-600">
-            {NAV_LINKS.map((item) => (
-              <a key={item.href} href={item.href} className="hover:text-slate-900 transition-colors">
-                {item.label}
-              </a>
-            ))}
+          <nav className="hidden xl:flex items-center gap-8 text-sm font-bold text-slate-700">
+            <a href="#fitur" className="hover:text-[#0069b6] transition-colors">
+              Fitur &amp; Layanan
+            </a>
+            <a href="#manfaat" className="hover:text-[#0069b6] transition-colors">
+              Manfaat SIDesa
+            </a>
+            <a href="#implementasi" className="hover:text-[#0069b6] transition-colors">
+              Contoh Website Desa
+            </a>
+            <a href="#faq" className="hover:text-[#0069b6] transition-colors">
+              FAQ
+            </a>
           </nav>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0">
             <button
               type="button"
               onClick={() => onOpenVillagePortal('beranda')}
-              className="h-9 px-3.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+              className="h-11 px-4 sm:px-5 rounded-full bg-[#0069b6] hover:bg-[#005a9e] text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 shadow-sm transition-colors"
             >
-              <Globe className="w-3.5 h-3.5 text-emerald-700" />
-              <span>Lihat Website Desa</span>
+              <Globe className="w-4 h-4" />
+              <span>Lihat Website {village.name}</span>
             </button>
             <button
               type="button"
               onClick={onOpenAdmin}
-              className="h-9 px-3.5 rounded-lg bg-[#0B2A57] hover:bg-slate-900 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+              className="h-11 px-4 sm:px-5 rounded-full border-2 border-[#0B2A57] text-[#0B2A57] hover:bg-[#0B2A57] hover:text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 transition-colors"
             >
-              <LogIn className="w-3.5 h-3.5" />
+              <LogIn className="w-4 h-4" />
               <span className="hidden sm:inline">Back-Office Desa</span>
             </button>
             <button
               type="button"
               onClick={() => setMobileNavOpen((v) => !v)}
-              aria-label="Buka navigasi"
-              className="lg:hidden h-9 w-9 rounded-lg border border-slate-200 flex items-center justify-center text-slate-700"
+              aria-label="Menu navigasi"
+              className="xl:hidden h-10 w-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-700"
             >
-              {mobileNavOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
 
         {mobileNavOpen && (
-          <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-2">
-            <div className="grid grid-cols-2 gap-1.5">
-              {NAV_LINKS.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileNavOpen(false)}
-                  className="px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  {item.label}
-                </a>
-              ))}
-            </div>
-            <div className="pt-2 border-t border-slate-100 flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileNavOpen(false);
-                  onOpenVillagePortal('beranda');
-                }}
-                className="flex-1 h-9 px-3 rounded-lg border border-slate-300 text-xs font-semibold text-slate-800"
+          <div className="xl:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <a
+                href="#fitur"
+                onClick={() => setMobileNavOpen(false)}
+                className="px-3 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-100"
               >
-                Website {village.name}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileNavOpen(false);
-                  onOpenAdmin();
-                }}
-                className="flex-1 h-9 px-3 rounded-lg bg-[#0B2A57] text-white text-xs font-semibold"
+                Fitur &amp; Layanan
+              </a>
+              <a
+                href="#manfaat"
+                onClick={() => setMobileNavOpen(false)}
+                className="px-3 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-100"
               >
-                Masuk Back-Office
-              </button>
+                Manfaat SIDesa
+              </a>
+              <a
+                href="#implementasi"
+                onClick={() => setMobileNavOpen(false)}
+                className="px-3 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-100"
+              >
+                Contoh Website Desa
+              </a>
+              <a
+                href="#faq"
+                onClick={() => setMobileNavOpen(false)}
+                className="px-3 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-100"
+              >
+                FAQ
+              </a>
             </div>
           </div>
         )}
       </header>
 
-      <main id="top" className="flex-1">
-        {/* Hero Section */}
-        <section className="border-b border-slate-200 bg-gradient-to-b from-slate-50 to-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 lg:py-16 grid lg:grid-cols-12 gap-10 items-start">
-            {/* Left Copy */}
-            <div className="lg:col-span-6 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Platform Digitalisasi Pemerintahan &amp; Pelayanan Publik Desa</span>
-              </div>
+      <main id="top" className="flex-1 w-full">
+        {/* 1. FULL-WIDTH JUMBOTRON HERO (seperti digitaldesa.id) */}
+        <section className="relative w-full min-h-[560px] lg:min-h-[640px] bg-slate-900 text-white overflow-hidden flex items-center">
+          <img
+            src={activeHero.bgImage}
+            alt={activeHero.title}
+            className="absolute inset-0 w-full h-full object-cover object-right-top opacity-45 transition-all duration-700"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0B2A57]/95 via-[#0B2A57]/80 to-black/50" />
 
-              <h1 className="text-3xl sm:text-4xl lg:text-[40px] font-extrabold tracking-tight text-slate-900 leading-[1.15]">
-                Kelola pemerintahan dan pelayanan warga desa dalam satu sistem yang tertib.
+          {/* Left/Right Carousel Buttons */}
+          <button
+            type="button"
+            onClick={() => setHeroIdx((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
+            aria-label="Slide sebelumnya"
+            className="hidden sm:flex absolute left-4 lg:left-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/15 hover:bg-white/30 text-white items-center justify-center"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setHeroIdx((prev) => (prev + 1) % HERO_SLIDES.length)}
+            aria-label="Slide berikutnya"
+            className="hidden sm:flex absolute right-4 lg:right-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/15 hover:bg-white/30 text-white items-center justify-center"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+
+          <div className="relative z-10 w-full px-4 sm:px-10 lg:px-20 xl:px-28 py-14 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            <div className="lg:col-span-7 space-y-5">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs sm:text-sm font-bold">
+                <ShieldCheck className="w-4 h-4" />
+                <span>{activeHero.badge}</span>
+              </span>
+
+              <h1 className="text-3xl sm:text-5xl lg:text-[52px] font-extrabold tracking-tight leading-[1.12]">
+                {activeHero.title}
               </h1>
 
-              <p className="text-base text-slate-600 leading-relaxed">
-                Dari administrasi kependudukan, cetak surat mandiri dalam hitungan menit, transparansi APBDes &amp; Bansos,
-                hingga portal resmi desa dan katalog UMKM warga — semuanya terhubung dalam satu platform yang mudah dijalankan
-                perangkat desa.
+              <p className="text-base sm:text-lg lg:text-xl text-slate-200 leading-relaxed max-w-2xl">
+                {activeHero.subtitle}
               </p>
 
-              <div className="flex flex-wrap items-center gap-3 pt-1">
+              <div className="pt-2 flex flex-wrap items-center gap-3.5">
                 <button
                   type="button"
                   onClick={() => onOpenVillagePortal('beranda')}
-                  className="h-11 px-5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold inline-flex items-center gap-2 transition-colors"
+                  className="h-12 px-7 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm sm:text-base font-extrabold inline-flex items-center gap-2 shadow-lg transition-colors"
                 >
-                  <Globe className="w-4 h-4" />
-                  <span>Jelajahi Website {village.name}</span>
+                  <Globe className="w-5 h-5" />
+                  <span>Buka Website {village.name}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
                   onClick={onOpenAdmin}
-                  className="h-11 px-5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-900 text-sm font-semibold inline-flex items-center gap-2 transition-colors"
+                  className="h-12 px-7 rounded-full bg-white/15 hover:bg-white/25 border border-white/35 text-white text-sm sm:text-base font-bold inline-flex items-center gap-2 transition-colors"
                 >
-                  <Landmark className="w-4 h-4 text-[#0B2A57]" />
-                  <span>Buka Back-Office Perangkat Desa</span>
+                  <Landmark className="w-4 h-4" />
+                  <span>Masuk Back-Office Perangkat Desa</span>
                 </button>
               </div>
 
-              {/* Regulatory & Feature Strip */}
-              <div className="pt-4 border-t border-slate-200 grid grid-cols-3 gap-4 text-xs">
+              {/* Slide Indicators */}
+              <div className="pt-4 flex items-center gap-2">
+                {HERO_SLIDES.map((s, idx) => (
+                  <button
+                    key={s.badge}
+                    type="button"
+                    onClick={() => setHeroIdx(idx)}
+                    className={`h-2.5 rounded-full transition-all ${
+                      idx === heroIdx % HERO_SLIDES.length ? 'w-10 bg-emerald-400' : 'w-2.5 bg-white/40'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 flex items-center justify-center">
+              <img
+                src={activeHero.fgImage}
+                alt={activeHero.title}
+                className="w-full max-w-lg max-h-[380px] object-contain drop-shadow-2xl"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* 2. EMPAT PILAR EKOSISTEM (Strip Ringkas di Bawah Hero) */}
+        <section className="w-full bg-[#F6F6F6] border-b border-slate-200 py-10 px-4 sm:px-8 lg:px-14 xl:px-20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              {
+                title: 'Pemerintahan Desa',
+                sub: '32 Buku Administrasi (Permendagri 47/2016), Kependudukan, SOTK & Absensi Aparatur',
+                icon: 'https://cdn.digitaldesa.com/statics/profil/icon/profil.svg',
+              },
+              {
+                title: 'Pelayanan Publik',
+                sub: 'Layanan Persuratan Mandiri (Permendagri 109/2019), PBB-P2, & Transparansi Bansos',
+                icon: 'https://cdn.digitaldesa.com/statics/profil/icon/ppid.svg',
+              },
+              {
+                title: 'Publikasi & Website Desa',
+                sub: 'Website Profil Desa, Infografis APBDes, PPID (UU KIP), Berita & Lapak UMKM',
+                icon: 'https://cdn.digitaldesa.com/statics/profil/icon/infografis.svg',
+              },
+              {
+                title: 'Pemantauan & Indeks Desa',
+                sub: 'WebGIS Peta Wilayah Desa, Indeks Desa Membangun (IDM), SDGs & Data Stunting',
+                icon: 'https://cdn.digitaldesa.com/statics/profil/icon/infografis/idm.svg',
+              },
+            ].map((p) => (
+              <div
+                key={p.title}
+                className="bg-white rounded-2xl p-5 shadow-xs flex items-start gap-4"
+              >
+                <img src={p.icon} alt={p.title} className="w-14 h-14 object-contain shrink-0" />
                 <div>
-                  <div className="font-bold text-slate-900">Permendagri 47/2016</div>
-                  <div className="text-slate-500">Standar Administrasi Desa</div>
-                </div>
-                <div>
-                  <div className="font-bold text-slate-900">Permendagri 109/2019</div>
-                  <div className="text-slate-500">Format Pelayanan Persuratan</div>
-                </div>
-                <div>
-                  <div className="font-bold text-slate-900">UU KIP &amp; Transparansi</div>
-                  <div className="text-slate-500">Portal PPID, APBDes &amp; Bansos</div>
+                  <h2 className="text-base font-extrabold text-slate-900">{p.title}</h2>
+                  <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">{p.sub}</p>
                 </div>
               </div>
-            </div>
-
-            {/* Right Interactive Module Preview */}
-            <div className="lg:col-span-6">
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                {/* Preview Header Bar */}
-                <div className="bg-[#0B2A57] text-white px-4 py-3 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <ReneoSidesaLogo className="w-6 h-6 shrink-0" />
-                    <span className="text-xs font-semibold truncate">Simulasi Modul Reneo SIDesa</span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 text-[11px] font-mono">
-                    {activePreview.regBadge}
-                  </span>
-                </div>
-
-                {/* Module Selector Tabs */}
-                <div className="p-2 bg-slate-100 border-b border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                  {HERO_MODULE_PREVIEWS.map((mod, idx) => (
-                    <button
-                      key={mod.id}
-                      type="button"
-                      onClick={() => setActiveHeroIdx(idx)}
-                      className={`px-2.5 py-2 rounded-lg text-xs font-semibold transition-colors text-center ${
-                        activeHeroIdx === idx
-                          ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-                      }`}
-                    >
-                      {mod.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Active Module Body */}
-                <div className="p-5 space-y-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-xs font-semibold text-emerald-700">{activePreview.title}</div>
-                      <div className="text-sm font-bold text-slate-900 mt-0.5">{activePreview.citizenName}</div>
-                      <div className="text-xs text-slate-500">{activePreview.citizenSub}</div>
-                    </div>
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-semibold shrink-0">
-                      {activePreview.statusLabel}
-                    </span>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                      Data / Permohonan Masuk
-                    </div>
-                    <p className="text-xs text-slate-700 leading-relaxed">{activePreview.requestSummary}</p>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-1">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider text-emerald-800">
-                      Tindak Lanjut Sistem &amp; Portal Desa
-                    </div>
-                    <p className="text-xs text-emerald-950 leading-relaxed">{activePreview.officialResponse}</p>
-                  </div>
-
-                  {/* Operational Context Strip */}
-                  <div className="pt-2 border-t border-slate-200 grid grid-cols-3 gap-2 text-[11px]">
-                    <div className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 font-mono text-slate-700 truncate">
-                      {activePreview.metaLeft}
-                    </div>
-                    <div className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 font-medium text-slate-700 truncate">
-                      {activePreview.metaMid}
-                    </div>
-                    <div className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 font-medium text-slate-700 truncate">
-                      {activePreview.metaRight}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Preview Footer Action */}
-                <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2 text-xs">
-                  <span className="text-slate-600">Ingin mencoba langsung modul ini?</span>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onOpenVillagePortal(
-                          activePreview.id === 'persuratan'
-                            ? 'layanan'
-                            : activePreview.id === 'apbdes'
-                              ? 'infografis'
-                              : activePreview.id === 'kependudukan'
-                                ? 'infografis'
-                                : 'ppid'
-                        )
-                      }
-                      className="font-semibold text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1"
-                    >
-                      <span>Buka di Website Desa</span>
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </section>
 
-        {/* Pain Points Section */}
-        <section className="py-14 border-b border-slate-200 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8">
-            <div className="max-w-2xl space-y-2">
-              <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
-                Tantangan Pelayanan Desa
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-                Mengapa administrasi manual membuat perangkat desa kewalahan?
-              </h2>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              {VILLAGE_PAIN_POINTS.map((item) => (
-                <div key={item.stat} className="p-6 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3">
-                  <span className="inline-block px-2.5 py-1 rounded-md bg-[#0B2A57] text-white text-xs font-bold">
-                    {item.stat}
-                  </span>
-                  <h3 className="text-base font-bold text-slate-900 leading-snug">{item.title}</h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">{item.detail}</p>
-                </div>
-              ))}
-            </div>
+        {/* 3. FITUR SIDESA (Interactive Visual Showcase seperti digitaldesa.id) */}
+        <section id="fitur" className="w-full py-16 px-4 sm:px-8 lg:px-14 xl:px-20 space-y-10">
+          <div className="text-center max-w-3xl mx-auto space-y-3">
+            <span className="px-3.5 py-1 rounded-full bg-sky-50 text-[#0069b6] text-xs font-extrabold uppercase tracking-wider">
+              Solusi yang Kami Berikan
+            </span>
+            <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-slate-900">
+              FITUR RENEO SIDESA
+            </h2>
+            <p className="text-base sm:text-lg text-slate-600">
+              Membawa desa Anda ke era digital dengan pekerjaan yang jauh lebih efektif dan efisien dalam satu platform
+              yang sesuai dengan UU Desa &amp; Peraturan Menteri Dalam Negeri.
+            </p>
           </div>
-        </section>
 
-        {/* Editorial Storytelling Section */}
-        <section id="kenapa-dibuat" className="py-16 border-b border-slate-200 bg-slate-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 grid lg:grid-cols-12 gap-10 items-start">
-            <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
-                Cerita di Balik Reneo SIDesa
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 leading-tight">
-                Kenapa kami membangun Reneo SIDesa untuk pemerintahan desa.
-              </h2>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Digitalisasi desa bukan soal memindahkan tumpukan kertas ke layar yang rumit, melainkan menghadirkan tata
-                kelola yang tenang bagi perangkat desa dan transparan bagi seluruh warga.
-              </p>
-              <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2">
-                <div className="text-xs font-bold text-slate-900">Prinsip Utama Reneo SIDesa</div>
-                <ul className="space-y-1.5 text-xs text-slate-600">
-                  <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Satu sumber data untuk Back-Office &amp; Website Desa</span>
+          {/* Feature Category Pills */}
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
+            {FEATURE_TABS.map((f, idx) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setFeatureIdx(idx)}
+                className={`h-11 px-6 rounded-full text-sm font-extrabold transition-all ${
+                  featureIdx === idx
+                    ? 'bg-[#0069b6] text-white shadow-md'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Active Feature Showcase */}
+          <div className="bg-[#F6F6F6] rounded-3xl p-6 sm:p-10 lg:p-12 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            <div className="lg:col-span-6 flex items-center justify-center">
+              <img
+                src={activeFeature.image}
+                alt={activeFeature.title}
+                className="w-full max-w-xl max-h-[380px] object-contain drop-shadow-lg rounded-2xl"
+              />
+            </div>
+
+            <div className="lg:col-span-6 space-y-5">
+              <span className="inline-block px-3 py-1 rounded-lg bg-emerald-100 text-emerald-900 text-xs font-extrabold">
+                {activeFeature.regulation}
+              </span>
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-snug">
+                {activeFeature.title}
+              </h3>
+              <p className="text-base text-slate-700 leading-relaxed">{activeFeature.description}</p>
+
+              <ul className="space-y-2.5 pt-1">
+                {activeFeature.points.map((pt) => (
+                  <li key={pt} className="flex items-start gap-2.5 text-sm sm:text-base text-slate-800 font-medium">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span>{pt}</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Mengacu Permendagri 47/2016, 109/2019 &amp; UU KIP</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Warga dapat mengurus surat &amp; cek bansos dari ponsel</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
+                ))}
+              </ul>
 
-            <div className="lg:col-span-7 space-y-4">
-              {STORY_CHAPTERS.map((ch) => (
-                <div key={ch.number} className="p-6 rounded-2xl bg-white border border-slate-200 space-y-2.5">
-                  <div className="flex items-center gap-2.5">
-                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
-                      Bab {ch.number}
-                    </span>
-                    <h3 className="text-base font-bold text-slate-900">{ch.step}</h3>
-                  </div>
-                  {ch.paragraphs.map((p, i) => (
-                    <p key={i} className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                      {p}
-                    </p>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* 4-Pillar Ecosystem Section */}
-        <section id="ekosistem" className="py-16 border-b border-slate-200 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
-            <div className="max-w-3xl space-y-2">
-              <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
-                Ekosistem &amp; Modul Terintegrasi
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-                Empat pilar digitalisasi desa dalam satu platform.
-              </h2>
-              <p className="text-sm text-slate-600">
-                Dirancang mengikuti alur kerja nyata di kantor desa — mulai dari pencatatan buku administrasi, penerbitan
-                surat warga, publikasi infografis APBDes, hingga promosi produk UMKM desa.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              {ECOSYSTEM_PILLARS.map((pillar) => {
-                const Icon = pillar.icon;
-                return (
-                  <div
-                    key={pillar.title}
-                    className="p-6 rounded-2xl border border-slate-200 bg-white flex flex-col justify-between gap-5"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 text-xs font-semibold">
-                          <Icon className="w-3.5 h-3.5 text-[#0B2A57]" />
-                          <span>{pillar.badge}</span>
-                        </span>
-                        <span className="font-mono text-[11px] text-emerald-700 font-semibold">
-                          {pillar.regulation}
-                        </span>
-                      </div>
-                      <h3 className="text-lg font-bold text-slate-900">{pillar.title}</h3>
-                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{pillar.description}</p>
-                    </div>
-
-                    <ul className="pt-4 border-t border-slate-100 space-y-2">
-                      {pillar.items.map((item) => (
-                        <li key={item} className="flex items-start gap-2 text-xs text-slate-700">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* Live Village Implementation Showcase (seperti sugihwaras.digitaldesa.id) */}
-        <section id="website-desa" className="py-16 border-b border-slate-200 bg-slate-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div className="space-y-2 max-w-2xl">
-                <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
-                  Implementasi Portal Resmi Desa
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-                  Lihat langsung Website Resmi Desa yang berjalan di atas Reneo SIDesa.
-                </h2>
-                <p className="text-sm text-slate-600">
-                  Pilih modul di bawah ini untuk masuk ke portal publik <strong>{village.name}</strong> atau buka
-                  Back-Office untuk mengubah datanya secara langsung.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="pt-3 flex flex-wrap gap-3">
                 <button
                   type="button"
-                  onClick={() => onOpenVillagePortal('beranda')}
-                  className="h-10 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold inline-flex items-center gap-2"
+                  onClick={() =>
+                    onOpenVillagePortal(
+                      activeFeature.id === 'pelayanan'
+                        ? 'layanan'
+                        : activeFeature.id === 'perpajakan'
+                          ? 'infografis'
+                          : activeFeature.id === 'webgis'
+                            ? 'peta'
+                            : 'beranda'
+                    )
+                  }
+                  className="h-11 px-6 rounded-full bg-[#0069b6] hover:bg-[#005a9e] text-white text-sm font-bold inline-flex items-center gap-2"
                 >
-                  <Globe className="w-4 h-4" />
-                  <span>Buka Website {village.name}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <span>Coba di Website {village.name}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={onOpenAdmin}
+                  className="h-11 px-6 rounded-full bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 text-sm font-bold"
+                >
+                  Kelola di Back-Office
                 </button>
               </div>
             </div>
+          </div>
+        </section>
 
-            {/* Active Village Card */}
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-              <div className="bg-[#0B2A57] text-white p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-3.5">
-                  <ReneoSidesaLogo className="w-12 h-12 shrink-0" />
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-lg font-bold">{village.name}</h3>
-                      <span className="px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 text-[11px] font-semibold">
-                        Status IDM: {indicator.idmStatus} ({indicator.idmScore})
+        {/* 4. MANFAAT SIDESA: TANPA SIDESA VS DENGAN SIDESA (seperti digitaldesa.id) */}
+        <section id="manfaat" className="w-full py-16 px-4 sm:px-8 lg:px-14 xl:px-20 bg-[#F6F6F6] space-y-10">
+          <div className="text-center max-w-3xl mx-auto space-y-2">
+            <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-slate-900">
+              Manfaat Reneo SIDesa
+            </h2>
+            <p className="text-base sm:text-lg text-slate-600">
+              Perbandingan nyata pengelolaan administrasi dan pelayanan warga sebelum dan sesudah transformasi digital
+              desa.
+            </p>
+          </div>
+
+          <div className="hidden lg:grid lg:grid-cols-12 gap-6 text-center font-extrabold text-xl">
+            <div className="lg:col-span-5 py-3 rounded-2xl bg-slate-200 text-slate-700">Tanpa SIDesa</div>
+            <div className="lg:col-span-2 flex items-center justify-center text-sm uppercase tracking-wider text-slate-500">
+              Aspek Layanan
+            </div>
+            <div className="lg:col-span-5 py-3 rounded-2xl bg-[#0069b6] text-white">Dengan Reneo SIDesa</div>
+          </div>
+
+          <div className="space-y-5">
+            {BENEFIT_PARIS.map((row) => (
+              <div key={row.topic} className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+                {/* Tanpa SIDesa */}
+                <div className="lg:col-span-5 bg-white rounded-2xl p-6 shadow-xs border-l-4 border-rose-400 flex flex-col justify-center space-y-1.5">
+                  <span className="lg:hidden text-xs font-extrabold uppercase text-rose-600">Tanpa SIDesa</span>
+                  <div className="text-base font-extrabold text-slate-900">{row.topic}</div>
+                  <p className="text-sm text-slate-600 leading-relaxed">{row.without}</p>
+                </div>
+
+                {/* Center Icon */}
+                <div className="lg:col-span-2 flex flex-col items-center justify-center py-2">
+                  <div className="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center p-3">
+                    <img src={row.icon} alt={row.topic} className="w-10 h-10 object-contain" />
+                  </div>
+                </div>
+
+                {/* Dengan SIDesa */}
+                <div className="lg:col-span-5 bg-white rounded-2xl p-6 shadow-xs border-l-4 border-emerald-500 flex flex-col justify-center space-y-1.5">
+                  <span className="lg:hidden text-xs font-extrabold uppercase text-emerald-700">
+                    Dengan Reneo SIDesa
+                  </span>
+                  <div className="text-base font-extrabold text-[#0069b6]">{row.topic}</div>
+                  <p className="text-sm text-slate-700 leading-relaxed font-medium">{row.withSidesa}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 5. IMPLEMENTASI WEBSITE RESMI DESA & CERITA SUKSES (Live Demo Desa Sugihwaras) */}
+        <section id="implementasi" className="w-full py-16 px-4 sm:px-8 lg:px-14 xl:px-20 space-y-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+            <div className="space-y-2 max-w-3xl">
+              <span className="px-3.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-extrabold uppercase tracking-wider">
+                Cerita Sukses &amp; Portal Desa Aktif
+              </span>
+              <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-slate-900">
+                Implementasi Website Resmi Desa
+              </h2>
+              <p className="text-base sm:text-lg text-slate-600">
+                Lihat dan coba langsung portal publik <strong>{village.name}</strong> yang terhubung secara real-time
+                dengan database kependudukan, persuratan, APBDes, dan UMKM.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onOpenVillagePortal('beranda')}
+              className="h-12 px-7 rounded-full bg-[#0069b6] hover:bg-[#005a9e] text-white text-sm sm:text-base font-extrabold inline-flex items-center gap-2 shadow-md shrink-0"
+            >
+              <Globe className="w-5 h-5" />
+              <span>Buka Website {village.name} Sekarang</span>
+              <ArrowUpRight className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Featured Live Village Portal Banner (Desa Sugihwaras) */}
+          <div className="rounded-3xl overflow-hidden shadow-lg bg-[#003865] text-white grid grid-cols-1 lg:grid-cols-12">
+            <div className="lg:col-span-5 relative min-h-[280px]">
+              <img
+                src="https://cdn.digitaldesa.com/uploads/profil/35.22.09.2024/berita/29ac04c99ac6977a17584e511f07072a.jpeg"
+                alt={village.name}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#003865] via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-[#003865]" />
+            </div>
+
+            <div className="lg:col-span-7 p-6 sm:p-10 space-y-6 flex flex-col justify-center">
+              <div className="flex items-center gap-4">
+                <img src={BOJONEGORO_CREST} alt="Lambang Kabupaten" className="w-16 h-16 object-contain shrink-0" />
+                <div>
+                  <span className="px-3 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 text-xs font-extrabold">
+                    PORTAL DESA AKTIF · LIVE DEMO
+                  </span>
+                  <h3 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">
+                    Website Resmi {village.name}
+                  </h3>
+                  <p className="text-sm text-sky-200">
+                    Kecamatan {village.district}, Kabupaten {village.regency}, Provinsi {village.province} · Kode{' '}
+                    <span className="font-mono">{village.kodeDesa}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3.5 rounded-2xl bg-white/10">
+                  <div className="text-xs text-sky-200">Penduduk Terdata</div>
+                  <div className="text-lg font-extrabold font-mono text-white mt-0.5">
+                    {demographics.totalResidents} Jiwa
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-white/10">
+                  <div className="text-xs text-sky-200">Kepala Keluarga</div>
+                  <div className="text-lg font-extrabold font-mono text-white mt-0.5">
+                    {demographics.totalHouseholds} KK
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-white/10">
+                  <div className="text-xs text-sky-200">Pendapatan APBDes</div>
+                  <div className="text-sm sm:text-base font-extrabold font-mono text-emerald-300 mt-0.5 truncate">
+                    {formatRp(apbdes.pendapatan?.budget)}
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-white/10">
+                  <div className="text-xs text-sky-200">Belanja APBDes</div>
+                  <div className="text-sm sm:text-base font-extrabold font-mono text-white mt-0.5 truncate">
+                    {formatRp(apbdes.belanja?.budget)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2.5">
+                {[
+                  ['beranda', 'Beranda Desa'],
+                  ['profil', 'Profil & Sejarah'],
+                  ['pemerintah', 'SOTK Perangkat'],
+                  ['infografis', 'Infografis & APBDes'],
+                  ['layanan', 'Ajukan Surat'],
+                  ['belanja', 'Beli Dari Desa (UMKM)'],
+                  ['ppid', 'Portal PPID'],
+                ].map(([tabKey, label]) => (
+                  <button
+                    key={tabKey}
+                    type="button"
+                    onClick={() => onOpenVillagePortal(tabKey)}
+                    className="h-9 px-4 rounded-full bg-white/15 hover:bg-white text-white hover:text-[#003865] text-xs font-bold transition-colors"
+                  >
+                    {label} &rarr;
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Grid Cerita Sukses Desa Lainnya */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {SUCCESS_VILLAGES.map((v) => (
+              <div
+                key={v.name}
+                onClick={() => onOpenVillagePortal('beranda')}
+                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md border border-slate-200 cursor-pointer transition-all group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="relative h-48 overflow-hidden bg-slate-200">
+                    <img
+                      src={v.image}
+                      alt={v.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    {v.isLiveDemo && (
+                      <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-emerald-600 text-white text-xs font-extrabold shadow">
+                        Live Portal
                       </span>
-                    </div>
-                    <p className="text-xs text-slate-300 mt-0.5">
-                      Kecamatan {village.district} · Kabupaten {village.regency} · Provinsi {village.province} ({village.postalCode})
-                    </p>
+                    )}
+                  </div>
+                  <div className="p-5 space-y-1.5">
+                    <h3 className="text-lg font-extrabold text-slate-900 group-hover:text-[#0069b6]">{v.name}</h3>
+                    <div className="text-xs font-semibold text-slate-500">{v.region}</div>
+                    <p className="text-xs sm:text-sm text-slate-600 pt-1 leading-relaxed">{v.highlight}</p>
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onOpenVillagePortal('beranda')}
-                    className="h-9 px-3.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-bold inline-flex items-center gap-1.5"
-                  >
-                    <span>Masuk Portal Warga</span>
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onOpenAdmin}
-                    className="h-9 px-3.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold inline-flex items-center gap-1.5"
-                  >
-                    <LogIn className="w-3.5 h-3.5" />
-                    <span>Kelola di Back-Office</span>
-                  </button>
+                <div className="px-5 pb-4 text-xs font-extrabold text-[#0069b6] inline-flex items-center gap-1">
+                  <span>{v.isLiveDemo ? 'Kunjungi Website Desa' : 'Lihat Contoh Portal'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </div>
               </div>
-
-              {/* Live Metrics Strip */}
-              <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-slate-200 border-b border-slate-200 bg-slate-50/50">
-                <div className="p-4">
-                  <div className="text-[11px] text-slate-500">Populasi &amp; Kepala Keluarga</div>
-                  <div className="text-base font-bold font-mono text-slate-900 mt-0.5">
-                    {demographics.totalPopulation} Jiwa · {demographics.totalKK} KK
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="text-[11px] text-slate-500">Pendapatan APBDes {apbdes.year}</div>
-                  <div className="text-base font-bold font-mono text-emerald-700 mt-0.5">
-                    {formatRp(apbdes.pendapatan)}
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="text-[11px] text-slate-500">Belanja APBDes {apbdes.year}</div>
-                  <div className="text-base font-bold font-mono text-slate-900 mt-0.5">
-                    {formatRp(apbdes.belanja)}
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="text-[11px] text-slate-500">Skor SDGs Desa &amp; Luas Wilayah</div>
-                  <div className="text-base font-bold font-mono text-slate-900 mt-0.5">
-                    SDGs {indicator.sdgsScore} · {village.areaKm2} km²
-                  </div>
-                </div>
-              </div>
-
-              {/* Direct Shortcut Grid to Village Website Sections */}
-              <div className="p-6 space-y-3">
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Pintasan Halaman Website {village.name}
-                </div>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                  {[
-                    {
-                      tab: 'profil',
-                      title: 'Profil & Sejarah Desa',
-                      desc: 'Visi-misi, batas geografis & luas wilayah',
-                      icon: Building2,
-                    },
-                    {
-                      tab: 'pemerintah',
-                      title: 'Pemerintah & SOTK',
-                      desc: 'Struktur organisasi & perangkat desa',
-                      icon: Users,
-                    },
-                    {
-                      tab: 'infografis',
-                      title: 'Infografis & Bansos',
-                      desc: 'Demografi, APBDes, Cek Bansos, IDM & SDGs',
-                      icon: BarChart3,
-                    },
-                    {
-                      tab: 'layanan',
-                      title: 'Layanan Surat Mandiri',
-                      desc: 'Ajukan SKTM, Domisili, SKU & lacak status',
-                      icon: FileText,
-                    },
-                    {
-                      tab: 'ppid',
-                      title: 'PPID, Pengaduan & UMKM',
-                      desc: 'Dokumen publik UU KIP & Beli dari Desa',
-                      icon: Scale,
-                    },
-                  ].map((shortcut) => {
-                    const Icon = shortcut.icon;
-                    return (
-                      <button
-                        key={shortcut.tab}
-                        type="button"
-                        onClick={() => onOpenVillagePortal(shortcut.tab)}
-                        className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-600 hover:bg-emerald-50/40 text-left transition-colors group flex flex-col justify-between gap-2"
-                      >
-                        <div className="flex items-center justify-between">
-                          <Icon className="w-4 h-4 text-[#0B2A57] group-hover:text-emerald-700" />
-                          <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-700" />
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-slate-900">{shortcut.title}</div>
-                          <div className="text-[11px] text-slate-500 mt-0.5">{shortcut.desc}</div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </section>
 
-        {/* Comparison Table */}
-        <section id="perbandingan" className="py-16 border-b border-slate-200 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8">
-            <div className="max-w-2xl space-y-2">
-              <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
-                Perbandingan Cara Kerja
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-                Sebelum dan sesudah menggunakan Reneo SIDesa.
-              </h2>
-            </div>
-
-            <div className="overflow-x-auto border border-slate-200 rounded-2xl">
-              <table className="w-full text-left border-collapse text-xs sm:text-sm">
-                <thead>
-                  <tr className="bg-slate-100 border-b border-slate-200 text-slate-700">
-                    <th className="py-3.5 px-4 font-bold">Aspek Pelayanan &amp; Administrasi</th>
-                    <th className="py-3.5 px-4 font-bold">Cara Manual / Terpisah</th>
-                    <th className="py-3.5 px-4 font-bold text-emerald-800 bg-emerald-50/60">Reneo SIDesa</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {COMPARISON_ROWS.map((row) => (
-                    <tr key={row.aspect}>
-                      <td className="py-3.5 px-4 font-semibold text-slate-900">{row.aspect}</td>
-                      <td className="py-3.5 px-4 text-slate-600">{row.manual}</td>
-                      <td className="py-3.5 px-4 text-slate-900 font-medium bg-emerald-50/30">{row.sidesa}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        {/* FAQ Section */}
-        <section id="faq" className="py-16 bg-slate-50">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-8">
+        {/* 6. FAQ */}
+        <section id="faq" className="w-full py-16 px-4 sm:px-8 lg:px-14 xl:px-20 bg-[#F6F6F6]">
+          <div className="max-w-4xl mx-auto space-y-8">
             <div className="text-center space-y-2">
-              <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">
-                Pertanyaan Umum
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-                Hal yang sering ditanyakan perangkat desa.
-              </h2>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900">FAQ</h2>
+              <p className="text-base text-slate-600">
+                Pertanyaan yang sering diajukan seputar platform Reneo SIDesa dan Website Resmi Desa.
+              </p>
             </div>
 
             <div className="space-y-3">
               {FAQ_ITEMS.map((item, idx) => {
                 const isOpen = openFaqIdx === idx;
                 return (
-                  <div key={item.q} className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                  <div key={item.q} className="bg-white rounded-2xl shadow-2xs overflow-hidden">
                     <button
                       type="button"
                       onClick={() => setOpenFaqIdx(isOpen ? null : idx)}
-                      className="w-full px-5 py-4 text-left flex items-center justify-between gap-4 text-sm font-bold text-slate-900 hover:bg-slate-50"
+                      className="w-full px-6 py-4 text-left flex items-center justify-between gap-4 text-base font-extrabold text-slate-900 hover:bg-slate-50"
                     >
                       <span>{item.q}</span>
                       <ChevronDown
-                        className={`w-4 h-4 text-slate-500 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                        className={`w-5 h-5 text-slate-500 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                       />
                     </button>
                     {isOpen && (
-                      <div className="px-5 pb-4 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                      <div className="px-6 pb-5 pt-2 text-sm sm:text-base text-slate-600 leading-relaxed border-t border-slate-100">
                         {item.a}
                       </div>
                     )}
@@ -920,30 +807,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-[#0B2A57] text-slate-300 py-10 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <ReneoSidesaLogo className="w-9 h-9 shrink-0" />
+      {/* FULL-WIDTH FOOTER */}
+      <footer className="w-full bg-[#0B2A57] text-slate-300 py-12 px-4 sm:px-8 lg:px-14 xl:px-20">
+        <div className="w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex items-center gap-3.5">
+            <ReneoSidesaLogo className="w-11 h-11 shrink-0" />
             <div>
-              <div className="text-sm font-bold text-white">Reneo SIDesa</div>
-              <div className="text-xs text-slate-400">
-                Platform Sistem Informasi &amp; Pelayanan Publik Desa · Ekosistem Reneo
+              <div className="text-lg font-extrabold text-white">Reneo SIDesa</div>
+              <div className="text-xs sm:text-sm text-slate-300">
+                Platform Sistem Informasi Pemerintahan &amp; Pelayanan Publik Desa · Ekosistem Reneo
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => onOpenVillagePortal('beranda')}
-              className="px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold"
+              className="h-11 px-5 rounded-full bg-[#0069b6] hover:bg-[#0078cd] text-white text-xs sm:text-sm font-bold"
             >
               Website {village.name}
             </button>
             <button
               type="button"
               onClick={onOpenAdmin}
-              className="px-3.5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold"
+              className="h-11 px-5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs sm:text-sm font-extrabold"
             >
               Back-Office Perangkat Desa
             </button>
