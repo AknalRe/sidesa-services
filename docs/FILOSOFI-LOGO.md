@@ -23,6 +23,8 @@ Semua aplikasi resmi di bawah ekosistem Reneo berbagi DNA visual yang sama agar 
 
 ## 2. Tahap Pembentukan Logo (4 Lapisan)
 
+![Tahap Pembentukan Logo Reneo SIDesa](./assets/sidesa-logo-evolution.svg)
+
 Logo **Reneo SIDesa** dibentuk secara bertahap dari wadah dasar hingga simbol pelayanan desa yang utuh:
 
 ### Tahap 1 — Wadah Reneo (Fondasi)
