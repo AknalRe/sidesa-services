@@ -1,0 +1,43 @@
+import React from 'react';
+
+interface ReneoSidesaLogoProps {
+  className?: string;
+}
+
+export const ReneoSidesaLogo: React.FC<ReneoSidesaLogoProps> = ({ className = 'w-9 h-9' }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 512 512"
+    role="img"
+    aria-label="Reneo SIDesa"
+    className={className}
+  >
+    <rect x="40" y="40" width="432" height="432" rx="92" fill="#0B2A57" />
+    <path
+      d="M96 346C144 300 206 286 270 306C318 320 366 306 416 266V372C416 396.3 396.3 416 372 416H140C115.7 416 96 396.3 96 372V346Z"
+      fill="#10B981"
+    />
+    <circle cx="366" cy="148" r="30" fill="#10B981" />
+    <path
+      d="M256 116L334 176H178L256 116Z"
+      fill="#FFFFFF"
+      stroke="#0B2A57"
+      strokeWidth="10"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M118 228L178 176H334L394 228H118Z"
+      fill="#FFFFFF"
+      stroke="#0B2A57"
+      strokeWidth="10"
+      strokeLinejoin="round"
+    />
+    <rect x="148" y="236" width="216" height="122" rx="14" fill="#FFFFFF" />
+    <rect x="172" y="262" width="32" height="68" rx="8" fill="#0B2A57" />
+    <path d="M230 358V288C230 273.6 241.6 262 256 262C270.4 262 282 273.6 282 288V358H230Z" fill="#0B2A57" />
+    <rect x="308" y="262" width="32" height="68" rx="8" fill="#0B2A57" />
+    <rect x="128" y="352" width="256" height="22" rx="11" fill="#FFFFFF" />
+  </svg>
+);
+
+export default ReneoSidesaLogo;

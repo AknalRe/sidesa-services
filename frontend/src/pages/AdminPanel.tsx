@@ -17,6 +17,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { api } from '../services/api';
+import { ReneoSidesaLogo } from '../components/ReneoSidesaLogo';
 
 type AdminTab =
   | 'dashboard'
@@ -141,9 +142,7 @@ export const AdminPanel: React.FC<{ onBackToPortal: () => void }> = ({ onBackToP
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white border border-slate-200 rounded-xl p-6 space-y-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-emerald-700 text-white flex items-center justify-center">
-              <Building2 className="w-5 h-5" />
-            </div>
+            <ReneoSidesaLogo className="w-10 h-10 shrink-0" />
             <div>
               <h1 className="text-base font-bold text-slate-900">
                 {auth?.initialized ? 'Masuk Back-Office Desa' : 'Setup Awal Admin Reneo SIDesa'}
@@ -177,7 +176,8 @@ export const AdminPanel: React.FC<{ onBackToPortal: () => void }> = ({ onBackToP
     <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row">
       {/* Sidebar */}
       <aside className="no-print lg:w-60 bg-slate-900 text-slate-200 flex flex-col shrink-0">
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between gap-2">
+        <div className="p-4 border-b border-slate-800 flex items-center gap-2.5">
+          <ReneoSidesaLogo className="w-8 h-8 shrink-0" />
           <div className="min-w-0">
             <div className="text-sm font-bold text-white truncate">{village?.name || 'Reneo SIDesa'}</div>
             <div className="text-[11px] text-slate-400 truncate">{auth.user?.name}</div>

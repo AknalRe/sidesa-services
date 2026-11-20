@@ -7,6 +7,7 @@ RUN --mount=type=cache,target=/root/.npm \
     npm install --no-audit --no-fund
 
 COPY frontend/tsconfig.json frontend/vite.config.ts frontend/tailwind.config.js frontend/postcss.config.js frontend/index.html ./
+COPY frontend/public ./public/
 COPY frontend/src ./src/
 RUN npm run build
 

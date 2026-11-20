@@ -21,6 +21,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { api } from '../services/api';
+import { ReneoSidesaLogo } from '../components/ReneoSidesaLogo';
 
 type PublicTab =
   | 'beranda'
@@ -252,9 +253,7 @@ export const PublicPortal: React.FC<{ onOpenAdmin: () => void }> = ({ onOpenAdmi
             }}
             className="flex items-center gap-2.5 text-left min-w-0"
           >
-            <div className="w-9 h-9 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0">
-              <Building2 className="w-5 h-5" />
-            </div>
+            <ReneoSidesaLogo className="w-9 h-9 shrink-0" />
             <div className="min-w-0 leading-tight">
               <div className="text-sm font-bold text-slate-900 truncate">{village.name}</div>
               <div className="text-[11px] text-slate-500 truncate">
