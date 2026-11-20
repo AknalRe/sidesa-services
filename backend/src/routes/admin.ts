@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { FastifyInstance } from 'fastify';
 import { and, count, desc, eq } from 'drizzle-orm';
-import { db } from '../db';
+import { calculateSubscriptionAmount, db } from '../db';
 import {
   apbdesItems,
   attendanceLogs,
@@ -11,9 +11,12 @@ import {
   newsArticles,
   officials,
   pbbRecords,
+  platformSettings,
   ppidDocuments,
   ppidRequests,
   residents,
+  subscriptionInvoices,
+  subscriptionPlans,
   umkmProducts,
   villageIndicators,
   villagePlaces,
@@ -29,7 +32,7 @@ import {
 import { buildLetterStatusMessage, sendWahaNotification } from '../services/wahaNotify.service';
 
 function getVillageId(req: any): string {
-  return (req.sidesaUser as SessionUser).villageId;
+  return (req.sidesaUser as SessionUser).villageId || '';
 }
 
 export default async function adminRouter(fastify: FastifyInstance) {
@@ -692,4 +695,103 @@ export default async function adminRouter(fastify: FastifyInstance) {
       .returning();
     return { success: true, data: created };
   });
+
+  // Billing & Langganan Paket Desa (Layaknya Hosting)
+  fastify.get('/billing', async (req, reply) => {
+    const vid = getVillageId(req);
+    const [village] = await db.select().from(villages).where(eq(villages.id, vid)).limit(1);
+    if (!village) return reply.status(404).send({ success: false, error: 'Desa tidak ditemukan.' });
+    const [invoices, plans, settings] = await Promise.all([
+      db
+        .select()
+        .from(subscriptionInvoices)
+        .where(eq(subscriptionInvoices.villageId, vid))
+        .orderBy(desc(subscriptionInvoices.createdAt)),
+      db
+        .select()
+        .from(subscriptionPlans)
+        .where(eq(subscriptionPlans.active, true))
+        .orderBy(subscriptionPlans.sortOrder),
+      db.select().from(platformSettings),
+    ]);
+    const paymentConfig: Record<string, string> = {};
+    for (const s of settings) paymentConfig[s.key] = s.value;
+    return {
+      success: true,
+      data: {
+        subscription: {
+          status: village.status,
+          licenseStatus: village.licenseStatus,
+          licensePlan: village.licensePlan,
+          licenseExpiresAt: village.licenseExpiresAt,
+        },
+        invoices,
+        plans,
+        paymentConfig,
+      },
+    };
+  });
+
+  fastify.post<{ Body: { planCode: string; durationMonths: number; paymentMethod?: string } }>(
+    '/billing/invoices',
+    async (req, reply) => {
+      const vid = getVillageId(req);
+      const planCode = String(req.body?.planCode || 'PRO').toUpperCase();
+      const durationMonths = [1, 6, 12, 24].includes(Number(req.body?.durationMonths))
+        ? Number(req.body?.durationMonths)
+        : 12;
+      const paymentMethod = String(req.body?.paymentMethod || 'TRANSFER_BANK').toUpperCase();
+      const [plan] = await db
+        .select()
+        .from(subscriptionPlans)
+        .where(eq(subscriptionPlans.code, planCode))
+        .limit(1);
+      if (!plan) return reply.status(404).send({ success: false, error: 'Paket langganan tidak ditemukan.' });
+
+      const amount = calculateSubscriptionAmount(plan, durationMonths);
+      const d = new Date();
+      const ym = `${String(d.getFullYear()).slice(-2)}${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const invoiceNumber = `INV-SIDESA-${ym}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+
+      const [created] = await db
+        .insert(subscriptionInvoices)
+        .values({
+          id: crypto.randomUUID(),
+          invoiceNumber,
+          villageId: vid,
+          planCode: plan.code,
+          planName: plan.name,
+          durationMonths,
+          amount,
+          status: 'UNPAID',
+          paymentMethod,
+        })
+        .returning();
+      return reply.status(201).send({ success: true, data: created });
+    }
+  );
+
+  fastify.post<{ Params: { id: string }; Body: { paymentMethod?: string; paymentReference?: string; paymentNote?: string } }>(
+    '/billing/invoices/:id/confirm',
+    async (req, reply) => {
+      const vid = getVillageId(req);
+      const [existing] = await db
+        .select()
+        .from(subscriptionInvoices)
+        .where(and(eq(subscriptionInvoices.id, req.params.id), eq(subscriptionInvoices.villageId, vid)))
+        .limit(1);
+      if (!existing) return reply.status(404).send({ success: false, error: 'Tagihan tidak ditemukan.' });
+      const [updated] = await db
+        .update(subscriptionInvoices)
+        .set({
+          status: 'WAITING_VERIFICATION',
+          paymentMethod: req.body?.paymentMethod || existing.paymentMethod,
+          paymentReference: String(req.body?.paymentReference || '').trim() || existing.paymentReference,
+          paymentNote: String(req.body?.paymentNote || '').trim() || existing.paymentNote,
+        })
+        .where(eq(subscriptionInvoices.id, existing.id))
+        .returning();
+      return { success: true, data: updated };
+    }
+  );
 }

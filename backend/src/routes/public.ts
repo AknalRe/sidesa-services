@@ -9,9 +9,11 @@ import {
   letterRequests,
   newsArticles,
   officials,
+  platformSettings,
   ppidDocuments,
   ppidRequests,
   residents,
+  subscriptionPlans,
   umkmProducts,
   villageIndicators,
   villagePlaces,
@@ -27,14 +29,18 @@ import { buildLetterStatusMessage, sendWahaNotification } from '../services/waha
 
 async function resolvePublicVillage(slug?: string) {
   if (slug) {
-    const rows = await db.select().from(villages).where(eq(villages.slug, slug)).limit(1);
-    if (rows[0]) return rows[0];
+    const rows = await db
+      .select()
+      .from(villages)
+      .where(and(eq(villages.slug, slug), eq(villages.status, 'ACTIVE')))
+      .limit(1);
+    return rows[0] || null;
   }
   return getDefaultVillage();
 }
 
 export default async function publicRouter(fastify: FastifyInstance) {
-  // List all active registered villages on this SaaS platform
+  // List ONLY officially registered & ACTIVE villages on this SaaS platform
   fastify.get('/villages', async () => {
     const list = await db
       .select({
@@ -48,10 +54,43 @@ export default async function publicRouter(fastify: FastifyInstance) {
         headName: villages.headName,
         logoUrl: villages.logoUrl,
         heroImageUrl: villages.heroImageUrl,
+        licensePlan: villages.licensePlan,
+        licenseExpiresAt: villages.licenseExpiresAt,
       })
       .from(villages)
+      .where(and(eq(villages.status, 'ACTIVE'), eq(villages.licenseStatus, 'ACTIVE')))
       .orderBy(villages.createdAt);
     return { success: true, data: list };
+  });
+
+  // List SaaS subscription plans + payment config for registration & landing page
+  fastify.get('/plans', async () => {
+    const [plans, settings] = await Promise.all([
+      db
+        .select()
+        .from(subscriptionPlans)
+        .where(eq(subscriptionPlans.active, true))
+        .orderBy(subscriptionPlans.sortOrder),
+      db.select().from(platformSettings),
+    ]);
+    const paymentConfig: Record<string, string> = {};
+    for (const s of settings) paymentConfig[s.key] = s.value;
+    return {
+      success: true,
+      data: {
+        plans: plans.map((p) => ({
+          ...p,
+          features: (() => {
+            try {
+              return JSON.parse(p.featuresJson || '[]');
+            } catch {
+              return [];
+            }
+          })(),
+        })),
+        paymentConfig,
+      },
+    };
   });
 
   // Complete public village portal bootstrap (Beranda + Profil + SOTK + Ringkasan)

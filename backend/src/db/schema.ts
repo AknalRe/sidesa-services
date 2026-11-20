@@ -44,16 +44,14 @@ export const villages = pgTable('villages', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// 2. Back-office users (Perangkat / Operator Desa)
+// 2. Back-office users (Superadmin Platform & Perangkat / Operator Desa)
 export const villageUsers = pgTable('village_users', {
   id: text('id').primaryKey(),
-  villageId: text('village_id')
-    .references(() => villages.id, { onDelete: 'cascade' })
-    .notNull(),
+  villageId: text('village_id').references(() => villages.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   email: text('email').notNull(),
   passwordHash: text('password_hash').notNull(),
-  role: text('role').notNull().default('ADMIN'), // ADMIN | KADES | SEKDES | OPERATOR
+  role: text('role').notNull().default('ADMIN'), // SUPERADMIN | ADMIN | KADES | SEKDES | OPERATOR
   phone: text('phone'),
   position: text('position'),
   active: boolean('active').notNull().default(true),
@@ -301,4 +299,44 @@ export const attendanceLogs = pgTable('attendance_logs', {
   purpose: text('purpose').default(''),
   checkInAt: timestamp('check_in_at').defaultNow().notNull(),
   checkOutAt: timestamp('check_out_at'),
+});
+
+// 17. Paket Langganan SaaS Desa (Layaknya Hosting)
+export const subscriptionPlans = pgTable('subscription_plans', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(), // STARTER | PRO | ENTERPRISE
+  name: text('name').notNull(),
+  description: text('description').default(''),
+  priceMonthly: integer('price_monthly').notNull().default(150000),
+  priceYearly: integer('price_yearly').notNull().default(1500000),
+  featuresJson: text('features_json').default('[]'),
+  active: boolean('active').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// 18. Tagihan / Invoice Berlangganan Desa
+export const subscriptionInvoices = pgTable('subscription_invoices', {
+  id: text('id').primaryKey(),
+  invoiceNumber: text('invoice_number').notNull().unique(),
+  villageId: text('village_id')
+    .references(() => villages.id, { onDelete: 'cascade' })
+    .notNull(),
+  planCode: text('plan_code').notNull(),
+  planName: text('plan_name').notNull(),
+  durationMonths: integer('duration_months').notNull().default(12),
+  amount: integer('amount').notNull().default(0),
+  status: text('status').notNull().default('UNPAID'), // UNPAID | WAITING_VERIFICATION | PAID | CANCELLED
+  paymentMethod: text('payment_method').notNull().default('TRANSFER_BANK'), // TRANSFER_BANK | QRIS | VIRTUAL_ACCOUNT
+  paymentReference: text('payment_reference'),
+  paymentNote: text('payment_note'),
+  paidAt: timestamp('paid_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// 19. Pengaturan Platform Superadmin (Rekening Pembayaran, QRIS, Kontak)
+export const platformSettings = pgTable('platform_settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull().default(''),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

@@ -52,7 +52,7 @@ export async function ensureDatabaseSchema(): Promise<void> {
 
     CREATE TABLE IF NOT EXISTS village_users (
       id TEXT PRIMARY KEY,
-      village_id TEXT NOT NULL REFERENCES villages(id) ON DELETE CASCADE,
+      village_id TEXT REFERENCES villages(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
       email TEXT NOT NULL,
       password_hash TEXT NOT NULL,
@@ -62,6 +62,8 @@ export async function ensureDatabaseSchema(): Promise<void> {
       active BOOLEAN NOT NULL DEFAULT TRUE,
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
+
+    ALTER TABLE village_users ALTER COLUMN village_id DROP NOT NULL;
 
     CREATE TABLE IF NOT EXISTS officials (
       id TEXT PRIMARY KEY,
@@ -263,212 +265,144 @@ export async function ensureDatabaseSchema(): Promise<void> {
       check_in_at TIMESTAMP NOT NULL DEFAULT NOW(),
       check_out_at TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS subscription_plans (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      price_monthly INTEGER NOT NULL DEFAULT 150000,
+      price_yearly INTEGER NOT NULL DEFAULT 1500000,
+      features_json TEXT DEFAULT '[]',
+      active BOOLEAN NOT NULL DEFAULT TRUE,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS subscription_invoices (
+      id TEXT PRIMARY KEY,
+      invoice_number TEXT NOT NULL UNIQUE,
+      village_id TEXT NOT NULL REFERENCES villages(id) ON DELETE CASCADE,
+      plan_code TEXT NOT NULL,
+      plan_name TEXT NOT NULL,
+      duration_months INTEGER NOT NULL DEFAULT 12,
+      amount INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'UNPAID',
+      payment_method TEXT NOT NULL DEFAULT 'TRANSFER_BANK',
+      payment_reference TEXT,
+      payment_note TEXT,
+      paid_at TIMESTAMP,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS platform_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL DEFAULT '',
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
   `);
 
-  await seedDefaultVillageIfEmpty();
+  // Hapus data seed demo Sugihwaras yang tidak terdaftar secara resmi
+  await queryClient.unsafe(`
+    DELETE FROM villages
+    WHERE id = 'default-village'
+      AND slug = 'sugihwaras'
+      AND NOT EXISTS (SELECT 1 FROM village_users WHERE village_id = 'default-village');
+  `);
+
+  await seedDefaultPlansAndSettings();
 }
 
-async function seedDefaultVillageIfEmpty(): Promise<void> {
-  const [{ total }] = await db.select({ total: count() }).from(schema.villages);
-  if (total > 0) return;
+async function seedDefaultPlansAndSettings(): Promise<void> {
+  const [{ total }] = await db.select({ total: count() }).from(schema.subscriptionPlans);
+  if (total === 0) {
+    await db.insert(schema.subscriptionPlans).values([
+      {
+        id: 'plan-starter',
+        code: 'STARTER',
+        name: 'Paket Desa Mandiri',
+        description: 'Cocok untuk desa yang baru memulai digitalisasi website profil desa & pelayanan surat.',
+        priceMonthly: 150000,
+        priceYearly: 1500000,
+        featuresJson: JSON.stringify([
+          'Website Resmi Profil Desa (/desa/nama-desa)',
+          'CMS Berita, Pengumuman & Galeri Desa',
+          'Database Penduduk & Statistik Demografi',
+          'Pelayanan Pengajuan Surat Mandiri Warga',
+          'Transparansi Infografis APBDes & SOTK',
+        ]),
+        active: true,
+        sortOrder: 1,
+      },
+      {
+        id: 'plan-pro',
+        code: 'PRO',
+        name: 'Paket Desa Digital Pro',
+        description: 'Paket lengkap dengan PPID, Cek Bansos, PBB-P2, Lapak UMKM, WebGIS, dan Notifikasi WhatsApp.',
+        priceMonthly: 250000,
+        priceYearly: 2500000,
+        featuresJson: JSON.stringify([
+          'Semua fitur Paket Desa Mandiri',
+          'Notifikasi WhatsApp Otomatis Status Surat & Pengaduan',
+          'Portal PPID (UU KIP) & Pengaduan Warga Online',
+          'Katalog Beli Dari Desa (UMKM) & Peta WebGIS',
+          'Modul PBB-P2, Cek Bansos, IDM, SDGs & Stunting',
+        ]),
+        active: true,
+        sortOrder: 2,
+      },
+      {
+        id: 'plan-enterprise',
+        code: 'ENTERPRISE',
+        name: 'Paket Desa Prioritas / Custom Domain',
+        description: 'Dukungan penuh domain .desa.id, pendampingan migrasi data kependudukan, dan SLA prioritas.',
+        priceMonthly: 450000,
+        priceYearly: 4500000,
+        featuresJson: JSON.stringify([
+          'Semua fitur Paket Desa Digital Pro',
+          'Integrasi Custom Domain (.desa.id)',
+          'Pendampingan Migrasi Data Kependudukan & APBDes',
+          'Backup Harian Terjadwal & SLA Prioritas',
+          'Multi-Operator Perangkat Desa (Kades, Sekdes, Kaur)',
+        ]),
+        active: true,
+        sortOrder: 3,
+      },
+    ]);
+  }
 
-  const vid = schema.DEFAULT_VILLAGE_ID;
-  const year = new Date().getFullYear();
+  const defaultSettings: Array<[string, string]> = [
+    ['bankName', 'Bank BRI / Mandiri (Reneo SIDesa)'],
+    ['bankAccountNumber', '1234-01-000888-30-9'],
+    ['bankAccountHolder', 'PT Reneo Teknologi Nusantara'],
+    ['qrisNote', 'Tersedia pembayaran QRIS / Virtual Account atas nama Reneo SIDesa. Hubungi admin untuk QRIS dinamis.'],
+    ['whatsappSupport', '6281234567890'],
+  ];
 
-  await db.insert(schema.villages).values({
-    id: vid,
-    name: 'Desa Sugihwaras',
-    slug: 'sugihwaras',
-    kodeDesa: '35.22.13.2001',
-    district: 'Kepohbaru',
-    regency: 'Bojonegoro',
-    province: 'Jawa Timur',
-    postalCode: '62194',
-    headName: 'H. Sutrisno, S.Sos',
-    headTitle: 'Kepala Desa',
-    headGreeting:
-      'Selamat datang di Website Resmi dan Portal Layanan Digital Desa Sugihwaras. Melalui portal ini, warga dapat mengakses informasi publik, transparansi APBDes, cek penerima bantuan sosial, hingga mengajukan permohonan surat secara mandiri dari rumah.',
-    vision:
-      'Terwujudnya Desa Sugihwaras yang Maju, Mandiri, Transparan, dan Sejahtera Berbasis Pelayanan Publik Digital.',
-    mission:
-      '1. Meningkatkan mutu pelayanan administrasi dan persuratan warga yang cepat dan transparan.\n2. Mengelola APBDes secara akuntabel dan partisipatif.\n3. Mengembangkan ekonomi lokal melalui digitalisasi UMKM dan potensi pertanian desa.\n4. Membangun infrastruktur desa yang merata dan berkelanjutan.',
-    history:
-      'Desa Sugihwaras berdiri sejak awal abad ke-20 sebagai sentra pertanian subur di Kecamatan Kepohbaru, Kabupaten Bojonegoro. Nama Sugihwaras berasal dari doa para leluhur agar masyarakatnya senantiasa makmur (sugih) dan sehat sentosa (waras).',
-    address: 'Jl. Raya Balai Desa Sugihwaras No. 01, Kec. Kepohbaru, Kab. Bojonegoro 62194',
-    phone: '081234567890',
-    email: 'pemdes@sugihwaras.desa.id',
-    website: 'https://sugihwaras.desa.id',
-    areaKm2: 4.82,
-    boundariesJson: JSON.stringify({
-      north: 'Desa Sumbergede',
-      east: 'Desa Mojosari',
-      south: 'Desa Krangkong',
-      west: 'Desa Nglumber',
-    }),
-    mapLat: -7.2345,
-    mapLng: 112.0942,
-  });
+  for (const [key, value] of defaultSettings) {
+    await db
+      .insert(schema.platformSettings)
+      .values({ key, value })
+      .onConflictDoNothing({ target: schema.platformSettings.key });
+  }
+}
 
-  // Seed SOTK officials
-  await db.insert(schema.officials).values([
-    { id: crypto.randomUUID(), villageId: vid, name: 'H. Sutrisno, S.Sos', position: 'Kepala Desa', sortOrder: 1 },
-    { id: crypto.randomUUID(), villageId: vid, name: 'Ahmad Fauzi, S.AP', position: 'Sekretaris Desa', sortOrder: 2 },
-    { id: crypto.randomUUID(), villageId: vid, name: 'Siti Rahmawati', position: 'Kaur Keuangan', sortOrder: 3 },
-    { id: crypto.randomUUID(), villageId: vid, name: 'Bambang Wijaya', position: 'Kasi Pemerintahan', sortOrder: 4 },
-    { id: crypto.randomUUID(), villageId: vid, name: 'Rina Kusuma', position: 'Kasi Pelayanan & Kesejahteraan', sortOrder: 5 },
-    { id: crypto.randomUUID(), villageId: vid, name: 'Dedi Prasetyo', position: 'Kepala Dusun Krajan', sortOrder: 6 },
-  ]);
-
-  // Seed representative residents for live Infografis Penduduk
-  await db.insert(schema.residents).values([
-    { id: crypto.randomUUID(), villageId: vid, nik: '3522130101850001', kkNumber: '3522130101100001', fullName: 'Slamet Widodo', gender: 'L', birthDate: '1985-04-12', dusun: 'Dusun Krajan', rt: '001', rw: '001', education: 'SLTA/Sederajat', occupation: 'Petani/Pekebun', religion: 'Islam', maritalStatus: 'Kawin', isVoter: true },
-    { id: crypto.randomUUID(), villageId: vid, nik: '3522134506880002', kkNumber: '3522130101100001', fullName: 'Sri Wahyuni', gender: 'P', birthDate: '1988-06-05', dusun: 'Dusun Krajan', rt: '001', rw: '001', education: 'SLTA/Sederajat', occupation: 'Mengurus Rumah Tangga', religion: 'Islam', maritalStatus: 'Kawin', isVoter: true },
-    { id: crypto.randomUUID(), villageId: vid, nik: '3522131209120003', kkNumber: '3522130101100001', fullName: 'Bagas Pratama', gender: 'L', birthDate: '2012-09-12', dusun: 'Dusun Krajan', rt: '001', rw: '001', education: 'SD/Sederajat', occupation: 'Pelajar/Mahasiswa', religion: 'Islam', maritalStatus: 'Belum Kawin', isVoter: false },
-    { id: crypto.randomUUID(), villageId: vid, nik: '3522131803790004', kkNumber: '3522130101100002', fullName: 'Hendra Gunawan', gender: 'L', birthDate: '1979-03-18', dusun: 'Dusun Ngasem', rt: '002', rw: '001', education: 'S1/Diploma IV', occupation: 'Wiraswasta', religion: 'Islam', maritalStatus: 'Kawin', isVoter: true },
-    { id: crypto.randomUUID(), villageId: vid, nik: '3522135407820005', kkNumber: '3522130101100002', fullName: 'Nurul Hidayah', gender: 'P', birthDate: '1982-07-14', dusun: 'Dusun Ngasem', rt: '002', rw: '001', education: 'S1/Diploma IV', occupation: 'Guru/PNS', religion: 'Islam', maritalStatus: 'Kawin', isVoter: true },
-    { id: crypto.randomUUID(), villageId: vid, nik: '3522132211950006', kkNumber: '3522130101100003', fullName: 'Rizky Saputra', gender: 'L', birthDate: '1995-11-22', dusun: 'Dusun Sumber', rt: '003', rw: '002', education: 'SLTA/Sederajat', occupation: 'Karyawan Swasta', religion: 'Islam', maritalStatus: 'Belum Kawin', isVoter: true },
-    { id: crypto.randomUUID(), villageId: vid, nik: '3522136102650007', kkNumber: '3522130101100004', fullName: 'Sumarni', gender: 'P', birthDate: '1965-02-21', dusun: 'Dusun Sumber', rt: '003', rw: '002', education: 'SD/Sederajat', occupation: 'Pedagang', religion: 'Islam', maritalStatus: 'Cerai Mati', isVoter: true },
-    { id: crypto.randomUUID(), villageId: vid, nik: '3522130908010008', kkNumber: '3522130101100005', fullName: 'Dina Amelia', gender: 'P', birthDate: '2001-08-09', dusun: 'Dusun Krajan', rt: '002', rw: '001', education: 'S1/Diploma IV', occupation: 'Pelajar/Mahasiswa', religion: 'Islam', maritalStatus: 'Belum Kawin', isVoter: true },
-  ]);
-
-  // Seed APBDes
-  await db.insert(schema.apbdesItems).values([
-    { id: crypto.randomUUID(), villageId: vid, fiscalYear: year, category: 'PENDAPATAN', subCategory: 'Dana Desa (DD)', label: 'Dana Desa APBN', budgetAmount: 1050000000, realizedAmount: 840000000 },
-    { id: crypto.randomUUID(), villageId: vid, fiscalYear: year, category: 'PENDAPATAN', subCategory: 'Alokasi Dana Desa (ADD)', label: 'Alokasi Dana Desa Kabupaten', budgetAmount: 480000000, realizedAmount: 410000000 },
-    { id: crypto.randomUUID(), villageId: vid, fiscalYear: year, category: 'PENDAPATAN', subCategory: 'PADes', label: 'Pendapatan Asli Desa & BUMDes', budgetAmount: 125000000, realizedAmount: 98500000 },
-    { id: crypto.randomUUID(), villageId: vid, fiscalYear: year, category: 'BELANJA', subCategory: 'Penyelenggaraan Pemerintahan', label: 'Siltap, Operasional & Pelayanan Desa', budgetAmount: 465000000, realizedAmount: 392000000 },
-    { id: crypto.randomUUID(), villageId: vid, fiscalYear: year, category: 'BELANJA', subCategory: 'Pelaksanaan Pembangunan', label: 'Jalan Usaha Tani, Drainase & Posyandu', budgetAmount: 720000000, realizedAmount: 585000000 },
-    { id: crypto.randomUUID(), villageId: vid, fiscalYear: year, category: 'BELANJA', subCategory: 'Pembinaan & Pemberdayaan', label: 'UMKM, Karang Taruna & Ketahanan Pangan', budgetAmount: 290000000, realizedAmount: 215000000 },
-    { id: crypto.randomUUID(), villageId: vid, fiscalYear: year, category: 'BELANJA', subCategory: 'Penanggulangan Bencana & BLT', label: 'BLT Dana Desa & Darurat Desa', budgetAmount: 144000000, realizedAmount: 120000000 },
-    { id: crypto.randomUUID(), villageId: vid, fiscalYear: year, category: 'PEMBIAYAAN', subCategory: 'SILPA Tahun Sebelumnya', label: 'Penerimaan Pembiayaan SILPA', budgetAmount: 45000000, realizedAmount: 45000000 },
-  ]);
-
-  // Seed Bansos
-  await db.insert(schema.bansosRecipients).values([
-    { id: crypto.randomUUID(), villageId: vid, nik: '3522136102650007', fullName: 'Sumarni', kkNumber: '3522130101100004', program: 'BLT-DD', period: `Tahap I ${year}`, amount: 900000, status: 'TERSALURKAN', dusun: 'Dusun Sumber' },
-    { id: crypto.randomUUID(), villageId: vid, nik: '3522130101850001', fullName: 'Slamet Widodo', kkNumber: '3522130101100001', program: 'BPNT', period: `Triwulan I ${year}`, amount: 600000, status: 'AKTIF', dusun: 'Dusun Krajan' },
-    { id: crypto.randomUUID(), villageId: vid, nik: '3522134506880002', fullName: 'Sri Wahyuni', kkNumber: '3522130101100001', program: 'PKH', period: `Tahap I ${year}`, amount: 750000, status: 'TERSALURKAN', dusun: 'Dusun Krajan' },
-  ]);
-
-  // Seed Indicators (IDM / Indeks Desa / SDGs / Stunting)
-  await db.insert(schema.villageIndicators).values({
-    id: crypto.randomUUID(),
-    villageId: vid,
-    year,
-    idmScore: 0.8124,
-    idmStatus: 'Mandiri',
-    sdgsScore: 68.4,
-    stuntingCases: 4,
-    stuntingRate: 2.1,
-    dimensionsJson: JSON.stringify([
-      { name: 'Layanan Dasar', score: 0.84 },
-      { name: 'Sosial', score: 0.86 },
-      { name: 'Ekonomi', score: 0.77 },
-      { name: 'Lingkungan', score: 0.79 },
-      { name: 'Aksesibilitas', score: 0.81 },
-      { name: 'Tata Kelola Pemerintahan Desa', score: 0.88 },
-    ]),
-  });
-
-  // Seed News
-  await db.insert(schema.newsArticles).values([
-    {
-      id: crypto.randomUUID(),
-      villageId: vid,
-      slug: 'musyawarah-perencanaan-pembangunan-desa-tahun-ini',
-      title: `Musyawarah Perencanaan Pembangunan Desa (Musrenbangdes) Tahun ${year}`,
-      category: 'Pemerintahan',
-      excerpt:
-        'Pemerintah Desa bersama BPD, tokoh masyarakat, dan perwakilan dusun menyepakati prioritas pembangunan jalan usaha tani serta digitalisasi pelayanan publik.',
-      content:
-        'Pemerintah Desa Sugihwaras telah menyelenggarakan Musrenbangdes di Balai Desa dengan dihadiri oleh perangkat desa, BPD, ketua RT/RW, serta perwakilan kelompok tani dan PKK.\n\nPrioritas tahun ini mencakup peningkatan saluran irigasi pertanian, perkerasan jalan poros dusun, penanganan stunting terpadu di Posyandu, serta layanan pengajuan surat mandiri melalui portal resmi desa agar warga tidak perlu antre lama di kantor desa.',
-      authorName: 'Sekretaris Desa',
-      views: 128,
-    },
-    {
-      id: crypto.randomUUID(),
-      villageId: vid,
-      slug: 'penyaluran-blt-dana-desa-tahap-pertama-berjalan-lancar',
-      title: 'Penyaluran BLT Dana Desa Tahap Pertama Berjalan Tertib dan Transparan',
-      category: 'Bansos',
-      excerpt:
-        'Sebanyak 40 Keluarga Penerima Manfaat menerima bantuan langsung tunai di Balai Desa dengan verifikasi data kependudukan.',
-      content:
-        'Penyaluran Bantuan Langsung Tunai Dana Desa (BLT-DD) telah dilaksanakan secara terbuka di Pendopo Balai Desa. Warga dapat memeriksa status kepesertaan bansos secara mandiri melalui menu Infografis > Bansos di website desa menggunakan NIK atau nama lengkap.',
-      authorName: 'Kasi Pelayanan',
-      views: 94,
-    },
-  ]);
-
-  // Seed UMKM
-  await db.insert(schema.umkmProducts).values([
-    {
-      id: crypto.randomUUID(),
-      villageId: vid,
-      name: 'Keripik Tempe Gurih Khas Sugihwaras',
-      category: 'Kuliner',
-      price: 15000,
-      unit: 'bungkus 250g',
-      sellerName: 'UMKM Ibu Sumarni',
-      sellerPhone: '6281234567891',
-      description: 'Keripik tempe renyah tanpa pengawet, diolah dari kedelai pilihan petani lokal.',
-    },
-    {
-      id: crypto.randomUUID(),
-      villageId: vid,
-      name: 'Beras Organik Pandan Wangi',
-      category: 'Hasil Pertanian',
-      price: 78000,
-      unit: 'sak 5 kg',
-      sellerName: 'Gapoktan Tani Makmur',
-      sellerPhone: '6281234567892',
-      description: 'Beras pulen wangi langsung dari penggilingan Gabungan Kelompok Tani Desa Sugihwaras.',
-    },
-    {
-      id: crypto.randomUUID(),
-      villageId: vid,
-      name: 'Anyaman Tas Bambu Tradisional',
-      category: 'Kerajinan',
-      price: 45000,
-      unit: 'pcs',
-      sellerName: 'Kriya Muda Karang Taruna',
-      sellerPhone: '6281234567893',
-      description: 'Tas anyaman bambu ramah lingkungan cocok untuk hampers dan belanja harian.',
-    },
-  ]);
-
-  // Seed PPID Documents
-  await db.insert(schema.ppidDocuments).values([
-    { id: crypto.randomUUID(), villageId: vid, category: 'BERKALA', title: `Peraturan Desa tentang APBDes Tahun Anggaran ${year}`, documentNumber: `PERDES/01/${year}`, year, summary: 'Rincian rencana pendapatan, belanja, dan pembiayaan desa tahun berjalan.' },
-    { id: crypto.randomUUID(), villageId: vid, category: 'SETIAP_SAAT', title: 'Daftar Informasi Publik (DIP) Pemerintah Desa', documentNumber: `SK-PPID/02/${year}`, year, summary: 'Daftar dokumen publik yang dapat diakses warga sesuai UU No. 14 Tahun 2008 tentang KIP.' },
-    { id: crypto.randomUUID(), villageId: vid, category: 'DASAR_HUKUM', title: 'Permendagri No. 47 Tahun 2016 tentang Administrasi Pemerintahan Desa', documentNumber: 'PERMENDAGRI-47-2016', year: 2016, summary: 'Pedoman baku pencatatan 32 buku administrasi pemerintahan desa.' },
-    { id: crypto.randomUUID(), villageId: vid, category: 'SERTA_MERTA', title: 'Prosedur Siaga Banjir & Tanggap Darurat Desa', documentNumber: `SOP-DARURAT/${year}`, year, summary: 'Informasi titik evakuasi dan nomor darurat desa.' },
-  ]);
-
-  // Seed Places (POI, Potensi, Wisata, Galeri)
-  await db.insert(schema.villagePlaces).values([
-    { id: crypto.randomUUID(), villageId: vid, kind: 'POI', title: 'Kantor Balai Desa Sugihwaras', category: 'Pemerintahan', description: 'Pusat pelayanan administrasi kependudukan, persuratan, dan informasi PPID desa.', address: 'Jl. Raya Balai Desa No. 01', lat: -7.2345, lng: 112.0942 },
-    { id: crypto.randomUUID(), villageId: vid, kind: 'POI', title: 'Polindes & Posyandu Melati', category: 'Kesehatan', description: 'Layanan pemeriksaan ibu hamil, balita, dan pemantauan gizi stunting bulanan.', address: 'Dusun Krajan RT 001/001', lat: -7.2351, lng: 112.0958 },
-    { id: crypto.randomUUID(), villageId: vid, kind: 'POTENSI', title: 'Sentra Pertanian Padi & Palawija', category: 'Pertanian', description: 'Hamparan sawah irigasi teknis seluas 280 hektar dengan hasil panen 3 kali setahun.', address: 'Wilayah Timur Desa' },
-    { id: crypto.randomUUID(), villageId: vid, kind: 'WISATA', title: 'Embung Wisata Tani Sugihwaras', category: 'Wisata Alam', description: 'Tampungan air irigasi yang ditata sebagai ruang rekreasi keluarga dan pasar kuliner sore.', address: 'Dusun Sumber', lat: -7.232, lng: 112.0981 },
-  ]);
-
-  // Seed PBB-P2 sample
-  await db.insert(schema.pbbRecords).values([
-    { id: crypto.randomUUID(), villageId: vid, nop: '35.22.130.001.001-0012.0', taxpayerName: 'Slamet Widodo', dusun: 'Dusun Krajan', fiscalYear: year, taxAmount: 85000, status: 'LUNAS', paidAt: new Date() },
-    { id: crypto.randomUUID(), villageId: vid, nop: '35.22.130.001.002-0045.0', taxpayerName: 'Hendra Gunawan', dusun: 'Dusun Ngasem', fiscalYear: year, taxAmount: 145000, status: 'BELUM_BAYAR' },
-  ]);
-
-  console.log('[SIDesa DB] Seeded default village "Desa Sugihwaras"');
+export function calculateSubscriptionAmount(
+  plan: { priceMonthly: number; priceYearly: number },
+  durationMonths: number
+): number {
+  const m = Number(durationMonths) || 12;
+  if (m === 12) return plan.priceYearly;
+  if (m === 24) return Math.round(plan.priceYearly * 2 * 0.9); // Diskon tambahan 10% untuk 2 tahun
+  if (m === 6) return Math.round(plan.priceMonthly * 6 * 0.95); // Diskon 5% untuk 6 bulan
+  return plan.priceMonthly * m;
 }
 
 export async function getDefaultVillage() {
-  const rows = await db
+  const anyRow = await db
     .select()
     .from(schema.villages)
-    .where(eq(schema.villages.id, schema.DEFAULT_VILLAGE_ID))
+    .where(eq(schema.villages.status, 'ACTIVE'))
     .limit(1);
-  if (rows[0]) return rows[0];
-  const anyRow = await db.select().from(schema.villages).limit(1);
   return anyRow[0] || null;
 }

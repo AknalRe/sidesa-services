@@ -1,0 +1,537 @@
+import React, { useEffect, useState } from 'react';
+import {
+  Building2,
+  CheckCircle2,
+  CreditCard,
+  ExternalLink,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  ShieldCheck,
+  Trash2,
+  XCircle,
+} from 'lucide-react';
+import { api } from '../services/api';
+import { ReneoSidesaLogo } from './ReneoSidesaLogo';
+
+type SuperTab = 'overview' | 'villages' | 'invoices' | 'plans';
+
+function formatRp(n: number): string {
+  return `Rp ${Number(n || 0).toLocaleString('id-ID')}`;
+}
+
+function formatDate(d?: string | null): string {
+  if (!d) return '-';
+  try {
+    return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch {
+    return '-';
+  }
+}
+
+export const SuperadminDashboard: React.FC<{
+  user: { name: string; email: string };
+  onLogout: () => void;
+  onOpenVillagePortal: (slug: string) => void;
+  onBackToLanding?: () => void;
+}> = ({ user, onLogout, onOpenVillagePortal, onBackToLanding }) => {
+  const [tab, setTab] = useState<SuperTab>('overview');
+  const [overview, setOverview] = useState<any>(null);
+  const [villages, setVillages] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [paymentConfig, setPaymentConfig] = useState<Record<string, string>>({});
+  const [savingMsg, setSavingMsg] = useState<string | null>(null);
+
+  const loadAll = async () => {
+    const [ov, v, inv, pl, cfg] = await Promise.all([
+      api.getSuperadminOverview(),
+      api.getSuperadminVillages(),
+      api.getSuperadminInvoices(),
+      api.getSuperadminPlans(),
+      api.getSuperadminPaymentConfig(),
+    ]);
+    setOverview(ov);
+    setVillages(v || []);
+    setInvoices(inv || []);
+    setPlans(pl || []);
+    setPaymentConfig(cfg || {});
+  };
+
+  useEffect(() => {
+    void loadAll();
+  }, []);
+
+  const flash = (msg: string) => {
+    setSavingMsg(msg);
+    window.setTimeout(() => setSavingMsg(null), 3500);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F6F6F6] text-slate-900 flex flex-col lg:flex-row">
+      {/* Sidebar Superadmin Platform */}
+      <aside className="w-full lg:w-64 bg-[#0B2A57] text-white flex flex-col shrink-0">
+        <div className="p-4 border-b border-white/10 flex items-center gap-3">
+          <ReneoSidesaLogo className="w-9 h-9 shrink-0" />
+          <div className="min-w-0">
+            <div className="text-sm font-extrabold truncate">Reneo SIDesa</div>
+            <div className="text-[11px] text-emerald-300 font-semibold flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Superadmin Platform</span>
+            </div>
+          </div>
+        </div>
+
+        <nav className="p-3 space-y-1 flex-1 text-xs font-bold">
+          {(
+            [
+              ['overview', 'Ringkasan Platform', LayoutDashboard],
+              ['villages', 'Desa Terdaftar', Building2],
+              ['invoices', 'Tagihan & Pembayaran', CreditCard],
+              ['plans', 'Paket & Rekening', Settings],
+            ] as const
+          ).map(([id, label, Icon]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                tab === id ? 'bg-[#0069b6] text-white' : 'text-slate-200 hover:bg-white/10'
+              }`}
+            >
+              <Icon className="w-4 h-4 shrink-0" />
+              <span>{label}</span>
+              {id === 'invoices' && overview?.waitingVerificationInvoices > 0 && (
+                <span className="ml-auto px-1.5 py-0.5 rounded bg-amber-500 text-white text-[10px] font-mono">
+                  {overview.waitingVerificationInvoices}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        <div className="p-3 border-t border-white/10 space-y-2 text-xs">
+          <div className="px-2">
+            <div className="font-bold text-white truncate">{user.name}</div>
+            <div className="text-[11px] text-slate-300 font-mono truncate">{user.email}</div>
+          </div>
+          {onBackToLanding && (
+            <button
+              type="button"
+              onClick={onBackToLanding}
+              className="w-full py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 text-slate-100 font-semibold text-left"
+            >
+              &larr; Beranda Platform
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onLogout}
+            className="w-full py-2 px-3 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-white font-bold flex items-center gap-2"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Keluar Superadmin</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 overflow-x-auto">
+        {savingMsg && (
+          <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800">
+            {savingMsg}
+          </div>
+        )}
+
+        {tab === 'overview' && overview && (
+          <section className="space-y-6">
+            <div>
+              <h1 className="text-2xl font-extrabold text-slate-900">Ringkasan Platform Reneo SIDesa</h1>
+              <p className="text-xs sm:text-sm text-slate-600">
+                Pantau seluruh desa terdaftar, status langganan, dan verifikasi tagihan pembayaran.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white border border-slate-200 rounded-xl p-5">
+                <div className="text-xs font-bold text-slate-500 uppercase">Desa Aktif</div>
+                <div className="text-3xl font-extrabold font-mono text-emerald-700 mt-1">{overview.activeVillages}</div>
+                <div className="text-xs text-slate-500 mt-1">dari {overview.totalVillages} desa terdaftar</div>
+              </div>
+              <div className="bg-white border border-slate-200 rounded-xl p-5">
+                <div className="text-xs font-bold text-slate-500 uppercase">Menunggu Pembayaran</div>
+                <div className="text-3xl font-extrabold font-mono text-amber-600 mt-1">{overview.pendingVillages}</div>
+                <div className="text-xs text-slate-500 mt-1">desa baru belum aktif</div>
+              </div>
+              <div className="bg-white border border-slate-200 rounded-xl p-5">
+                <div className="text-xs font-bold text-slate-500 uppercase">Perlu Verifikasi Bayar</div>
+                <div className="text-3xl font-extrabold font-mono text-[#0069b6] mt-1">
+                  {overview.waitingVerificationInvoices}
+                </div>
+                <div className="text-xs text-slate-500 mt-1">{overview.unpaidInvoices} tagihan belum dibayar</div>
+              </div>
+              <div className="bg-white border border-slate-200 rounded-xl p-5">
+                <div className="text-xs font-bold text-slate-500 uppercase">Total Pendapatan Lunas</div>
+                <div className="text-2xl font-extrabold font-mono text-slate-900 mt-1">
+                  {formatRp(overview.totalRevenuePaid)}
+                </div>
+                <div className="text-xs text-slate-500 mt-1">akumulasi langganan desa</div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {tab === 'villages' && (
+          <section className="space-y-4">
+            <div>
+              <h1 className="text-2xl font-extrabold text-slate-900">Desa Terdaftar Resmi ({villages.length})</h1>
+              <p className="text-xs sm:text-sm text-slate-600">
+                Hanya desa berstatus <strong>ACTIVE</strong> yang tampil di direktori Landing Page dan dapat diakses publik.
+              </p>
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase">
+                  <tr>
+                    <th className="py-3 px-4 font-bold">Desa &amp; URL</th>
+                    <th className="py-3 px-4 font-bold">Admin</th>
+                    <th className="py-3 px-4 font-bold">Paket</th>
+                    <th className="py-3 px-4 font-bold">Masa Aktif</th>
+                    <th className="py-3 px-4 font-bold">Status</th>
+                    <th className="py-3 px-4 font-bold text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {villages.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-10 text-center text-slate-500">
+                        Belum ada desa yang mendaftar di platform ini.
+                      </td>
+                    </tr>
+                  ) : (
+                    villages.map((v) => (
+                      <tr key={v.id} className="hover:bg-slate-50">
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-slate-900">{v.name}</div>
+                          <div className="font-mono text-[11px] text-[#0069b6]">/desa/{v.slug}</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-semibold text-slate-800">{v.adminName}</div>
+                          <div className="font-mono text-[11px] text-slate-500">{v.adminEmail}</div>
+                        </td>
+                        <td className="py-3 px-4 font-semibold text-slate-700">{v.licensePlan}</td>
+                        <td className="py-3 px-4 font-mono text-slate-700">{formatDate(v.licenseExpiresAt)}</td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`px-2 py-0.5 rounded font-bold text-[11px] ${
+                              v.licenseStatus === 'ACTIVE'
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : v.licenseStatus === 'PENDING_PAYMENT'
+                                  ? 'bg-amber-50 text-amber-700'
+                                  : 'bg-rose-50 text-rose-700'
+                            }`}
+                          >
+                            {v.licenseStatus}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => onOpenVillagePortal(v.slug)}
+                            className="px-2.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold inline-flex items-center gap-1"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            <span>Buka</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              await api.updateSuperadminVillage(v.id, {
+                                status: 'ACTIVE',
+                                licenseStatus: 'ACTIVE',
+                                extendMonths: 12,
+                              });
+                              await loadAll();
+                              flash(`${v.name} diaktifkan dan diperpanjang +12 bulan.`);
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                          >
+                            Aktifkan +1 Thn
+                          </button>
+                          {v.licenseStatus === 'ACTIVE' && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                await api.updateSuperadminVillage(v.id, {
+                                  status: 'SUSPENDED',
+                                  licenseStatus: 'SUSPENDED',
+                                });
+                                await loadAll();
+                                flash(`${v.name} ditangguhkan.`);
+                              }}
+                              className="px-2.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold"
+                            >
+                              Tangguhkan
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (!window.confirm(`Hapus permanen ${v.name} beserta seluruh datanya?`)) return;
+                              await api.deleteSuperadminVillage(v.id);
+                              await loadAll();
+                              flash(`${v.name} telah dihapus.`);
+                            }}
+                            className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 inline-flex items-center"
+                            title="Hapus Desa"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {tab === 'invoices' && (
+          <section className="space-y-4">
+            <div>
+              <h1 className="text-2xl font-extrabold text-slate-900">Tagihan &amp; Verifikasi Pembayaran Desa</h1>
+              <p className="text-xs sm:text-sm text-slate-600">
+                Klik <strong>Konfirmasi Lunas</strong> untuk mengaktifkan website desa dan menambah durasi langganan secara otomatis.
+              </p>
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase">
+                  <tr>
+                    <th className="py-3 px-4 font-bold">No. Invoice</th>
+                    <th className="py-3 px-4 font-bold">Desa</th>
+                    <th className="py-3 px-4 font-bold">Paket &amp; Durasi</th>
+                    <th className="py-3 px-4 font-bold">Total</th>
+                    <th className="py-3 px-4 font-bold">Konfirmasi / Ref</th>
+                    <th className="py-3 px-4 font-bold">Status</th>
+                    <th className="py-3 px-4 font-bold text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {invoices.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-10 text-center text-slate-500">
+                        Belum ada tagihan langganan desa.
+                      </td>
+                    </tr>
+                  ) : (
+                    invoices.map((inv) => (
+                      <tr key={inv.id} className="hover:bg-slate-50">
+                        <td className="py-3 px-4 font-mono font-bold text-slate-900">{inv.invoiceNumber}</td>
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-slate-800">{inv.villageName}</div>
+                          <div className="font-mono text-[11px] text-slate-500">/desa/{inv.villageSlug}</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-semibold">{inv.planName}</div>
+                          <div className="text-slate-500">{inv.durationMonths} Bulan</div>
+                        </td>
+                        <td className="py-3 px-4 font-mono font-bold text-[#0069b6]">{formatRp(inv.amount)}</td>
+                        <td className="py-3 px-4 text-[11px] text-slate-600">
+                          <div>{inv.paymentMethod}</div>
+                          {inv.paymentReference && <div className="font-mono">Ref: {inv.paymentReference}</div>}
+                          {inv.paymentNote && <div className="text-slate-500">{inv.paymentNote}</div>}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`px-2 py-0.5 rounded font-bold text-[11px] ${
+                              inv.status === 'PAID'
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : inv.status === 'WAITING_VERIFICATION'
+                                  ? 'bg-sky-50 text-[#0069b6]'
+                                  : inv.status === 'UNPAID'
+                                    ? 'bg-amber-50 text-amber-700'
+                                    : 'bg-slate-100 text-slate-500'
+                            }`}
+                          >
+                            {inv.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
+                          {inv.status !== 'PAID' && inv.status !== 'CANCELLED' && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  await api.approveSuperadminInvoice(inv.id);
+                                  await loadAll();
+                                  flash(`Invoice ${inv.invoiceNumber} lunas! ${inv.villageName} otomatis aktif.`);
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold inline-flex items-center gap-1"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Konfirmasi Lunas</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  await api.cancelSuperadminInvoice(inv.id);
+                                  await loadAll();
+                                  flash(`Invoice ${inv.invoiceNumber} dibatalkan.`);
+                                }}
+                                className="px-2 py-1.5 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 font-semibold inline-flex items-center gap-1"
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                                <span>Batal</span>
+                              </button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {tab === 'plans' && (
+          <section className="space-y-6">
+            <div>
+              <h1 className="text-2xl font-extrabold text-slate-900">Paket Berlangganan &amp; Rekening Pembayaran</h1>
+              <p className="text-xs sm:text-sm text-slate-600">
+                Atur harga paket langganan bulanan/tahunan desa serta rekening transfer / QRIS yang tampil saat desa mendaftar.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {plans.map((p) => (
+                <div key={p.id} className="bg-white border border-slate-200 rounded-xl p-5 space-y-3 text-xs">
+                  <div className="font-mono text-[11px] font-bold text-[#0069b6]">{p.code}</div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Nama Paket</label>
+                    <input
+                      type="text"
+                      value={p.name}
+                      onChange={(e) =>
+                        setPlans((prev) => prev.map((x) => (x.id === p.id ? { ...x, name: e.target.value } : x)))
+                      }
+                      className="w-full h-9 px-3 rounded-lg border border-slate-300"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Harga / Bulan (Rp)</label>
+                      <input
+                        type="number"
+                        value={p.priceMonthly}
+                        onChange={(e) =>
+                          setPlans((prev) =>
+                            prev.map((x) => (x.id === p.id ? { ...x, priceMonthly: Number(e.target.value) } : x))
+                          )
+                        }
+                        className="w-full h-9 px-3 rounded-lg border border-slate-300 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Harga / Tahun (Rp)</label>
+                      <input
+                        type="number"
+                        value={p.priceYearly}
+                        onChange={(e) =>
+                          setPlans((prev) =>
+                            prev.map((x) => (x.id === p.id ? { ...x, priceYearly: Number(e.target.value) } : x))
+                          )
+                        }
+                        className="w-full h-9 px-3 rounded-lg border border-slate-300 font-mono"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await api.updateSuperadminPlan(p.id, {
+                        name: p.name,
+                        priceMonthly: p.priceMonthly,
+                        priceYearly: p.priceYearly,
+                      });
+                      flash(`Harga ${p.name} disimpan.`);
+                    }}
+                    className="w-full h-9 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white font-bold"
+                  >
+                    Simpan Paket
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 space-y-4 max-w-2xl text-xs">
+              <h2 className="text-base font-extrabold text-slate-900">Rekening &amp; Instruksi Pembayaran Platform</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Nama Bank</label>
+                  <input
+                    type="text"
+                    value={paymentConfig.bankName || ''}
+                    onChange={(e) => setPaymentConfig({ ...paymentConfig, bankName: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-slate-300"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Nomor Rekening</label>
+                  <input
+                    type="text"
+                    value={paymentConfig.bankAccountNumber || ''}
+                    onChange={(e) => setPaymentConfig({ ...paymentConfig, bankAccountNumber: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-slate-300 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Atas Nama</label>
+                  <input
+                    type="text"
+                    value={paymentConfig.bankAccountHolder || ''}
+                    onChange={(e) => setPaymentConfig({ ...paymentConfig, bankAccountHolder: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-slate-300"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">WhatsApp Konfirmasi (628...)</label>
+                  <input
+                    type="text"
+                    value={paymentConfig.whatsappSupport || ''}
+                    onChange={(e) => setPaymentConfig({ ...paymentConfig, whatsappSupport: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-slate-300 font-mono"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Catatan QRIS / Virtual Account</label>
+                <textarea
+                  rows={2}
+                  value={paymentConfig.qrisNote || ''}
+                  onChange={(e) => setPaymentConfig({ ...paymentConfig, qrisNote: e.target.value })}
+                  className="w-full p-3 rounded-lg border border-slate-300"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  await api.updateSuperadminPaymentConfig(paymentConfig);
+                  flash('Pengaturan rekening pembayaran berhasil disimpan.');
+                }}
+                className="h-9 px-5 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white font-bold"
+              >
+                Simpan Pengaturan Pembayaran
+              </button>
+            </div>
+          </section>
+        )}
+      </main>
+    </div>
+  );
+};

@@ -3,6 +3,7 @@ import {
   BarChart3,
   Building2,
   ClipboardCheck,
+  CreditCard,
   Edit3,
   FileText,
   Globe,
@@ -22,9 +23,11 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { ReneoSidesaLogo } from '../components/ReneoSidesaLogo';
+import { SuperadminDashboard } from '../components/SuperadminDashboard';
 
 type AdminTab =
   | 'dashboard'
+  | 'billing'
   | 'profile'
   | 'news'
   | 'letters'
@@ -42,6 +45,7 @@ type AdminTab =
 
 const MENU: Array<{ id: AdminTab; label: string; icon: React.ComponentType<any> }> = [
   { id: 'dashboard', label: 'Dashboard Desa', icon: LayoutDashboard },
+  { id: 'billing', label: 'Langganan & Tagihan', icon: CreditCard },
   { id: 'profile', label: 'Profil & Banner Desa', icon: Building2 },
   { id: 'news', label: 'Artikel & Berita Blog', icon: Newspaper },
   { id: 'letters', label: 'Pelayanan Surat', icon: FileText },
@@ -68,7 +72,8 @@ export const AdminPanel: React.FC<{
 }> = ({ onBackToPortal, onBackToLanding }) => {
   const [auth, setAuth] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'register' | 'superadmin_setup'>('login');
+  const [publicPlans, setPublicPlans] = useState<any[]>([]);
   const [authForm, setAuthForm] = useState({
     name: '',
     email: '',
@@ -79,8 +84,16 @@ export const AdminPanel: React.FC<{
     regency: '',
     province: 'Jawa Timur',
     kodeDesa: '',
+    planCode: 'PRO',
+    durationMonths: 12,
+    paymentMethod: 'TRANSFER_BANK',
   });
   const [authErr, setAuthErr] = useState<string | null>(null);
+  const [billingData, setBillingData] = useState<any>(null);
+  const [renewForm, setRenewForm] = useState({ planCode: 'PRO', durationMonths: 12, paymentMethod: 'TRANSFER_BANK' });
+  const [confirmInvoiceId, setConfirmInvoiceId] = useState<string | null>(null);
+  const [confirmRef, setConfirmRef] = useState('');
+  const [confirmNote, setConfirmNote] = useState('');
 
   const [tab, setTab] = useState<AdminTab>('dashboard');
   const [dashboard, setDashboard] = useState<any>(null);
@@ -196,12 +209,24 @@ export const AdminPanel: React.FC<{
   const checkAuth = async () => {
     setAuthLoading(true);
     try {
-      const status = await api.getAuthStatus();
+      const [status, plansRes] = await Promise.all([
+        api.getAuthStatus(),
+        api.getPublicPlans().catch(() => ({ plans: [] })),
+      ]);
       setAuth(status);
-      if (status.authenticated) {
-        const [dash, v] = await Promise.all([api.getDashboard(), api.getVillageProfile()]);
+      if (Array.isArray(plansRes?.plans)) setPublicPlans(plansRes.plans);
+      if (status.authenticated && status.user?.role !== 'SUPERADMIN') {
+        const [dash, v, bill] = await Promise.all([
+          api.getDashboard(),
+          api.getVillageProfile(),
+          api.getBilling().catch(() => null),
+        ]);
         setDashboard(dash);
         setVillage(v);
+        setBillingData(bill);
+        if (v?.licenseStatus && v.licenseStatus !== 'ACTIVE') {
+          setTab('billing');
+        }
       }
     } finally {
       setAuthLoading(false);
@@ -215,6 +240,7 @@ export const AdminPanel: React.FC<{
   const loadTab = async (t: AdminTab) => {
     setTab(t);
     if (t === 'dashboard') setDashboard(await api.getDashboard());
+    else if (t === 'billing') setBillingData(await api.getBilling());
     else if (t === 'letters') setLetters(await api.getLetters());
     else if (t === 'residents') setResidents(await api.getResidents());
     else if (t === 'apbdes') setApbdes(await api.getApbdes());
@@ -242,23 +268,36 @@ export const AdminPanel: React.FC<{
     else if (t === 'profile') setVillage(await api.getVillageProfile());
   };
 
+  const calcPlanPrice = (planCode: string, months: number): number => {
+    const p = publicPlans.find((x) => x.code === planCode) || publicPlans[0];
+    if (!p) return months === 12 ? 2500000 : months * 250000;
+    if (months === 12) return p.priceYearly;
+    if (months === 24) return Math.round(p.priceYearly * 2 * 0.9);
+    if (months === 6) return Math.round(p.priceMonthly * 6 * 0.95);
+    return p.priceMonthly * months;
+  };
+
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthErr(null);
     try {
       if (authMode === 'login') {
         await api.login({ email: authForm.email.trim(), password: authForm.password });
-      } else if (!auth?.initialized) {
-        await api.setupAdmin(authForm);
+      } else if (authMode === 'superadmin_setup') {
+        await api.setupAdmin({
+          name: authForm.name.trim(),
+          email: authForm.email.trim(),
+          password: authForm.password,
+        });
       } else {
         await api.registerVillage(authForm);
       }
       await checkAuth();
     } catch (err: any) {
       const msg = err?.response?.data?.error || 'Autentikasi gagal.';
-      if (err?.response?.status === 409 || msg.toLowerCase().includes('sudah diinisialisasi')) {
+      if (err?.response?.status === 409 || msg.toLowerCase().includes('sudah terdaftar')) {
         setAuthMode('login');
-        setAuthErr('Akun admin desa sudah terdaftar. Silakan masukkan email dan kata sandi Anda.');
+        setAuthErr('Akun sudah terdaftar. Silakan masukkan email dan kata sandi Anda.');
       } else {
         setAuthErr(msg);
       }
@@ -273,13 +312,33 @@ export const AdminPanel: React.FC<{
     );
   }
 
+  if (auth?.authenticated && auth?.user?.role === 'SUPERADMIN') {
+    return (
+      <SuperadminDashboard
+        user={auth.user}
+        onLogout={async () => {
+          await api.logout();
+          await checkAuth();
+        }}
+        onOpenVillagePortal={(slug) => onBackToPortal(slug)}
+        onBackToLanding={onBackToLanding}
+      />
+    );
+  }
+
   if (!auth?.authenticated) {
     const isRegister = authMode === 'register';
+    const isSuperSetup = authMode === 'superadmin_setup';
     const currentHost =
       typeof window !== 'undefined' && window.location.host ? window.location.host : 'panel.reneo.my.id';
+    const selectedPrice = calcPlanPrice(authForm.planCode, authForm.durationMonths);
     return (
       <div className="min-h-screen bg-[#F6F6F6] flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white border border-slate-200 rounded-xl shadow-xs p-5 sm:p-6 space-y-5">
+        <div
+          className={`${
+            isRegister ? 'max-w-xl' : 'max-w-md'
+          } w-full bg-white border border-slate-200 rounded-xl shadow-xs p-5 sm:p-6 space-y-5`}
+        >
           {/* Header seperti Reneo CRM */}
           <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -289,21 +348,21 @@ export const AdminPanel: React.FC<{
             <span className="text-[11px] font-mono text-slate-500 truncate">{currentHost}</span>
           </div>
 
-          {/* Tab Switcher — SELALU tampil (Masuk & Daftar) seperti Reneo CRM */}
-          <div className="flex p-1 bg-slate-100 rounded-lg text-xs font-medium">
+          {/* Tab Switcher — SELALU tampil (Masuk, Daftar Desa, & Setup Superadmin jika belum ada) */}
+          <div className="flex p-1 bg-slate-100 rounded-lg text-xs font-medium gap-1">
             <button
               type="button"
               onClick={() => {
                 setAuthMode('login');
                 setAuthErr(null);
               }}
-              className={`flex-1 py-2 px-3 rounded-md transition-colors text-center ${
+              className={`flex-1 py-2 px-2.5 rounded-md transition-colors text-center ${
                 authMode === 'login'
                   ? 'bg-white text-slate-900 shadow-2xs font-bold'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Masuk ke Akun
+              Masuk Akun
             </button>
             <button
               type="button"
@@ -311,30 +370,46 @@ export const AdminPanel: React.FC<{
                 setAuthMode('register');
                 setAuthErr(null);
               }}
-              className={`flex-1 py-2 px-3 rounded-md transition-colors text-center ${
+              className={`flex-1 py-2 px-2.5 rounded-md transition-colors text-center ${
                 authMode === 'register'
                   ? 'bg-white text-slate-900 shadow-2xs font-bold'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              {auth?.initialized ? 'Daftar Desa Baru' : 'Daftar / Setup Awal'}
+              Daftar Desa Baru
             </button>
+            {!auth?.superadminInitialized && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode('superadmin_setup');
+                  setAuthErr(null);
+                }}
+                className={`flex-1 py-2 px-2.5 rounded-md transition-colors text-center ${
+                  authMode === 'superadmin_setup'
+                    ? 'bg-white text-[#0069b6] shadow-2xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Setup Superadmin
+              </button>
+            )}
           </div>
 
           <div className="min-w-0">
             <h1 className="text-base font-extrabold text-slate-900">
               {authMode === 'login'
-                ? 'Masuk Back-Office Perangkat Desa'
-                : auth?.initialized
-                  ? 'Daftarkan Desa Baru di Reneo SIDesa'
-                  : 'Setup Awal Admin Reneo SIDesa'}
+                ? 'Masuk Back-Office & Superadmin SIDesa'
+                : isSuperSetup
+                  ? 'Buat Akun Superadmin Platform SIDesa'
+                  : 'Pendaftaran & Langganan Desa Baru'}
             </h1>
             <p className="text-xs text-slate-500 mt-1 leading-relaxed">
               {authMode === 'login'
-                ? 'Masukkan email dan kata sandi perangkat desa untuk mengelola website profil desa, kependudukan, persuratan, dan APBDes.'
-                : auth?.initialized
-                  ? 'Daftarkan desa Anda untuk mendapatkan website resmi desa (/desa/nama-desa) dan ruang kerja Back-Office terpisah.'
-                  : 'Buat akun admin pertama untuk mulai mengelola CMS Website Profil Desa, Artikel Berita, Kependudukan, dan APBDes.'}
+                ? 'Masukkan email dan kata sandi Superadmin Platform atau Perangkat Desa untuk masuk ke ruang kerja.'
+                : isSuperSetup
+                  ? 'Akun Superadmin mengelola seluruh desa terdaftar, verifikasi pembayaran langganan, paket harga, dan rekening.'
+                  : 'Pilih paket & durasi berlangganan desa layaknya hosting, lalu selesaikan pembayaran invoice untuk mengaktifkan website desa.'}
             </p>
           </div>
 
@@ -347,13 +422,60 @@ export const AdminPanel: React.FC<{
           <form onSubmit={handleAuthSubmit} className="space-y-3 text-xs">
             {isRegister && (
               <>
+                {/* Pilih Paket & Durasi Layaknya Hosting */}
+                <div className="p-3.5 rounded-lg bg-[#F6F6F6] border border-slate-200 space-y-3">
+                  <div className="font-extrabold text-slate-800">1. Pilih Paket &amp; Durasi Berlangganan</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Paket SIDesa</label>
+                      <select
+                        value={authForm.planCode}
+                        onChange={(e) => setAuthForm({ ...authForm, planCode: e.target.value })}
+                        className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold"
+                      >
+                        {(publicPlans.length > 0
+                          ? publicPlans
+                          : [
+                              { code: 'STARTER', name: 'Paket Desa Mandiri' },
+                              { code: 'PRO', name: 'Paket Desa Digital Pro' },
+                              { code: 'ENTERPRISE', name: 'Paket Desa Prioritas' },
+                            ]
+                        ).map((p) => (
+                          <option key={p.code} value={p.code}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Durasi Langganan</label>
+                      <select
+                        value={authForm.durationMonths}
+                        onChange={(e) => setAuthForm({ ...authForm, durationMonths: Number(e.target.value) })}
+                        className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold"
+                      >
+                        <option value={1}>1 Bulan</option>
+                        <option value={6}>6 Bulan (Hemat 5%)</option>
+                        <option value={12}>12 Bulan / 1 Tahun (Hemat 2 Bulan)</option>
+                        <option value={24}>24 Bulan / 2 Tahun (Diskon Tambahan 10%)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                    <span className="text-slate-600 font-semibold">Total Tagihan Invoice:</span>
+                    <span className="text-base font-extrabold font-mono text-[#0069b6]">
+                      {formatRp(selectedPrice)}
+                    </span>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block font-bold text-slate-700 mb-1">Nama Desa *</label>
                     <input
                       type="text"
                       required
-                      placeholder="Contoh: Desa Sugihwaras"
+                      placeholder="Contoh: Desa Sukamaju"
                       value={authForm.villageName}
                       onChange={(e) => setAuthForm({ ...authForm, villageName: e.target.value })}
                       className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-[#0069b6]"
@@ -363,56 +485,59 @@ export const AdminPanel: React.FC<{
                     <label className="block font-bold text-slate-700 mb-1">Slug URL (/desa/...) *</label>
                     <input
                       type="text"
-                      placeholder="Contoh: sugihwaras"
+                      placeholder="Contoh: sukamaju"
                       value={authForm.slug}
                       onChange={(e) => setAuthForm({ ...authForm, slug: e.target.value })}
                       className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono text-sm focus:outline-none focus:border-[#0069b6]"
                     />
                   </div>
                 </div>
-                {auth?.initialized && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <input
-                      type="text"
-                      required
-                      placeholder="Kecamatan *"
-                      value={authForm.district}
-                      onChange={(e) => setAuthForm({ ...authForm, district: e.target.value })}
-                      className="h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-[#0069b6]"
-                    />
-                    <input
-                      type="text"
-                      required
-                      placeholder="Kabupaten *"
-                      value={authForm.regency}
-                      onChange={(e) => setAuthForm({ ...authForm, regency: e.target.value })}
-                      className="h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-[#0069b6]"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Kode Desa"
-                      value={authForm.kodeDesa}
-                      onChange={(e) => setAuthForm({ ...authForm, kodeDesa: e.target.value })}
-                      className="h-10 px-3 rounded-lg border border-slate-300 font-mono text-sm focus:outline-none focus:border-[#0069b6]"
-                    />
-                  </div>
-                )}
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Nama Admin / Perangkat Desa *</label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <input
                     type="text"
                     required
-                    placeholder="Nama Lengkap Perangkat Desa"
-                    value={authForm.name}
-                    onChange={(e) => setAuthForm({ ...authForm, name: e.target.value })}
-                    className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-[#0069b6]"
+                    placeholder="Kecamatan *"
+                    value={authForm.district}
+                    onChange={(e) => setAuthForm({ ...authForm, district: e.target.value })}
+                    className="h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-[#0069b6]"
+                  />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Kabupaten *"
+                    value={authForm.regency}
+                    onChange={(e) => setAuthForm({ ...authForm, regency: e.target.value })}
+                    className="h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-[#0069b6]"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Kode Kemendagri"
+                    value={authForm.kodeDesa}
+                    onChange={(e) => setAuthForm({ ...authForm, kodeDesa: e.target.value })}
+                    className="h-10 px-3 rounded-lg border border-slate-300 font-mono text-sm focus:outline-none focus:border-[#0069b6]"
                   />
                 </div>
               </>
             )}
 
+            {(isRegister || isSuperSetup) && (
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  {isSuperSetup ? 'Nama Lengkap Superadmin *' : 'Nama Admin / Perangkat Desa *'}
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder={isSuperSetup ? 'Nama Pemilik Platform' : 'Nama Lengkap Perangkat Desa'}
+                  value={authForm.name}
+                  onChange={(e) => setAuthForm({ ...authForm, name: e.target.value })}
+                  className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-[#0069b6]"
+                />
+              </div>
+            )}
+
             <div>
-              <label className="block font-bold text-slate-700 mb-1">Email Perangkat Desa *</label>
+              <label className="block font-bold text-slate-700 mb-1">Email Akun *</label>
               <input
                 type="email"
                 required
@@ -440,10 +565,10 @@ export const AdminPanel: React.FC<{
               className="w-full h-10 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white text-sm font-bold transition-colors"
             >
               {authMode === 'login'
-                ? 'Masuk ke Back-Office Desa'
-                : auth?.initialized
-                  ? 'Daftarkan Desa & Buat Website'
-                  : 'Simpan & Buat Akun Admin'}
+                ? 'Masuk ke Back-Office'
+                : isSuperSetup
+                  ? 'Buat Akun Superadmin Platform'
+                  : 'Daftar Desa & Terbitkan Invoice'}
             </button>
           </form>
 
@@ -457,9 +582,7 @@ export const AdminPanel: React.FC<{
                 }}
                 className="text-xs text-[#0069b6] hover:text-[#0B2A57] font-semibold transition-colors"
               >
-                {auth?.initialized
-                  ? 'Belum punya akun? Daftarkan desa baru di sini'
-                  : 'Belum setup akun? Daftar / Setup awal di sini'}
+                Belum punya akun? Daftarkan desa baru di sini
               </button>
             ) : (
               <button
@@ -470,28 +593,19 @@ export const AdminPanel: React.FC<{
                 }}
                 className="text-xs text-[#0069b6] hover:text-[#0B2A57] font-semibold transition-colors"
               >
-                Sudah punya akun perangkat desa? Masuk di sini
+                Sudah punya akun? Masuk di sini
               </button>
             )}
 
-            <div className="flex items-center justify-between gap-2 pt-1">
-              {onBackToLanding && (
-                <button
-                  type="button"
-                  onClick={onBackToLanding}
-                  className="text-xs text-slate-500 hover:text-slate-800 font-medium"
-                >
-                  &larr; Beranda Platform SIDesa
-                </button>
-              )}
+            {onBackToLanding && (
               <button
                 type="button"
-                onClick={() => onBackToPortal(auth?.village?.slug || 'sugihwaras')}
-                className="text-xs text-slate-500 hover:text-[#0069b6] font-medium ml-auto"
+                onClick={onBackToLanding}
+                className="text-xs text-slate-500 hover:text-slate-800 font-medium"
               >
-                Lihat Website Desa &rarr;
+                &larr; Kembali ke Beranda Platform SIDesa
               </button>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -565,6 +679,220 @@ export const AdminPanel: React.FC<{
 
       {/* Main Content */}
       <main className="flex-1 p-4 sm:p-8 overflow-y-auto space-y-6">
+        {village && village.licenseStatus !== 'ACTIVE' && (
+          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="space-y-0.5">
+              <div className="font-extrabold text-amber-900">
+                Status Langganan Desa: {village.licenseStatus} ({village.licensePlan})
+              </div>
+              <p className="text-amber-800">
+                Selesaikan pembayaran tagihan berlangganan agar Website Resmi <strong>/desa/{village.slug}</strong> aktif dan tampil di direktori publik.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void loadTab('billing')}
+              className="h-9 px-4 rounded-lg bg-[#0069b6] text-white font-bold shrink-0"
+            >
+              Lihat Tagihan &amp; Bayar
+            </button>
+          </div>
+        )}
+
+        {/* LANGGANAN & TAGIHAN (BILLING LAYAKNYA HOSTING) */}
+        {tab === 'billing' && billingData && (
+          <section className="space-y-6">
+            <div>
+              <h1 className="text-2xl font-extrabold text-slate-900">Langganan &amp; Tagihan Desa</h1>
+              <p className="text-xs sm:text-sm text-slate-600">
+                Kelola paket aktif, perpanjangan durasi berlangganan, dan konfirmasi pembayaran invoice.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-1">
+                <div className="text-xs font-bold text-slate-500 uppercase">Paket Aktif</div>
+                <div className="text-lg font-extrabold text-[#0B2A57]">{billingData.subscription?.licensePlan}</div>
+                <div className="text-xs font-mono text-slate-600">
+                  Status: <strong>{billingData.subscription?.licenseStatus}</strong>
+                </div>
+              </div>
+              <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-1">
+                <div className="text-xs font-bold text-slate-500 uppercase">Masa Aktif Hingga</div>
+                <div className="text-lg font-extrabold font-mono text-emerald-700">
+                  {billingData.subscription?.licenseExpiresAt
+                    ? new Date(billingData.subscription.licenseExpiresAt).toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                      })
+                    : 'Menunggu Aktivasi'}
+                </div>
+              </div>
+              <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-1 text-xs">
+                <div className="font-bold text-slate-500 uppercase">Rekening Pembayaran Resmi</div>
+                <div className="font-bold text-slate-900">{billingData.paymentConfig?.bankName}</div>
+                <div className="font-mono text-sm font-extrabold text-[#0069b6]">
+                  {billingData.paymentConfig?.bankAccountNumber}
+                </div>
+                <div className="text-slate-600">a.n. {billingData.paymentConfig?.bankAccountHolder}</div>
+              </div>
+            </div>
+
+            {/* Perpanjang / Upgrade Paket */}
+            <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3 text-xs">
+              <div className="text-sm font-extrabold text-slate-900">Perpanjang Durasi / Ganti Paket</div>
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Pilih Paket</label>
+                  <select
+                    value={renewForm.planCode}
+                    onChange={(e) => setRenewForm({ ...renewForm, planCode: e.target.value })}
+                    className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white"
+                  >
+                    {(billingData.plans || []).map((p: any) => (
+                      <option key={p.code} value={p.code}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Durasi</label>
+                  <select
+                    value={renewForm.durationMonths}
+                    onChange={(e) => setRenewForm({ ...renewForm, durationMonths: Number(e.target.value) })}
+                    className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white"
+                  >
+                    <option value={1}>1 Bulan</option>
+                    <option value={6}>6 Bulan (-5%)</option>
+                    <option value={12}>12 Bulan (1 Tahun)</option>
+                    <option value={24}>24 Bulan (2 Tahun, -10%)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Metode Pembayaran</label>
+                  <select
+                    value={renewForm.paymentMethod}
+                    onChange={(e) => setRenewForm({ ...renewForm, paymentMethod: e.target.value })}
+                    className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white"
+                  >
+                    <option value="TRANSFER_BANK">Transfer Bank</option>
+                    <option value="QRIS">QRIS</option>
+                    <option value="VIRTUAL_ACCOUNT">Virtual Account</option>
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await api.createBillingInvoice(renewForm);
+                    setBillingData(await api.getBilling());
+                  }}
+                  className="h-9 px-4 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white font-bold"
+                >
+                  Buat Invoice ({formatRp(calcPlanPrice(renewForm.planCode, renewForm.durationMonths))})
+                </button>
+              </div>
+            </div>
+
+            {/* Daftar Invoice */}
+            <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase">
+                  <tr>
+                    <th className="py-3 px-4 font-bold">No. Invoice</th>
+                    <th className="py-3 px-4 font-bold">Paket &amp; Durasi</th>
+                    <th className="py-3 px-4 font-bold">Total Tagihan</th>
+                    <th className="py-3 px-4 font-bold">Status</th>
+                    <th className="py-3 px-4 font-bold text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {(billingData.invoices || []).map((inv: any) => (
+                    <tr key={inv.id}>
+                      <td className="py-3 px-4 font-mono font-bold text-slate-900">{inv.invoiceNumber}</td>
+                      <td className="py-3 px-4">
+                        <div className="font-semibold">{inv.planName}</div>
+                        <div className="text-slate-500">{inv.durationMonths} Bulan · {inv.paymentMethod}</div>
+                      </td>
+                      <td className="py-3 px-4 font-mono font-bold text-[#0069b6]">{formatRp(inv.amount)}</td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`px-2 py-0.5 rounded font-bold text-[11px] ${
+                            inv.status === 'PAID'
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : inv.status === 'WAITING_VERIFICATION'
+                                ? 'bg-sky-50 text-[#0069b6]'
+                                : 'bg-amber-50 text-amber-700'
+                          }`}
+                        >
+                          {inv.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        {inv.status === 'UNPAID' && (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmInvoiceId(inv.id)}
+                            className="px-3 py-1.5 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white font-bold"
+                          >
+                            Konfirmasi Sudah Bayar
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {confirmInvoiceId && (
+              <div className="bg-white border border-[#0069b6] rounded-xl p-5 space-y-3 text-xs max-w-lg">
+                <div className="font-extrabold text-slate-900">Konfirmasi Pembayaran Invoice</div>
+                <input
+                  type="text"
+                  placeholder="Nomor Referensi Transfer / Nama Pengirim *"
+                  value={confirmRef}
+                  onChange={(e) => setConfirmRef(e.target.value)}
+                  className="w-full h-9 px-3 rounded-lg border border-slate-300 font-mono"
+                />
+                <input
+                  type="text"
+                  placeholder="Catatan tambahan (opsional, mis. Bank pengirim / jam transfer)"
+                  value={confirmNote}
+                  onChange={(e) => setConfirmNote(e.target.value)}
+                  className="w-full h-9 px-3 rounded-lg border border-slate-300"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await api.confirmBillingInvoice(confirmInvoiceId, {
+                        paymentReference: confirmRef,
+                        paymentNote: confirmNote,
+                      });
+                      setConfirmInvoiceId(null);
+                      setConfirmRef('');
+                      setConfirmNote('');
+                      setBillingData(await api.getBilling());
+                    }}
+                    className="h-9 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                  >
+                    Kirim Konfirmasi ke Superadmin
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmInvoiceId(null)}
+                    className="h-9 px-4 rounded-lg border border-slate-300 text-slate-700 font-semibold"
+                  >
+                    Batal
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
         {/* Print Letter Modal */}
         {printLetter && (
           <div

@@ -6,8 +6,9 @@ const client = axios.create({
 });
 
 export const api = {
-  // Public Village Portal (supports multi-village slug e.g. /desa/sugihwaras)
+  // Public Village Portal (supports multi-village slug e.g. /desa/nama-desa)
   getPublicVillages: async () => (await client.get('/public/villages')).data.data,
+  getPublicPlans: async () => (await client.get('/public/plans')).data.data,
   getPublicVillage: async (villageSlug?: string) =>
     (await client.get('/public/village', { params: villageSlug ? { village: villageSlug } : undefined })).data.data,
   getPublicInfografis: async (year?: number, villageSlug?: string) =>
@@ -55,7 +56,7 @@ export const api = {
 
   // Auth
   getAuthStatus: async () => (await client.get('/auth/status')).data.data,
-  setupAdmin: async (payload: { name: string; email: string; password: string; villageName?: string }) =>
+  setupAdmin: async (payload: { name: string; email: string; password: string }) =>
     (await client.post('/auth/setup', payload)).data.data,
   registerVillage: async (payload: {
     villageName: string;
@@ -67,10 +68,42 @@ export const api = {
     name: string;
     email: string;
     password: string;
+    planCode?: string;
+    durationMonths?: number;
+    paymentMethod?: string;
   }) => (await client.post('/auth/register-village', payload)).data.data,
   login: async (payload: { email: string; password: string }) =>
     (await client.post('/auth/login', payload)).data.data,
   logout: async () => (await client.post('/auth/logout')).data,
+
+  // Village Billing & Subscription (Hosting-style)
+  getBilling: async () => (await client.get('/admin/billing')).data.data,
+  createBillingInvoice: async (payload: { planCode: string; durationMonths: number; paymentMethod?: string }) =>
+    (await client.post('/admin/billing/invoices', payload)).data.data,
+  confirmBillingInvoice: async (
+    id: string,
+    payload: { paymentMethod?: string; paymentReference?: string; paymentNote?: string }
+  ) => (await client.post(`/admin/billing/invoices/${id}/confirm`, payload)).data.data,
+
+  // Superadmin Platform SaaS
+  getSuperadminOverview: async () => (await client.get('/superadmin/overview')).data.data,
+  getSuperadminVillages: async () => (await client.get('/superadmin/villages')).data.data,
+  updateSuperadminVillage: async (
+    id: string,
+    payload: { status?: string; licenseStatus?: string; licensePlan?: string; extendMonths?: number }
+  ) => (await client.patch(`/superadmin/villages/${id}`, payload)).data.data,
+  deleteSuperadminVillage: async (id: string) => (await client.delete(`/superadmin/villages/${id}`)).data,
+  getSuperadminInvoices: async () => (await client.get('/superadmin/invoices')).data.data,
+  approveSuperadminInvoice: async (id: string) =>
+    (await client.patch(`/superadmin/invoices/${id}/approve`)).data.data,
+  cancelSuperadminInvoice: async (id: string) =>
+    (await client.patch(`/superadmin/invoices/${id}/cancel`)).data.data,
+  getSuperadminPlans: async () => (await client.get('/superadmin/plans')).data.data,
+  updateSuperadminPlan: async (id: string, payload: Record<string, any>) =>
+    (await client.patch(`/superadmin/plans/${id}`, payload)).data.data,
+  getSuperadminPaymentConfig: async () => (await client.get('/superadmin/payment-config')).data.data,
+  updateSuperadminPaymentConfig: async (payload: Record<string, string>) =>
+    (await client.patch('/superadmin/payment-config', payload)).data.data,
 
   // Admin Back-Office
   getDashboard: async () => (await client.get('/admin/dashboard')).data.data,

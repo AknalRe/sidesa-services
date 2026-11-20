@@ -160,57 +160,14 @@ const BENEFIT_ROWS = [
   },
 ];
 
-const STATIC_PORTFOLIO_VILLAGES = [
-  {
-    slug: 'sugihwaras',
-    name: 'Desa Sugihwaras',
-    logoUrl: sidesaAsset('crest-default.svg'),
-  },
-  {
-    slug: 'sugihwaras',
-    name: 'Desa Senga Selatan',
-    logoUrl: sidesaAsset('crest-kab-2.svg'),
-  },
-  {
-    slug: 'sugihwaras',
-    name: 'Desa Cawet',
-    logoUrl: sidesaAsset('crest-kab-3.svg'),
-  },
-  {
-    slug: 'sugihwaras',
-    name: 'Desa Pasamai',
-    logoUrl: sidesaAsset('crest-kab-4.svg'),
-  },
-  {
-    slug: 'sugihwaras',
-    name: 'Desa Salumukanan',
-    logoUrl: sidesaAsset('crest-kab-2.svg'),
-  },
-  {
-    slug: 'sugihwaras',
-    name: 'Desa Sebawang',
-    logoUrl: sidesaAsset('crest-kab-3.svg'),
-  },
-  {
-    slug: 'sugihwaras',
-    name: 'Desa Suban Ayam',
-    logoUrl: sidesaAsset('crest-kab-4.svg'),
-  },
-  {
-    slug: 'sugihwaras',
-    name: 'Desa Balantang',
-    logoUrl: sidesaAsset('crest-default.svg'),
-  },
-];
-
 const FAQ_ITEMS = [
   {
     q: 'Apa itu Reneo SIDesa?',
     a: 'Reneo SIDesa adalah platform Sistem Informasi Desa terintegrasi yang memadukan Back-Office Pemerintahan Desa (administrasi kependudukan Permendagri 47/2016, persuratan Permendagri 109/2019, APBDes, Bansos, PBB-P2) dengan Website Resmi Profil Desa untuk pelayanan mandiri masyarakat.',
   },
   {
-    q: 'Bagaimana mekanisme pendaftaran dan pengelolaan data untuk desa baru?',
-    a: 'Perangkat desa dapat mendaftarkan desanya melalui menu Back-Office (/admin), menentukan slug URL desa (misalnya /desa/sugihwaras), lalu langsung mengisi profil desa, artikel berita, data penduduk, APBDes, perangkat SOTK, dokumen PPID, dan produk UMKM dari satu dashboard CMS.',
+    q: 'Bagaimana mekanisme pendaftaran, paket berlangganan, dan aktivasi desa baru?',
+    a: 'Perangkat desa cukup mendaftar melalui menu Back-Office (/admin), memilih paket serta durasi berlangganan (bulanan atau tahunan layaknya hosting), lalu menyelesaikan pembayaran sesuai invoice. Setelah dikonfirmasi, website resmi desa (/desa/nama-desa) otomatis aktif.',
   },
   {
     q: 'Apakah perubahan data di Back-Office langsung memperbarui Website Resmi Desa?',
@@ -227,6 +184,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
   const [heroIdx, setHeroIdx] = useState(0);
   const [featureIdx, setFeatureIdx] = useState(0);
   const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(0);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly');
+  const [plans, setPlans] = useState<any[]>([]);
   const [registeredVillages, setRegisteredVillages] = useState<Array<{ slug: string; name: string; logoUrl?: string }>>(
     []
   );
@@ -235,8 +194,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
     api
       .getPublicVillages()
       .then((rows) => {
-        if (Array.isArray(rows) && rows.length > 0) {
+        if (Array.isArray(rows)) {
           setRegisteredVillages(rows);
+        }
+      })
+      .catch(() => {});
+    api
+      .getPublicPlans()
+      .then((res) => {
+        if (Array.isArray(res?.plans)) {
+          setPlans(res.plans);
         }
       })
       .catch(() => {});
@@ -252,30 +219,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
   const activeHero = HERO_SLIDES[heroIdx % HERO_SLIDES.length];
   const activeFeature = FEATURE_TABS[featureIdx] || FEATURE_TABS[0];
 
-  // Combine live DB villages (e.g. Desa Sugihwaras and any newly registered villages) with portfolio items
-  const portfolioList = (() => {
-    const seen = new Set<string>();
-    const list: Array<{ slug: string; name: string; logoUrl: string }> = [];
-    for (const v of registeredVillages) {
-      const key = v.name.toLowerCase();
-      if (!seen.has(key)) {
-        seen.add(key);
-        list.push({
-          slug: v.slug || 'sugihwaras',
-          name: v.name,
-          logoUrl: v.logoUrl || DEFAULT_CREST,
-        });
-      }
-    }
-    for (const sv of STATIC_PORTFOLIO_VILLAGES) {
-      const key = sv.name.toLowerCase();
-      if (!seen.has(key)) {
-        seen.add(key);
-        list.push(sv);
-      }
-    }
-    return list;
-  })();
+  // 100% data desa yang benar-benar terdaftar dan berstatus aktif di database
+  const portfolioList = registeredVillages.map((v) => ({
+    slug: v.slug,
+    name: v.name,
+    logoUrl: v.logoUrl || DEFAULT_CREST,
+  }));
 
   return (
     <div className="min-h-screen w-full bg-white text-slate-900 flex flex-col">
@@ -300,6 +249,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
             </a>
             <a href="#manfaat" className="hover:text-[#0069b6] transition-colors">
               Manfaat
+            </a>
+            <a href="#paket" className="hover:text-[#0069b6] transition-colors">
+              Paket &amp; Harga
             </a>
             <a href="#portofolio" className="hover:text-[#0069b6] transition-colors">
               Desa Pengguna
@@ -594,39 +546,153 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenVillagePortal, o
           </div>
         </section>
 
-        {/* 5. PORTOFOLIO DESA PENGGUNA (Cukup Logo Desa & Nama Desa Saja, Termasuk Desa Sugihwaras) */}
+        {/* 4B. PAKET BERLANGGANAN DESA (Layaknya Hosting) */}
+        {plans.length > 0 && (
+          <section id="paket" className="w-full py-16 px-4 sm:px-8 lg:px-14 xl:px-20 bg-white border-b border-slate-200 space-y-8">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div className="max-w-2xl space-y-2">
+                <div className="text-xs font-bold uppercase tracking-wider text-[#0069b6]">
+                  Langganan SaaS Desa
+                </div>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900">
+                  Paket Berlangganan Reneo SIDesa
+                </h2>
+                <p className="text-sm sm:text-base text-slate-600">
+                  Pilih durasi paket bulanan atau tahunan sesuai kebutuhan pemerintahan desa Anda.
+                </p>
+              </div>
+              <div className="inline-flex p-1 bg-slate-100 rounded-lg text-xs font-bold self-start">
+                <button
+                  type="button"
+                  onClick={() => setBillingPeriod('monthly')}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    billingPeriod === 'monthly' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600'
+                  }`}
+                >
+                  Bulanan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBillingPeriod('yearly')}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    billingPeriod === 'yearly' ? 'bg-white text-[#0069b6] shadow-2xs' : 'text-slate-600'
+                  }`}
+                >
+                  Tahunan (Hemat 2 Bulan)
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {plans.map((p) => {
+                const isPro = p.code === 'PRO';
+                const price = billingPeriod === 'yearly' ? p.priceYearly : p.priceMonthly;
+                return (
+                  <div
+                    key={p.id}
+                    className={`rounded-xl p-6 flex flex-col justify-between space-y-6 bg-white border ${
+                      isPro ? 'border-[#0069b6] ring-1 ring-[#0069b6]' : 'border-slate-200'
+                    }`}
+                  >
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-lg font-extrabold text-slate-900">{p.name}</h3>
+                        {isPro && (
+                          <span className="px-2 py-0.5 rounded bg-sky-50 text-[#0069b6] text-[11px] font-bold">
+                            Populer
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{p.description}</p>
+                      <div className="pt-2 border-t border-slate-100">
+                        <span className="text-2xl sm:text-3xl font-extrabold font-mono text-[#0B2A57]">
+                          Rp {Number(price || 0).toLocaleString('id-ID')}
+                        </span>
+                        <span className="text-xs text-slate-500 font-semibold">
+                          {' '}
+                          / {billingPeriod === 'yearly' ? 'tahun' : 'bulan'}
+                        </span>
+                      </div>
+                      <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
+                        {(p.features || []).map((f: string) => (
+                          <li key={f} className="flex items-start gap-2">
+                            <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                            <span>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={onOpenAdmin}
+                      className={`w-full h-10 rounded-lg text-sm font-bold transition-colors ${
+                        isPro
+                          ? 'bg-[#0069b6] hover:bg-[#005a9e] text-white'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-900'
+                      }`}
+                    >
+                      Pilih Paket &amp; Daftar Desa
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* 5. PORTOFOLIO DESA PENGGUNA (100% Data Resmi Terdaftar dari Database: Logo & Nama Desa) */}
         <section id="portofolio" className="w-full py-16 px-4 sm:px-8 lg:px-14 xl:px-20 border-b border-slate-200 space-y-8">
           <div className="max-w-3xl space-y-2">
             <div className="text-xs font-bold uppercase tracking-wider text-[#0069b6]">
-              Portofolio Implementasi
+              Direktori Resmi
             </div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900">
               Desa Pengguna Reneo SIDesa
             </h2>
             <p className="text-sm sm:text-base text-slate-600">
-              Klik pada desa di bawah ini untuk membuka Website Resmi Desa terkait.
+              Daftar desa yang terdaftar dan aktif berlangganan layanan Reneo SIDesa.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
-            {portfolioList.map((item) => (
+          {portfolioList.length === 0 ? (
+            <div className="bg-[#F6F6F6] border border-slate-200 rounded-xl p-8 text-center space-y-3">
+              <div className="text-base font-extrabold text-slate-800">
+                Belum ada desa terdaftar aktif saat ini
+              </div>
+              <p className="text-sm text-slate-600 max-w-xl mx-auto">
+                Setiap desa yang mendaftar dan menyelesaikan aktivasi langganan akan otomatis tampil di direktori resmi ini.
+              </p>
               <button
-                key={item.name}
                 type="button"
-                onClick={() => onOpenVillagePortal('beranda', item.slug)}
-                className="bg-white border border-slate-200 hover:border-[#0069b6] rounded-xl p-5 flex flex-col items-center justify-center gap-3 text-center transition-colors group"
+                onClick={onOpenAdmin}
+                className="h-10 px-5 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white text-sm font-bold inline-flex items-center gap-2"
               >
-                <img
-                  src={item.logoUrl}
-                  alt={item.name}
-                  className="w-16 h-16 object-contain"
-                />
-                <span className="text-sm sm:text-base font-extrabold text-slate-900 group-hover:text-[#0069b6]">
-                  {item.name}
-                </span>
+                <span>Daftarkan Desa Anda</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
+              {portfolioList.map((item) => (
+                <button
+                  key={item.slug}
+                  type="button"
+                  onClick={() => onOpenVillagePortal('beranda', item.slug)}
+                  className="bg-white border border-slate-200 hover:border-[#0069b6] rounded-xl p-5 flex flex-col items-center justify-center gap-3 text-center transition-colors group"
+                >
+                  <img
+                    src={item.logoUrl}
+                    alt={item.name}
+                    className="w-16 h-16 object-contain"
+                  />
+                  <span className="text-sm sm:text-base font-extrabold text-slate-900 group-hover:text-[#0069b6]">
+                    {item.name}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* 6. FAQ */}

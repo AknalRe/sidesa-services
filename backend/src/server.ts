@@ -6,6 +6,7 @@ import { ensureDatabaseSchema } from './db';
 import authRouter from './routes/auth';
 import publicRouter from './routes/public';
 import adminRouter from './routes/admin';
+import superadminRouter from './routes/superadmin';
 
 const PORT = Number(process.env.PORT || 5000);
 
@@ -27,6 +28,7 @@ async function start() {
   await fastify.register(authRouter, { prefix: '/api/auth' });
   await fastify.register(publicRouter, { prefix: '/api/public' });
   await fastify.register(adminRouter, { prefix: '/api/admin' });
+  await fastify.register(superadminRouter, { prefix: '/api/superadmin' });
 
   await ensureDatabaseSchema();
 
