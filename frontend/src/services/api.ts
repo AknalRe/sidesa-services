@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { getAppPrefix } from '../lib/assets';
 
 const client = axios.create({
-  baseURL: '/api',
+  baseURL: `${getAppPrefix()}/api`,
   withCredentials: true,
 });
 

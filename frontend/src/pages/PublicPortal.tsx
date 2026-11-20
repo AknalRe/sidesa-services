@@ -361,7 +361,7 @@ export const PublicPortal: React.FC<{
     e.preventDefault();
     setLetterSubmitting(true);
     try {
-      const res = await api.submitLetterRequest(letterForm);
+      const res = await api.submitLetterRequest({ ...letterForm, villageSlug: data?.village?.slug || villageSlug });
       setLetterCreated(res);
       setLetterForm({
         letterType: 'SKTM',
@@ -395,7 +395,7 @@ export const PublicPortal: React.FC<{
     e.preventDefault();
     setComplaintSubmitting(true);
     try {
-      const res = await api.submitComplaint(complaintForm);
+      const res = await api.submitComplaint({ ...complaintForm, villageSlug: data?.village?.slug || villageSlug });
       setComplaintCreated(res);
       setComplaintForm({
         reporterName: '',
@@ -428,7 +428,7 @@ export const PublicPortal: React.FC<{
     e.preventDefault();
     setPpidSubmitting(true);
     try {
-      const res = await api.submitPpidRequest(ppidForm);
+      const res = await api.submitPpidRequest({ ...ppidForm, villageSlug: data?.village?.slug || villageSlug });
       setPpidCreated(res);
       setPpidForm({
         requesterName: '',

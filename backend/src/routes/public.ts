@@ -358,6 +358,7 @@ export default async function publicRouter(fastify: FastifyInstance) {
 
   fastify.post<{
     Body: {
+      villageSlug?: string;
       requesterName: string;
       requesterNik: string;
       requesterPhone: string;
@@ -366,7 +367,7 @@ export default async function publicRouter(fastify: FastifyInstance) {
       purpose: string;
     };
   }>('/ppid/request', async (req, reply) => {
-    const village = await resolvePublicVillage();
+    const village = await resolvePublicVillage(req.body?.villageSlug);
     if (!village) return reply.status(404).send({ success: false, error: 'Desa tidak ditemukan.' });
     const { requesterName, requesterNik, requesterPhone, requesterEmail, informationNeeded, purpose } = req.body || {};
     if (!requesterName?.trim() || !requesterNik?.trim() || !requesterPhone?.trim() || !informationNeeded?.trim()) {
@@ -397,6 +398,7 @@ export default async function publicRouter(fastify: FastifyInstance) {
   // Pengaduan Warga Online + Tracking
   fastify.post<{
     Body: {
+      villageSlug?: string;
       reporterName: string;
       reporterPhone: string;
       category?: string;
@@ -404,7 +406,7 @@ export default async function publicRouter(fastify: FastifyInstance) {
       description: string;
     };
   }>('/pengaduan', async (req, reply) => {
-    const village = await resolvePublicVillage();
+    const village = await resolvePublicVillage(req.body?.villageSlug);
     if (!village) return reply.status(404).send({ success: false, error: 'Desa tidak ditemukan.' });
     const { reporterName, reporterPhone, category, location, description } = req.body || {};
     if (!reporterName?.trim() || !reporterPhone?.trim() || !description?.trim()) {
@@ -444,6 +446,7 @@ export default async function publicRouter(fastify: FastifyInstance) {
   // Layanan Surat Mandiri Warga + Tracking
   fastify.post<{
     Body: {
+      villageSlug?: string;
       letterType: string;
       applicantNik: string;
       applicantName: string;
@@ -452,7 +455,7 @@ export default async function publicRouter(fastify: FastifyInstance) {
       notes?: string;
     };
   }>('/surat/request', async (req, reply) => {
-    const village = await resolvePublicVillage();
+    const village = await resolvePublicVillage(req.body?.villageSlug);
     if (!village) return reply.status(404).send({ success: false, error: 'Desa tidak ditemukan.' });
     const { letterType, applicantNik, applicantName, applicantPhone, purpose, notes } = req.body || {};
     if (!letterType?.trim() || !applicantNik?.trim() || !applicantName?.trim() || !applicantPhone?.trim() || !purpose?.trim()) {

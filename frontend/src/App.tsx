@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { LandingPage } from './pages/LandingPage';
 import { PublicPortal } from './pages/PublicPortal';
 import { AdminPanel } from './pages/AdminPanel';
+import { getAppPrefix } from './lib/assets';
 
 type RouteView = 'landing' | 'village' | 'admin';
 
@@ -11,7 +12,7 @@ export interface ParsedRoute {
   initialTab?: string;
 }
 
-const DEFAULT_VILLAGE_SLUG = 'sugihwaras';
+const DEFAULT_VILLAGE_SLUG = 'pohjejer';
 
 function stripProxyPrefix(pathname: string): string {
   let p = pathname || '/';
@@ -65,8 +66,10 @@ export function parseLocationRoute(): ParsedRoute {
 
 export function navigateToPath(targetPath: string) {
   if (typeof window === 'undefined') return;
+  const prefix = getAppPrefix();
   const normalized = targetPath.startsWith('/') ? targetPath : `/${targetPath}`;
-  window.history.pushState({}, '', normalized);
+  const fullPath = prefix ? `${prefix}${normalized === '/' ? '/' : normalized}` : normalized;
+  window.history.pushState({}, '', fullPath);
   window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
@@ -105,8 +108,9 @@ export default function App() {
         initialTab={route.initialTab}
         onTabChange={(tab) => {
           const slug = route.villageSlug || DEFAULT_VILLAGE_SLUG;
+          const prefix = getAppPrefix();
           const nextPath = tab && tab !== 'beranda' ? `/desa/${slug}/${tab}` : `/desa/${slug}`;
-          window.history.replaceState({}, '', nextPath);
+          window.history.replaceState({}, '', `${prefix}${nextPath}`);
         }}
         onBackToPlatform={() => {
           navigateToPath('/');
