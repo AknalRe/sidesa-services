@@ -40,7 +40,7 @@ async function resolvePublicVillage(slug?: string) {
 }
 
 export default async function publicRouter(fastify: FastifyInstance) {
-  // List ONLY officially registered & ACTIVE villages on this SaaS platform
+  // List ONLY published (status = ACTIVE) villages (either active subscription OR published unclaimed showcase by Superadmin)
   fastify.get('/villages', async () => {
     const list = await db
       .select({
@@ -54,11 +54,18 @@ export default async function publicRouter(fastify: FastifyInstance) {
         headName: villages.headName,
         logoUrl: villages.logoUrl,
         heroImageUrl: villages.heroImageUrl,
+        isClaimed: villages.isClaimed,
+        licenseStatus: villages.licenseStatus,
         licensePlan: villages.licensePlan,
         licenseExpiresAt: villages.licenseExpiresAt,
       })
       .from(villages)
-      .where(and(eq(villages.status, 'ACTIVE'), eq(villages.licenseStatus, 'ACTIVE')))
+      .where(
+        and(
+          eq(villages.status, 'ACTIVE'),
+          or(eq(villages.licenseStatus, 'ACTIVE'), eq(villages.isClaimed, false))
+        )
+      )
       .orderBy(villages.createdAt);
     return { success: true, data: list };
   });

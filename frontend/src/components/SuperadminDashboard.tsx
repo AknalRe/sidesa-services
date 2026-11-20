@@ -3,9 +3,12 @@ import {
   Building2,
   CheckCircle2,
   CreditCard,
+  Edit3,
   ExternalLink,
+  Globe,
   LayoutDashboard,
   LogOut,
+  Plus,
   Settings,
   ShieldCheck,
   Trash2,
@@ -33,8 +36,9 @@ export const SuperadminDashboard: React.FC<{
   user: { name: string; email: string };
   onLogout: () => void;
   onOpenVillagePortal: (slug: string) => void;
+  onManageVillage: (village: any) => void;
   onBackToLanding?: () => void;
-}> = ({ user, onLogout, onOpenVillagePortal, onBackToLanding }) => {
+}> = ({ user, onLogout, onOpenVillagePortal, onManageVillage, onBackToLanding }) => {
   const [tab, setTab] = useState<SuperTab>('overview');
   const [overview, setOverview] = useState<any>(null);
   const [villages, setVillages] = useState<any[]>([]);
@@ -42,6 +46,19 @@ export const SuperadminDashboard: React.FC<{
   const [plans, setPlans] = useState<any[]>([]);
   const [paymentConfig, setPaymentConfig] = useState<Record<string, string>>({});
   const [savingMsg, setSavingMsg] = useState<string | null>(null);
+  const [showCreateVillage, setShowCreateVillage] = useState(false);
+  const [newVillage, setNewVillage] = useState({
+    name: '',
+    slug: '',
+    district: '',
+    regency: '',
+    province: 'Jawa Timur',
+    kodeDesa: '',
+    headName: '',
+    logoUrl: '',
+    heroImageUrl: '',
+    publishNow: true,
+  });
 
   const loadAll = async () => {
     const [ov, v, inv, pl, cfg] = await Promise.all([
@@ -183,30 +200,174 @@ export const SuperadminDashboard: React.FC<{
 
         {tab === 'villages' && (
           <section className="space-y-4">
-            <div>
-              <h1 className="text-2xl font-extrabold text-slate-900">Desa Terdaftar Resmi ({villages.length})</h1>
-              <p className="text-xs sm:text-sm text-slate-600">
-                Hanya desa berstatus <strong>ACTIVE</strong> yang tampil di direktori Landing Page dan dapat diakses publik.
-              </p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-extrabold text-slate-900">Desa Terdaftar &amp; Direktori ({villages.length})</h1>
+                <p className="text-xs sm:text-sm text-slate-600">
+                  Buat desa baru, isi data melalui CMS, publikasikan secara publik, dan biarkan perangkat desa mengklaimnya dengan berlangganan.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCreateVillage((v) => !v)}
+                className="h-9 px-4 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white text-xs font-bold inline-flex items-center gap-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{showCreateVillage ? 'Tutup Form' : 'Buat Desa Baru'}</span>
+              </button>
             </div>
+
+            {showCreateVillage && (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  await api.createSuperadminVillage(newVillage);
+                  setNewVillage({
+                    name: '',
+                    slug: '',
+                    district: '',
+                    regency: '',
+                    province: 'Jawa Timur',
+                    kodeDesa: '',
+                    headName: '',
+                    logoUrl: '',
+                    heroImageUrl: '',
+                    publishNow: true,
+                  });
+                  setShowCreateVillage(false);
+                  await loadAll();
+                  flash('Desa baru berhasil dibuat. Klik "Kelola Data (CMS)" untuk melengkapi profil, berita, penduduk, dan APBDes.');
+                }}
+                className="bg-white border border-slate-200 rounded-xl p-5 space-y-3 text-xs"
+              >
+                <div className="text-sm font-extrabold text-slate-900">Buat Profil Desa Baru (Bisa Diklaim Perangkat Desa)</div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Nama Desa *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: Desa Sukamaju"
+                      value={newVillage.name}
+                      onChange={(e) => setNewVillage({ ...newVillage, name: e.target.value })}
+                      className="w-full h-9 px-3 rounded-lg border border-slate-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Slug URL (/desa/...)</label>
+                    <input
+                      type="text"
+                      placeholder="sukamaju (otomatis jika kosong)"
+                      value={newVillage.slug}
+                      onChange={(e) => setNewVillage({ ...newVillage, slug: e.target.value })}
+                      className="w-full h-9 px-3 rounded-lg border border-slate-300 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Kode Kemendagri</label>
+                    <input
+                      type="text"
+                      placeholder="35.22.01.2001"
+                      value={newVillage.kodeDesa}
+                      onChange={(e) => setNewVillage({ ...newVillage, kodeDesa: e.target.value })}
+                      className="w-full h-9 px-3 rounded-lg border border-slate-300 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Kecamatan</label>
+                    <input
+                      type="text"
+                      placeholder="Kecamatan"
+                      value={newVillage.district}
+                      onChange={(e) => setNewVillage({ ...newVillage, district: e.target.value })}
+                      className="w-full h-9 px-3 rounded-lg border border-slate-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Kabupaten</label>
+                    <input
+                      type="text"
+                      placeholder="Kabupaten"
+                      value={newVillage.regency}
+                      onChange={(e) => setNewVillage({ ...newVillage, regency: e.target.value })}
+                      className="w-full h-9 px-3 rounded-lg border border-slate-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Kepala Desa</label>
+                    <input
+                      type="text"
+                      placeholder="Nama Kepala Desa"
+                      value={newVillage.headName}
+                      onChange={(e) => setNewVillage({ ...newVillage, headName: e.target.value })}
+                      className="w-full h-9 px-3 rounded-lg border border-slate-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">URL Logo Desa (Opsional)</label>
+                    <input
+                      type="text"
+                      placeholder="https://..."
+                      value={newVillage.logoUrl}
+                      onChange={(e) => setNewVillage({ ...newVillage, logoUrl: e.target.value })}
+                      className="w-full h-9 px-3 rounded-lg border border-slate-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">URL Banner Hero (Opsional)</label>
+                    <input
+                      type="text"
+                      placeholder="https://..."
+                      value={newVillage.heroImageUrl}
+                      onChange={(e) => setNewVillage({ ...newVillage, heroImageUrl: e.target.value })}
+                      className="w-full h-9 px-3 rounded-lg border border-slate-300"
+                    />
+                  </div>
+                  <div className="flex items-end pb-1.5">
+                    <label className="inline-flex items-center gap-2 font-semibold text-slate-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newVillage.publishNow}
+                        onChange={(e) => setNewVillage({ ...newVillage, publishNow: e.target.checked })}
+                      />
+                      <span>Publikasikan langsung secara publik</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateVillage(false)}
+                    className="h-9 px-4 rounded-lg border border-slate-300 text-slate-700 font-semibold"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="h-9 px-5 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white font-bold"
+                  >
+                    Simpan &amp; Buat Desa
+                  </button>
+                </div>
+              </form>
+            )}
 
             <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase">
                   <tr>
                     <th className="py-3 px-4 font-bold">Desa &amp; URL</th>
-                    <th className="py-3 px-4 font-bold">Admin</th>
-                    <th className="py-3 px-4 font-bold">Paket</th>
-                    <th className="py-3 px-4 font-bold">Masa Aktif</th>
-                    <th className="py-3 px-4 font-bold">Status</th>
+                    <th className="py-3 px-4 font-bold">Klaim &amp; Admin</th>
+                    <th className="py-3 px-4 font-bold">Paket &amp; Masa Aktif</th>
+                    <th className="py-3 px-4 font-bold">Publikasi / Status</th>
                     <th className="py-3 px-4 font-bold text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {villages.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-10 text-center text-slate-500">
-                        Belum ada desa yang mendaftar di platform ini.
+                      <td colSpan={5} className="py-10 text-center text-slate-500">
+                        Belum ada desa yang dibuat atau terdaftar di platform ini.
                       </td>
                     </tr>
                   ) : (
@@ -217,32 +378,66 @@ export const SuperadminDashboard: React.FC<{
                           <div className="font-mono text-[11px] text-[#0069b6]">/desa/{v.slug}</div>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-semibold text-slate-800">{v.adminName}</div>
-                          <div className="font-mono text-[11px] text-slate-500">{v.adminEmail}</div>
+                          {v.isClaimed === false ? (
+                            <span className="px-2 py-0.5 rounded bg-sky-50 text-[#0069b6] font-bold text-[11px]">
+                              Belum Diklaim (Bisa Diklaim)
+                            </span>
+                          ) : (
+                            <>
+                              <div className="font-semibold text-slate-800">{v.adminName}</div>
+                              <div className="font-mono text-[11px] text-slate-500">{v.adminEmail}</div>
+                            </>
+                          )}
                         </td>
-                        <td className="py-3 px-4 font-semibold text-slate-700">{v.licensePlan}</td>
-                        <td className="py-3 px-4 font-mono text-slate-700">{formatDate(v.licenseExpiresAt)}</td>
                         <td className="py-3 px-4">
-                          <span
-                            className={`px-2 py-0.5 rounded font-bold text-[11px] ${
-                              v.licenseStatus === 'ACTIVE'
-                                ? 'bg-emerald-50 text-emerald-700'
-                                : v.licenseStatus === 'PENDING_PAYMENT'
-                                  ? 'bg-amber-50 text-amber-700'
-                                  : 'bg-rose-50 text-rose-700'
-                            }`}
-                          >
-                            {v.licenseStatus}
-                          </span>
+                          <div className="font-semibold text-slate-700">{v.licensePlan}</div>
+                          <div className="font-mono text-[11px] text-slate-500">{formatDate(v.licenseExpiresAt)}</div>
+                        </td>
+                        <td className="py-3 px-4 space-y-1">
+                          <div>
+                            <span
+                              className={`px-2 py-0.5 rounded font-bold text-[11px] ${
+                                v.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                              }`}
+                            >
+                              {v.status === 'ACTIVE' ? 'PUBLIK' : v.status}
+                            </span>
+                          </div>
+                          <div className="text-[11px] font-mono text-slate-500">{v.licenseStatus}</div>
                         </td>
                         <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => onManageVillage(v)}
+                            className="px-2.5 py-1.5 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white font-semibold inline-flex items-center gap-1"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            <span>Kelola Data (CMS)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const nextPub = v.status === 'ACTIVE' ? 'DRAFT' : 'ACTIVE';
+                              await api.updateSuperadminVillage(v.id, { status: nextPub });
+                              await loadAll();
+                              flash(
+                                nextPub === 'ACTIVE'
+                                  ? `${v.name} dipublikasikan secara publik.`
+                                  : `${v.name} disembunyikan (Draft).`
+                              );
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold inline-flex items-center gap-1"
+                          >
+                            <Globe className="w-3 h-3" />
+                            <span>{v.status === 'ACTIVE' ? 'Sembunyikan' : 'Publikasikan'}</span>
+                          </button>
                           <button
                             type="button"
                             onClick={() => onOpenVillagePortal(v.slug)}
                             className="px-2.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold inline-flex items-center gap-1"
                           >
                             <ExternalLink className="w-3 h-3" />
-                            <span>Buka</span>
+                            <span>Lihat</span>
                           </button>
                           <button
                             type="button"
@@ -257,24 +452,8 @@ export const SuperadminDashboard: React.FC<{
                             }}
                             className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
                           >
-                            Aktifkan +1 Thn
+                            +1 Thn
                           </button>
-                          {v.licenseStatus === 'ACTIVE' && (
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                await api.updateSuperadminVillage(v.id, {
-                                  status: 'SUSPENDED',
-                                  licenseStatus: 'SUSPENDED',
-                                });
-                                await loadAll();
-                                flash(`${v.name} ditangguhkan.`);
-                              }}
-                              className="px-2.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold"
-                            >
-                              Tangguhkan
-                            </button>
-                          )}
                           <button
                             type="button"
                             onClick={async () => {

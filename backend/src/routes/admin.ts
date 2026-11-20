@@ -32,7 +32,13 @@ import {
 import { buildLetterStatusMessage, sendWahaNotification } from '../services/wahaNotify.service';
 
 function getVillageId(req: any): string {
-  return (req.sidesaUser as SessionUser).villageId || '';
+  const user = req.sidesaUser as SessionUser;
+  if (user.role === 'SUPERADMIN') {
+    const headerVid = String(req.headers?.['x-sidesa-village-id'] || '').trim();
+    const queryVid = String(req.query?.villageId || '').trim();
+    return headerVid || queryVid || user.villageId || '';
+  }
+  return user.villageId || '';
 }
 
 export default async function adminRouter(fastify: FastifyInstance) {

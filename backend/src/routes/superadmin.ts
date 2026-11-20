@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { FastifyInstance } from 'fastify';
 import { desc, eq } from 'drizzle-orm';
 import { db } from '../db';
@@ -5,9 +6,11 @@ import {
   platformSettings,
   subscriptionInvoices,
   subscriptionPlans,
+  villageIndicators,
   villages,
   villageUsers,
 } from '../db/schema';
+import { slugifyTitle } from '../lib/helpers';
 import { requireSuperadmin } from './auth';
 
 export default async function superadminRouter(fastify: FastifyInstance) {
@@ -65,10 +68,88 @@ export default async function superadminRouter(fastify: FastifyInstance) {
     };
   });
 
-  // Ubah status desa / perpanjang masa aktif langganan secara manual
+  // Superadmin membuat desa baru (bisa langsung dipublikasikan & belum diklaim agar bisa diklaim perangkat desa)
+  fastify.post<{
+    Body: {
+      name: string;
+      slug?: string;
+      kodeDesa?: string;
+      district?: string;
+      regency?: string;
+      province?: string;
+      headName?: string;
+      logoUrl?: string;
+      heroImageUrl?: string;
+      publishNow?: boolean;
+    };
+  }>('/villages', async (req, reply) => {
+    const name = String(req.body?.name || '').trim();
+    if (!name) {
+      return reply.status(400).send({ success: false, error: 'Nama desa wajib diisi.' });
+    }
+    const baseSlug = slugifyTitle(req.body?.slug?.trim() || name.replace(/^desa\s+/i, '')) || 'desa';
+    let finalSlug = baseSlug;
+    const [existingSlug] = await db.select().from(villages).where(eq(villages.slug, finalSlug)).limit(1);
+    if (existingSlug) {
+      finalSlug = `${baseSlug}-${Date.now().toString(36).slice(-4)}`;
+    }
+    const villageId = `village-${finalSlug}`;
+    const district = String(req.body?.district || '').trim();
+    const regency = String(req.body?.regency || '').trim();
+    const province = String(req.body?.province || 'Jawa Timur').trim();
+    const publishNow = req.body?.publishNow !== false;
+
+    const [created] = await db
+      .insert(villages)
+      .values({
+        id: villageId,
+        name,
+        slug: finalSlug,
+        kodeDesa: String(req.body?.kodeDesa || '').trim() || null,
+        district,
+        regency,
+        province,
+        headName: String(req.body?.headName || '').trim(),
+        headTitle: 'Kepala Desa',
+        headGreeting: `Selamat datang di Website Resmi ${name}${district ? `, Kecamatan ${district}` : ''}${regency ? `, Kabupaten ${regency}` : ''}.`,
+        vision: `Terwujudnya ${name} yang Maju, Mandiri, Transparan, dan Sejahtera.`,
+        mission: `1. Meningkatkan pelayanan administrasi dan persuratan warga secara digital.\n2. Mewujudkan keterbukaan informasi publik dan transparansi APBDes.\n3. Mengembangkan potensi ekonomi dan UMKM warga desa.`,
+        history: `${name} merupakan desa di wilayah ${district ? `Kecamatan ${district}, ` : ''}${regency ? `Kabupaten ${regency}, ` : ''}Provinsi ${province}.`,
+        address: `Kantor Balai ${name}`,
+        logoUrl: req.body?.logoUrl?.trim() || null,
+        heroImageUrl: req.body?.heroImageUrl?.trim() || null,
+        status: publishNow ? 'ACTIVE' : 'DRAFT',
+        isClaimed: false,
+        licenseStatus: 'UNCLAIMED',
+        licensePlan: 'Belum Diklaim',
+        licenseExpiresAt: null,
+      })
+      .returning();
+
+    await db.insert(villageIndicators).values({
+      id: crypto.randomUUID(),
+      villageId,
+      year: new Date().getFullYear(),
+      idmScore: 0.75,
+      idmStatus: 'MAJU',
+      sdgsScore: 74.0,
+      stuntingCases: 0,
+      stuntingRate: 0,
+      dimensionsJson: JSON.stringify([
+        { name: 'Layanan Dasar', score: 80 },
+        { name: 'Sosial', score: 78 },
+        { name: 'Ekonomi', score: 74 },
+        { name: 'Lingkungan', score: 76 },
+      ]),
+    });
+
+    return reply.status(201).send({ success: true, data: created });
+  });
+
+  // Ubah status desa / publikasi / perpanjang masa aktif langganan secara manual
   fastify.patch<{
     Params: { id: string };
-    Body: { status?: string; licenseStatus?: string; licensePlan?: string; extendMonths?: number };
+    Body: { status?: string; licenseStatus?: string; licensePlan?: string; isClaimed?: boolean; extendMonths?: number };
   }>('/villages/:id', async (req, reply) => {
     const [existing] = await db.select().from(villages).where(eq(villages.id, req.params.id)).limit(1);
     if (!existing) return reply.status(404).send({ success: false, error: 'Desa tidak ditemukan.' });
@@ -81,12 +162,13 @@ export default async function superadminRouter(fastify: FastifyInstance) {
     }
 
     const nextStatus = req.body?.status || existing.status;
-    const nextLicenseStatus = req.body?.licenseStatus || (nextStatus === 'ACTIVE' ? 'ACTIVE' : existing.licenseStatus);
+    const nextLicenseStatus = req.body?.licenseStatus || existing.licenseStatus;
 
     const [updated] = await db
       .update(villages)
       .set({
         status: nextStatus,
+        isClaimed: req.body?.isClaimed !== undefined ? Boolean(req.body.isClaimed) : existing.isClaimed,
         licenseStatus: nextLicenseStatus,
         licensePlan: req.body?.licensePlan || existing.licensePlan,
         licenseExpiresAt: nextExpiry,

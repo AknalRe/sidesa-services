@@ -5,6 +5,14 @@ const client = axios.create({
   withCredentials: true,
 });
 
+export function setActiveSuperadminVillage(villageId: string | null) {
+  if (villageId) {
+    client.defaults.headers.common['x-sidesa-village-id'] = villageId;
+  } else {
+    delete client.defaults.headers.common['x-sidesa-village-id'];
+  }
+}
+
 export const api = {
   // Public Village Portal (supports multi-village slug e.g. /desa/nama-desa)
   getPublicVillages: async () => (await client.get('/public/villages')).data.data,
@@ -72,6 +80,17 @@ export const api = {
     durationMonths?: number;
     paymentMethod?: string;
   }) => (await client.post('/auth/register-village', payload)).data.data,
+  claimVillage: async (payload: {
+    villageSlug: string;
+    name: string;
+    position?: string;
+    phone?: string;
+    email: string;
+    password: string;
+    planCode?: string;
+    durationMonths?: number;
+    paymentMethod?: string;
+  }) => (await client.post('/auth/claim-village', payload)).data.data,
   login: async (payload: { email: string; password: string }) =>
     (await client.post('/auth/login', payload)).data.data,
   logout: async () => (await client.post('/auth/logout')).data,
@@ -88,9 +107,11 @@ export const api = {
   // Superadmin Platform SaaS
   getSuperadminOverview: async () => (await client.get('/superadmin/overview')).data.data,
   getSuperadminVillages: async () => (await client.get('/superadmin/villages')).data.data,
+  createSuperadminVillage: async (payload: Record<string, any>) =>
+    (await client.post('/superadmin/villages', payload)).data.data,
   updateSuperadminVillage: async (
     id: string,
-    payload: { status?: string; licenseStatus?: string; licensePlan?: string; extendMonths?: number }
+    payload: { status?: string; licenseStatus?: string; licensePlan?: string; isClaimed?: boolean; extendMonths?: number }
   ) => (await client.patch(`/superadmin/villages/${id}`, payload)).data.data,
   deleteSuperadminVillage: async (id: string) => (await client.delete(`/superadmin/villages/${id}`)).data,
   getSuperadminInvoices: async () => (await client.get('/superadmin/invoices')).data.data,

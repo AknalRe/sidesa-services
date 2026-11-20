@@ -43,6 +43,7 @@ export async function ensureDatabaseSchema(): Promise<void> {
       logo_url TEXT,
       hero_image_url TEXT,
       status TEXT NOT NULL DEFAULT 'ACTIVE',
+      is_claimed BOOLEAN NOT NULL DEFAULT TRUE,
       license_status TEXT NOT NULL DEFAULT 'ACTIVE',
       license_plan TEXT NOT NULL DEFAULT 'SIDesa Standar',
       license_expires_at TIMESTAMP,
@@ -64,6 +65,7 @@ export async function ensureDatabaseSchema(): Promise<void> {
     );
 
     ALTER TABLE village_users ALTER COLUMN village_id DROP NOT NULL;
+    ALTER TABLE villages ADD COLUMN IF NOT EXISTS is_claimed BOOLEAN NOT NULL DEFAULT TRUE;
 
     CREATE TABLE IF NOT EXISTS officials (
       id TEXT PRIMARY KEY,

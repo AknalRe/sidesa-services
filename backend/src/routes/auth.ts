@@ -356,6 +356,119 @@ export default async function authRouter(fastify: FastifyInstance) {
     });
   });
 
+  // Klaim desa yang sudah dipublikasikan Superadmin namun belum diklaim perangkat desa
+  fastify.post<{
+    Body: {
+      villageSlug: string;
+      name: string;
+      position?: string;
+      phone?: string;
+      email: string;
+      password: string;
+      planCode?: string;
+      durationMonths?: number;
+      paymentMethod?: string;
+    };
+  }>('/claim-village', async (req, reply) => {
+    const villageSlug = String(req.body?.villageSlug || '').trim();
+    const name = String(req.body?.name || '').trim();
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const password = String(req.body?.password || '');
+
+    if (!villageSlug || !name || !email || password.length < 6) {
+      return reply.status(400).send({
+        success: false,
+        error: 'Desa, nama perangkat desa, email, dan kata sandi (minimal 6 karakter) wajib diisi.',
+      });
+    }
+
+    const [village] = await db.select().from(villages).where(eq(villages.slug, villageSlug)).limit(1);
+    if (!village) {
+      return reply.status(404).send({ success: false, error: 'Desa tidak ditemukan.' });
+    }
+    if (village.isClaimed) {
+      return reply.status(409).send({
+        success: false,
+        error: 'Desa ini sudah diklaim dan dikelola oleh perangkat desa resmi.',
+      });
+    }
+
+    const [existingUser] = await db.select().from(villageUsers).where(eq(villageUsers.email, email)).limit(1);
+    if (existingUser) {
+      return reply.status(409).send({ success: false, error: 'Email tersebut sudah terdaftar. Silakan gunakan email lain.' });
+    }
+
+    const planCode = String(req.body?.planCode || 'PRO').toUpperCase();
+    const durationMonths = [1, 6, 12, 24].includes(Number(req.body?.durationMonths))
+      ? Number(req.body?.durationMonths)
+      : 12;
+    const paymentMethod = String(req.body?.paymentMethod || 'TRANSFER_BANK').toUpperCase();
+
+    const [selectedPlan] = await db
+      .select()
+      .from(subscriptionPlans)
+      .where(eq(subscriptionPlans.code, planCode))
+      .limit(1);
+    const plan = selectedPlan || {
+      code: 'PRO',
+      name: 'Paket Desa Digital Pro',
+      priceMonthly: 250000,
+      priceYearly: 2500000,
+    };
+    const totalAmount = calculateSubscriptionAmount(plan, durationMonths);
+
+    const userId = crypto.randomUUID();
+    await db.insert(villageUsers).values({
+      id: userId,
+      villageId: village.id,
+      name,
+      email,
+      passwordHash: hashPassword(password),
+      role: 'ADMIN',
+      phone: String(req.body?.phone || '').trim() || null,
+      position: String(req.body?.position || 'Administrator Desa').trim(),
+    });
+
+    await db
+      .update(villages)
+      .set({
+        isClaimed: true,
+        licenseStatus: 'PENDING_PAYMENT',
+        licensePlan: plan.name,
+        updatedAt: new Date(),
+      })
+      .where(eq(villages.id, village.id));
+
+    const invoiceNumber = generateInvoiceNumber();
+    const [invoice] = await db
+      .insert(subscriptionInvoices)
+      .values({
+        id: crypto.randomUUID(),
+        invoiceNumber,
+        villageId: village.id,
+        planCode: plan.code,
+        planName: plan.name,
+        durationMonths,
+        amount: totalAmount,
+        status: 'UNPAID',
+        paymentMethod,
+      })
+      .returning();
+
+    const sessionUser: SessionUser = { id: userId, villageId: village.id, name, email, role: 'ADMIN' };
+    reply.setCookie(SESSION_COOKIE, signToken(sessionUser), {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 7 * 86400,
+    });
+
+    return reply.status(201).send({
+      success: true,
+      data: { user: sessionUser, villageSlug: village.slug, invoice },
+    });
+  });
+
   fastify.post('/logout', async (_req, reply) => {
     reply.clearCookie(SESSION_COOKIE, { path: '/' });
     return { success: true };

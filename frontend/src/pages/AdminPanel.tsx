@@ -21,7 +21,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-import { api } from '../services/api';
+import { api, setActiveSuperadminVillage } from '../services/api';
 import { ReneoSidesaLogo } from '../components/ReneoSidesaLogo';
 import { SuperadminDashboard } from '../components/SuperadminDashboard';
 
@@ -89,6 +89,7 @@ export const AdminPanel: React.FC<{
     paymentMethod: 'TRANSFER_BANK',
   });
   const [authErr, setAuthErr] = useState<string | null>(null);
+  const [managedVillage, setManagedVillage] = useState<any | null>(null);
   const [billingData, setBillingData] = useState<any>(null);
   const [renewForm, setRenewForm] = useState({ planCode: 'PRO', durationMonths: 12, paymentMethod: 'TRANSFER_BANK' });
   const [confirmInvoiceId, setConfirmInvoiceId] = useState<string | null>(null);
@@ -312,15 +313,29 @@ export const AdminPanel: React.FC<{
     );
   }
 
-  if (auth?.authenticated && auth?.user?.role === 'SUPERADMIN') {
+  if (auth?.authenticated && auth?.user?.role === 'SUPERADMIN' && !managedVillage) {
     return (
       <SuperadminDashboard
         user={auth.user}
         onLogout={async () => {
+          setActiveSuperadminVillage(null);
           await api.logout();
           await checkAuth();
         }}
         onOpenVillagePortal={(slug) => onBackToPortal(slug)}
+        onManageVillage={async (v) => {
+          setActiveSuperadminVillage(v.id);
+          setManagedVillage(v);
+          setTab('dashboard');
+          const [dash, prof, bill] = await Promise.all([
+            api.getDashboard(),
+            api.getVillageProfile(),
+            api.getBilling().catch(() => null),
+          ]);
+          setDashboard(dash);
+          setVillage(prof);
+          setBillingData(bill);
+        }}
         onBackToLanding={onBackToLanding}
       />
     );
@@ -679,7 +694,27 @@ export const AdminPanel: React.FC<{
 
       {/* Main Content */}
       <main className="flex-1 p-4 sm:p-8 overflow-y-auto space-y-6">
-        {village && village.licenseStatus !== 'ACTIVE' && (
+        {managedVillage && auth?.user?.role === 'SUPERADMIN' && (
+          <div className="p-3.5 rounded-xl bg-[#0B2A57] text-white flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div>
+              <span className="font-extrabold">Mode Superadmin</span> — Sedang mengelola data CMS untuk{' '}
+              <strong className="text-emerald-300">{village?.name || managedVillage.name}</strong> (
+              <span className="font-mono">/desa/{village?.slug || managedVillage.slug}</span>)
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveSuperadminVillage(null);
+                setManagedVillage(null);
+              }}
+              className="h-8 px-3.5 rounded-lg bg-white text-[#0B2A57] font-bold hover:bg-slate-100"
+            >
+              &larr; Kembali ke Superadmin Platform
+            </button>
+          </div>
+        )}
+
+        {village && village.licenseStatus !== 'ACTIVE' && auth?.user?.role !== 'SUPERADMIN' && (
           <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="space-y-0.5">
               <div className="font-extrabold text-amber-900">

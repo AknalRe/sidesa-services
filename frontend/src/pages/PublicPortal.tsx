@@ -253,6 +253,22 @@ export const PublicPortal: React.FC<{
   const [ppidSubmitting, setPpidSubmitting] = useState(false);
   const [ppidCreated, setPpidCreated] = useState<any | null>(null);
 
+  // Klaim Desa (jika isClaimed === false)
+  const [claimOpen, setClaimOpen] = useState(false);
+  const [claimPlans, setClaimPlans] = useState<any[]>([]);
+  const [claimForm, setClaimForm] = useState({
+    name: '',
+    position: 'Sekretaris Desa / Operator',
+    phone: '',
+    email: '',
+    password: '',
+    planCode: 'PRO',
+    durationMonths: 12,
+    paymentMethod: 'TRANSFER_BANK',
+  });
+  const [claimSubmitting, setClaimSubmitting] = useState(false);
+  const [claimErr, setClaimErr] = useState<string | null>(null);
+
   useEffect(() => {
     if (initialTab && NAV_ITEMS.some((i) => i.id === initialTab)) {
       setTab(initialTab as PublicTab);
@@ -285,7 +301,40 @@ export const PublicPortal: React.FC<{
 
   useEffect(() => {
     void loadBootstrap();
+    api
+      .getPublicPlans()
+      .then((res) => {
+        if (Array.isArray(res?.plans)) setClaimPlans(res.plans);
+      })
+      .catch(() => {});
   }, [villageSlug]);
+
+  const calcClaimAmount = (planCode: string, months: number): number => {
+    const p = claimPlans.find((x) => x.code === planCode) || claimPlans[0];
+    if (!p) return months === 12 ? 2500000 : months * 250000;
+    if (months === 12) return p.priceYearly;
+    if (months === 24) return Math.round(p.priceYearly * 2 * 0.9);
+    if (months === 6) return Math.round(p.priceMonthly * 6 * 0.95);
+    return p.priceMonthly * months;
+  };
+
+  const handleClaimSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setClaimErr(null);
+    setClaimSubmitting(true);
+    try {
+      await api.claimVillage({
+        villageSlug: data?.village?.slug || villageSlug,
+        ...claimForm,
+      });
+      setClaimOpen(false);
+      onOpenAdmin();
+    } catch (err: any) {
+      setClaimErr(err?.response?.data?.error || 'Gagal mengajukan klaim desa.');
+    } finally {
+      setClaimSubmitting(false);
+    }
+  };
 
   const handleCheckBansos = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -561,6 +610,164 @@ export const PublicPortal: React.FC<{
           </div>
         )}
       </header>
+
+      {/* Banner Klaim Desa jika desa dipublikasikan Superadmin & belum diklaim perangkat desa */}
+      {village.isClaimed === false && (
+        <div className="w-full bg-[#0B2A57] text-white border-b border-white/10">
+          <div className="w-full px-4 sm:px-8 lg:px-12 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <span>
+              Profil <strong>{village.name}</strong> belum diklaim oleh Perangkat Desa resmi. Anda perwakilan pemerintah desa ini?
+            </span>
+            <button
+              type="button"
+              onClick={() => setClaimOpen(true)}
+              className="h-8 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold transition-colors"
+            >
+              Klaim Website Desa &amp; Berlangganan
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Klaim Website Desa + Pilih Paket & Durasi Langganan */}
+      {claimOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/55 flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setClaimOpen(false)}
+        >
+          <div
+            className="bg-white border border-slate-200 rounded-xl shadow-xl max-w-lg w-full p-5 sm:p-6 space-y-4 text-xs"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <h2 className="text-base font-extrabold text-slate-900">Klaim Website {village.name}</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Pilih paket &amp; durasi langganan untuk mengambil alih pengelolaan Back-Office <span className="font-mono">/desa/{village.slug}</span>.
+                </p>
+              </div>
+              <button type="button" onClick={() => setClaimOpen(false)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {claimErr && (
+              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 font-medium">{claimErr}</div>
+            )}
+
+            <form onSubmit={handleClaimSubmit} className="space-y-3">
+              <div className="p-3.5 rounded-lg bg-[#F6F6F6] border border-slate-200 space-y-2.5">
+                <div className="font-extrabold text-slate-800">Pilih Paket &amp; Durasi Berlangganan</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Paket SIDesa</label>
+                    <select
+                      value={claimForm.planCode}
+                      onChange={(e) => setClaimForm({ ...claimForm, planCode: e.target.value })}
+                      className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white font-semibold"
+                    >
+                      {(claimPlans.length > 0
+                        ? claimPlans
+                        : [
+                            { code: 'STARTER', name: 'Paket Desa Mandiri' },
+                            { code: 'PRO', name: 'Paket Desa Digital Pro' },
+                            { code: 'ENTERPRISE', name: 'Paket Desa Prioritas' },
+                          ]
+                      ).map((p) => (
+                        <option key={p.code} value={p.code}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Durasi</label>
+                    <select
+                      value={claimForm.durationMonths}
+                      onChange={(e) => setClaimForm({ ...claimForm, durationMonths: Number(e.target.value) })}
+                      className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white font-semibold"
+                    >
+                      <option value={1}>1 Bulan</option>
+                      <option value={6}>6 Bulan (-5%)</option>
+                      <option value={12}>12 Bulan / 1 Tahun (Hemat 2 Bulan)</option>
+                      <option value={24}>24 Bulan / 2 Tahun (-10%)</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                  <span className="text-slate-600 font-semibold">Total Tagihan:</span>
+                  <span className="text-base font-extrabold font-mono text-[#0069b6]">
+                    Rp {calcClaimAmount(claimForm.planCode, claimForm.durationMonths).toLocaleString('id-ID')}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Nama Perangkat Desa *</label>
+                  <input
+                    type="text"
+                    required
+                    value={claimForm.name}
+                    onChange={(e) => setClaimForm({ ...claimForm, name: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-slate-300"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Jabatan</label>
+                  <input
+                    type="text"
+                    value={claimForm.position}
+                    onChange={(e) => setClaimForm({ ...claimForm, position: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-slate-300"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Email Akun Admin *</label>
+                  <input
+                    type="email"
+                    required
+                    value={claimForm.email}
+                    onChange={(e) => setClaimForm({ ...claimForm, email: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-slate-300"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">No. WhatsApp</label>
+                  <input
+                    type="tel"
+                    value={claimForm.phone}
+                    onChange={(e) => setClaimForm({ ...claimForm, phone: e.target.value })}
+                    className="w-full h-9 px-3 rounded-lg border border-slate-300 font-mono"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Kata Sandi Akun Back-Office *</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  placeholder="Minimal 6 karakter"
+                  value={claimForm.password}
+                  onChange={(e) => setClaimForm({ ...claimForm, password: e.target.value })}
+                  className="w-full h-9 px-3 rounded-lg border border-slate-300"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={claimSubmitting}
+                className="w-full h-10 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white text-sm font-bold"
+              >
+                {claimSubmitting ? 'Memproses Klaim...' : 'Klaim Desa & Lanjut ke Pembayaran Invoice'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* =========================================================
           BERANDA WEBSITE RESMI DESA (FULL WIDTH)

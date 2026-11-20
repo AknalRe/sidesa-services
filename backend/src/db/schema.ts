@@ -37,6 +37,7 @@ export const villages = pgTable('villages', {
   logoUrl: text('logo_url'),
   heroImageUrl: text('hero_image_url'),
   status: text('status').notNull().default('ACTIVE'),
+  isClaimed: boolean('is_claimed').notNull().default(true),
   licenseStatus: text('license_status').notNull().default('ACTIVE'),
   licensePlan: text('license_plan').notNull().default('SIDesa Standar'),
   licenseExpiresAt: timestamp('license_expires_at'),
