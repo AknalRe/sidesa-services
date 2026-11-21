@@ -312,6 +312,7 @@ export const subscriptionPlans = pgTable('subscription_plans', {
   priceMonthly: integer('price_monthly').notNull().default(150000),
   priceYearly: integer('price_yearly').notNull().default(1500000),
   featuresJson: text('features_json').default('[]'),
+  capabilitiesJson: text('capabilities_json').default('[]'),
   active: boolean('active').notNull().default(true),
   sortOrder: integer('sort_order').notNull().default(0),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

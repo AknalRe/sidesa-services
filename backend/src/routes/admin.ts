@@ -31,6 +31,12 @@ import {
   slugifyTitle,
   summarizeApbdes,
 } from '../lib/helpers';
+import {
+  getCapabilityLabel,
+  normalizeCapabilities,
+  resolveRequiredCapabilityForAdminRoute,
+  SIDESA_CAPABILITY_CATALOG,
+} from '../lib/capabilities';
 import { buildLetterStatusMessage, sendWahaNotification } from '../services/wahaNotify.service';
 import {
   createReneoEcosystemOrder,
@@ -59,8 +65,74 @@ function getVillageId(req: any): string {
   return user.villageId || '';
 }
 
+async function resolveVillageLicenseCapabilities(vid: string): Promise<{
+  licenseActive: boolean;
+  planCode: string;
+  planName: string;
+  capabilities: string[];
+}> {
+  const [village] = await db.select().from(villages).where(eq(villages.id, vid)).limit(1);
+  if (!village) {
+    return { licenseActive: false, planCode: 'STARTER', planName: 'Belum Aktif', capabilities: [] };
+  }
+  const now = new Date();
+  const notExpired = !village.licenseExpiresAt || new Date(village.licenseExpiresAt) >= now;
+  const licenseActive = village.licenseStatus === 'ACTIVE' && notExpired;
+
+  const plans = await db.select().from(subscriptionPlans).orderBy(subscriptionPlans.sortOrder);
+  const planNameRaw = String(village.licensePlan || '').trim();
+  let matchedPlan = plans.find(
+    (p) =>
+      p.code.toLowerCase() === planNameRaw.toLowerCase() ||
+      p.name.toLowerCase() === planNameRaw.toLowerCase()
+  );
+
+  if (!matchedPlan) {
+    const [latestInv] = await db
+      .select()
+      .from(subscriptionInvoices)
+      .where(eq(subscriptionInvoices.villageId, vid))
+      .orderBy(desc(subscriptionInvoices.createdAt))
+      .limit(1);
+    if (latestInv?.planCode) {
+      matchedPlan = plans.find((p) => p.code.toUpperCase() === latestInv.planCode.toUpperCase());
+    }
+  }
+
+  const code = matchedPlan?.code || 'STARTER';
+  const name = matchedPlan?.name || planNameRaw || 'Paket Desa Mandiri';
+  const capabilities = normalizeCapabilities(matchedPlan?.capabilitiesJson, code);
+  return { licenseActive, planCode: code, planName: name, capabilities };
+}
+
 export default async function adminRouter(fastify: FastifyInstance) {
   fastify.addHook('preHandler', requireAuth);
+
+  // Capability & License Feature Gate (seperti sistem lisensi Reneo CRM)
+  fastify.addHook('preHandler', async (req, reply) => {
+    const user = (req as any).sidesaUser as SessionUser | undefined;
+    if (!user || user.role === 'SUPERADMIN') return;
+    const requiredCap = resolveRequiredCapabilityForAdminRoute(req.method, req.url);
+    if (!requiredCap) return;
+    const vid = getVillageId(req);
+    const lic = await resolveVillageLicenseCapabilities(vid);
+    if (!lic.licenseActive) {
+      return reply.status(403).send({
+        success: false,
+        code: 'LICENSE_INACTIVE',
+        error: 'Langganan desa belum aktif atau masa aktif telah berakhir. Selesaikan pembayaran di menu Langganan & Tagihan.',
+      });
+    }
+    if (!lic.capabilities.includes(requiredCap)) {
+      return reply.status(403).send({
+        success: false,
+        code: 'FEATURE_LOCKED',
+        requiredCapability: requiredCap,
+        planName: lic.planName,
+        error: `Fitur "${getCapabilityLabel(requiredCap)}" tidak termasuk pada paket "${lic.planName}". Silakan upgrade paket di menu Langganan & Tagihan.`,
+      });
+    }
+  });
 
   // Upload Foto / Gambar langsung (Logo, Hero, Berita, UMKM, Perangkat, Lokasi/Galeri)
   fastify.post<{ Body: { dataUrl?: string; filename?: string } }>('/upload', async (req, reply) => {
@@ -278,18 +350,21 @@ export default async function adminRouter(fastify: FastifyInstance) {
         .returning();
 
       if (nextStatus !== existing.status && existing.applicantPhone) {
-        void sendWahaNotification(
-          existing.applicantPhone,
-          buildLetterStatusMessage({
-            villageName: village?.name || 'Pemerintah Desa',
-            applicantName: updated.applicantName,
-            letterType: updated.letterType,
-            trackingCode: updated.trackingCode,
-            status: updated.status,
-            letterNumber: updated.letterNumber,
-            adminNotes: updated.adminNotes,
-          })
-        );
+        const lic = await resolveVillageLicenseCapabilities(vid);
+        if (lic.capabilities.includes('whatsapp_notify')) {
+          void sendWahaNotification(
+            existing.applicantPhone,
+            buildLetterStatusMessage({
+              villageName: village?.name || 'Pemerintah Desa',
+              applicantName: updated.applicantName,
+              letterType: updated.letterType,
+              trackingCode: updated.trackingCode,
+              status: updated.status,
+              letterNumber: updated.letterNumber,
+              adminNotes: updated.adminNotes,
+            })
+          );
+        }
       }
 
       return { success: true, data: updated };
@@ -436,12 +511,15 @@ export default async function adminRouter(fastify: FastifyInstance) {
         .where(eq(complaints.id, existing.id))
         .returning();
       if (existing.reporterPhone) {
-        const [village] = await db.select().from(villages).where(eq(villages.id, vid)).limit(1);
-        void sendWahaNotification(
-          existing.reporterPhone,
-          `*${village?.name || 'Pemerintah Desa'} — Pengaduan*\nTiket *${updated.ticketCode}* kini berstatus *${updated.status}*.${updated.responseText ? `\nTanggapan: ${updated.responseText}` : ''
-          }`
-        );
+        const lic = await resolveVillageLicenseCapabilities(vid);
+        if (lic.capabilities.includes('whatsapp_notify')) {
+          const [village] = await db.select().from(villages).where(eq(villages.id, vid)).limit(1);
+          void sendWahaNotification(
+            existing.reporterPhone,
+            `*${village?.name || 'Pemerintah Desa'} — Pengaduan*\nTiket *${updated.ticketCode}* kini berstatus *${updated.status}*.${updated.responseText ? `\nTanggapan: ${updated.responseText}` : ''
+            }`
+          );
+        }
       }
       return { success: true, data: updated };
     }
@@ -861,6 +939,7 @@ export default async function adminRouter(fastify: FastifyInstance) {
     const [refreshedVillage] = await db.select().from(villages).where(eq(villages.id, vid)).limit(1);
     if (refreshedVillage) village = refreshedVillage;
 
+    const lic = await resolveVillageLicenseCapabilities(vid);
     const paymentConfig: Record<string, string> = {};
     for (const s of settings) paymentConfig[s.key] = s.value;
     return {
@@ -868,6 +947,10 @@ export default async function adminRouter(fastify: FastifyInstance) {
       data: {
         reneoEcosystemEnabled: isReneoPaymentEcosystemEnabled(),
         reneoPaymentMethods,
+        licenseActive: lic.licenseActive,
+        activePlanCode: lic.planCode,
+        activeCapabilities: lic.capabilities,
+        capabilityCatalog: SIDESA_CAPABILITY_CATALOG,
         subscription: {
           status: village.status,
           licenseStatus: village.licenseStatus,
@@ -875,7 +958,10 @@ export default async function adminRouter(fastify: FastifyInstance) {
           licenseExpiresAt: village.licenseExpiresAt,
         },
         invoices,
-        plans,
+        plans: plans.map((p) => ({
+          ...p,
+          capabilities: normalizeCapabilities(p.capabilitiesJson, p.code),
+        })),
         paymentConfig,
       },
     };

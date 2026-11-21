@@ -9,6 +9,7 @@ import {
   Globe,
   HeartHandshake,
   LayoutDashboard,
+  Lock,
   LogOut,
   MapPin,
   Menu,
@@ -269,36 +270,78 @@ export const AdminPanel: React.FC<{
     }
   }, [initialAdminTab, auth?.authenticated, managedVillage]);
 
+  const isSuperadminMode = auth?.user?.role === 'SUPERADMIN';
+  const activeCapabilities: string[] = Array.isArray(billingData?.activeCapabilities)
+    ? billingData.activeCapabilities
+    : [];
+  const isLicenseActive = isSuperadminMode || billingData?.licenseActive !== false;
+
+  const isMenuUnlocked = (menuId: AdminTab): boolean => {
+    if (menuId === 'dashboard' || menuId === 'billing' || isSuperadminMode) return true;
+    if (!billingData) return true;
+    if (!isLicenseActive) return false;
+    if (activeCapabilities.length === 0) return true;
+    return activeCapabilities.includes(menuId);
+  };
+
   const loadTab = async (t: AdminTab, syncUrl = true) => {
+    if (!isMenuUnlocked(t)) {
+      const targetMenu = MENU.find((m) => m.id === t);
+      setActionBanner({
+        type: 'error',
+        text: !isLicenseActive
+          ? 'Langganan desa belum aktif atau telah berakhir. Selesaikan pembayaran untuk membuka seluruh modul.'
+          : `Fitur "${targetMenu?.label || t}" tidak termasuk pada paket "${billingData?.subscription?.licensePlan || 'Saat Ini'}". Silakan upgrade paket pada menu Langganan & Tagihan.`,
+      });
+      setTab('billing');
+      if (syncUrl) onAdminTabChange?.('billing');
+      try {
+        setBillingData(await api.getBilling());
+      } catch {
+        // ignore
+      }
+      return;
+    }
+
     setTab(t);
     if (syncUrl) onAdminTabChange?.(t);
-    if (t === 'dashboard') setDashboard(await api.getDashboard());
-    else if (t === 'billing') setBillingData(await api.getBilling());
-    else if (t === 'letters') setLetters(await api.getLetters());
-    else if (t === 'residents') setResidents(await api.getResidents());
-    else if (t === 'apbdes') setApbdes(await api.getApbdes());
-    else if (t === 'bansos') setBansos(await api.getBansos());
-    else if (t === 'pbb') setPbb(await api.getPbb());
-    else if (t === 'complaints') setComplaints(await api.getComplaints());
-    else if (t === 'news') setNews(await api.getNewsAdmin());
-    else if (t === 'umkm') setUmkm(await api.getUmkmAdmin());
-    else if (t === 'officials') setOfficials(await api.getOfficials());
-    else if (t === 'places') setPlaces(await api.getPlacesAdmin());
-    else if (t === 'ppid') setPpidData(await api.getPpidAdmin());
-    else if (t === 'indicators') {
-      const rows = await api.getIndicatorsAdmin();
-      if (rows && rows[0]) {
-        setIndicatorForm({
-          year: rows[0].year,
-          idmScore: rows[0].idmScore,
-          idmStatus: rows[0].idmStatus,
-          sdgsScore: rows[0].sdgsScore,
-          stuntingCases: rows[0].stuntingCases,
-          stuntingRate: rows[0].stuntingRate,
-        });
+    try {
+      if (t === 'dashboard') setDashboard(await api.getDashboard());
+      else if (t === 'billing') setBillingData(await api.getBilling());
+      else if (t === 'letters') setLetters(await api.getLetters());
+      else if (t === 'residents') setResidents(await api.getResidents());
+      else if (t === 'apbdes') setApbdes(await api.getApbdes());
+      else if (t === 'bansos') setBansos(await api.getBansos());
+      else if (t === 'pbb') setPbb(await api.getPbb());
+      else if (t === 'complaints') setComplaints(await api.getComplaints());
+      else if (t === 'news') setNews(await api.getNewsAdmin());
+      else if (t === 'umkm') setUmkm(await api.getUmkmAdmin());
+      else if (t === 'officials') setOfficials(await api.getOfficials());
+      else if (t === 'places') setPlaces(await api.getPlacesAdmin());
+      else if (t === 'ppid') setPpidData(await api.getPpidAdmin());
+      else if (t === 'indicators') {
+        const rows = await api.getIndicatorsAdmin();
+        if (rows && rows[0]) {
+          setIndicatorForm({
+            year: rows[0].year,
+            idmScore: rows[0].idmScore,
+            idmStatus: rows[0].idmStatus,
+            sdgsScore: rows[0].sdgsScore,
+            stuntingCases: rows[0].stuntingCases,
+            stuntingRate: rows[0].stuntingRate,
+          });
+        }
+      } else if (t === 'attendance') setAttendance(await api.getAttendance());
+      else if (t === 'profile') setVillage(await api.getVillageProfile());
+    } catch (err: any) {
+      const code = err?.response?.data?.code;
+      const msg = err?.response?.data?.error || 'Gagal memuat modul.';
+      setActionBanner({ type: 'error', text: msg });
+      if (code === 'FEATURE_LOCKED' || code === 'LICENSE_INACTIVE') {
+        setTab('billing');
+        if (syncUrl) onAdminTabChange?.('billing');
       }
-    } else if (t === 'attendance') setAttendance(await api.getAttendance());
-    else if (t === 'profile') setVillage(await api.getVillageProfile());
+    }
   };
 
   const calcPlanPrice = (planCode: string, months: number): number => {
@@ -825,6 +868,7 @@ export const AdminPanel: React.FC<{
                 if (!m) return null;
                 const Icon = m.icon;
                 const isActive = tab === m.id;
+                const locked = !isMenuUnlocked(m.id);
                 return (
                   <button
                     key={m.id}
@@ -836,11 +880,18 @@ export const AdminPanel: React.FC<{
                     className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium transition-colors ${
                       isActive
                         ? 'bg-[#1E2438] text-white'
-                        : 'text-gray-400 hover:bg-[#1E2438]/60 hover:text-gray-100'
+                        : locked
+                          ? 'text-gray-500 hover:bg-[#1E2438]/40 hover:text-gray-300'
+                          : 'text-gray-400 hover:bg-[#1E2438]/60 hover:text-gray-100'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-indigo-400' : 'text-gray-400'}`} />
+                    <Icon
+                      className={`w-4 h-4 shrink-0 ${
+                        isActive ? 'text-indigo-400' : locked ? 'text-gray-500' : 'text-gray-400'
+                      }`}
+                    />
                     <span className="truncate flex-1 text-left">{m.label}</span>
+                    {locked && <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
                   </button>
                 );
               })}

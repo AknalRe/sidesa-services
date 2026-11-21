@@ -140,6 +140,7 @@ export const api = {
   cancelSuperadminInvoice: async (id: string) =>
     (await client.patch(`/superadmin/invoices/${id}/cancel`)).data.data,
   getSuperadminPlans: async () => (await client.get('/superadmin/plans')).data.data,
+  getSuperadminCapabilities: async () => (await client.get('/superadmin/capabilities')).data.data,
   updateSuperadminPlan: async (id: string, payload: Record<string, any>) =>
     (await client.patch(`/superadmin/plans/${id}`, payload)).data.data,
   getSuperadminPaymentConfig: async () => (await client.get('/superadmin/payment-config')).data.data,

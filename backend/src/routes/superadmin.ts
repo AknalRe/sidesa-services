@@ -11,6 +11,11 @@ import {
   villageUsers,
 } from '../db/schema';
 import { slugifyTitle } from '../lib/helpers';
+import {
+  capabilityLabelsFromKeys,
+  normalizeCapabilities,
+  SIDESA_CAPABILITY_CATALOG,
+} from '../lib/capabilities';
 import { getWilayahDetail } from '../services/wilayah.service';
 import { getReneoPaymentMethods, isReneoPaymentEcosystemEnabled } from '../services/reneoPayment.service';
 import { requireSuperadmin } from './auth';
@@ -277,20 +282,27 @@ export default async function superadminRouter(fastify: FastifyInstance) {
     return { success: true, data: updated };
   });
 
+  // Katalog Kapabilitas Fitur Resmi SIDesa (Single Source of Truth)
+  fastify.get('/capabilities', async () => {
+    return { success: true, data: SIDESA_CAPABILITY_CATALOG };
+  });
+
   // Kelola Paket Langganan
   fastify.get('/plans', async () => {
     const rows = await db.select().from(subscriptionPlans).orderBy(subscriptionPlans.sortOrder);
     return {
       success: true,
       data: rows.map((r) => {
+        const capabilities = normalizeCapabilities(r.capabilitiesJson, r.code);
         let features: string[] = [];
         try {
           const parsed = JSON.parse(r.featuresJson || '[]');
-          if (Array.isArray(parsed)) features = parsed.map((x) => String(x));
+          if (Array.isArray(parsed) && parsed.length > 0) features = parsed.map((x) => String(x));
         } catch {
           features = [];
         }
-        return { ...r, features };
+        if (features.length === 0) features = capabilityLabelsFromKeys(capabilities);
+        return { ...r, capabilities, features };
       }),
     };
   });
@@ -302,6 +314,7 @@ export default async function superadminRouter(fastify: FastifyInstance) {
       description?: string;
       priceMonthly?: number;
       priceYearly?: number;
+      capabilities?: string[];
       features?: string[];
       featuresJson?: string;
       active?: boolean;
@@ -310,8 +323,16 @@ export default async function superadminRouter(fastify: FastifyInstance) {
     const [existing] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, req.params.id)).limit(1);
     if (!existing) return reply.status(404).send({ success: false, error: 'Paket tidak ditemukan.' });
 
+    const nextCaps =
+      Array.isArray(req.body?.capabilities)
+        ? normalizeCapabilities(req.body.capabilities)
+        : normalizeCapabilities(existing.capabilitiesJson, existing.code);
+
     let nextFeaturesJson = existing.featuresJson;
-    if (Array.isArray(req.body?.features)) {
+    if (Array.isArray(req.body?.capabilities)) {
+      // Sinkronkan label fitur paket langsung dari daftar kapabilitas aktif
+      nextFeaturesJson = JSON.stringify(capabilityLabelsFromKeys(nextCaps));
+    } else if (Array.isArray(req.body?.features)) {
       const cleaned = req.body.features.map((f) => String(f || '').trim()).filter(Boolean);
       nextFeaturesJson = JSON.stringify(cleaned);
     } else if (typeof req.body?.featuresJson === 'string') {
@@ -325,20 +346,17 @@ export default async function superadminRouter(fastify: FastifyInstance) {
         description: req.body?.description !== undefined ? String(req.body.description) : existing.description,
         priceMonthly: req.body?.priceMonthly !== undefined ? Number(req.body.priceMonthly) : existing.priceMonthly,
         priceYearly: req.body?.priceYearly !== undefined ? Number(req.body.priceYearly) : existing.priceYearly,
+        capabilitiesJson: JSON.stringify(nextCaps),
         featuresJson: nextFeaturesJson,
         active: req.body?.active !== undefined ? Boolean(req.body.active) : existing.active,
         updatedAt: new Date(),
       })
       .where(eq(subscriptionPlans.id, existing.id))
       .returning();
-    let features: string[] = [];
-    try {
-      const parsed = JSON.parse(updated.featuresJson || '[]');
-      if (Array.isArray(parsed)) features = parsed.map((x) => String(x));
-    } catch {
-      features = [];
-    }
-    return { success: true, data: { ...updated, features } };
+
+    const capabilities = normalizeCapabilities(updated.capabilitiesJson, updated.code);
+    const features = capabilityLabelsFromKeys(capabilities);
+    return { success: true, data: { ...updated, capabilities, features } };
   });
 
   // Pengaturan Rekening Pembayaran / QRIS / WA Konfirmasi

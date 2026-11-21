@@ -63,6 +63,9 @@ export const SuperadminDashboard: React.FC<{
   const [villages, setVillages] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
+  const [capabilityCatalog, setCapabilityCatalog] = useState<
+    Array<{ key: string; label: string; category: string; description: string }>
+  >([]);
   const [paymentConfig, setPaymentConfig] = useState<Record<string, any>>({});
   const [savingMsg, setSavingMsg] = useState<string | null>(null);
   const [showCreateVillage, setShowCreateVillage] = useState(false);
@@ -80,17 +83,19 @@ export const SuperadminDashboard: React.FC<{
   });
 
   const loadAll = async () => {
-    const [ov, v, inv, pl, cfg] = await Promise.all([
+    const [ov, v, inv, pl, caps, cfg] = await Promise.all([
       api.getSuperadminOverview(),
       api.getSuperadminVillages(),
       api.getSuperadminInvoices(),
       api.getSuperadminPlans(),
+      api.getSuperadminCapabilities().catch(() => []),
       api.getSuperadminPaymentConfig(),
     ]);
     setOverview(ov);
     setVillages(v || []);
     setInvoices(inv || []);
     setPlans(pl || []);
+    setCapabilityCatalog(Array.isArray(caps) ? caps : []);
     setPaymentConfig(cfg || {});
   };
 
@@ -744,30 +749,33 @@ export const SuperadminDashboard: React.FC<{
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               {plans.map((p) => {
-                const featList: string[] = Array.isArray(p.features)
-                  ? p.features
-                  : (() => {
-                      try {
-                        const parsed = JSON.parse(p.featuresJson || '[]');
-                        return Array.isArray(parsed) ? parsed.map((x: any) => String(x)) : [];
-                      } catch {
-                        return [];
-                      }
-                    })();
-                const updatePlanFeatures = (nextFeats: string[]) => {
-                  setPlans((prev) =>
-                    prev.map((x) =>
-                      x.id === p.id ? { ...x, features: nextFeats, featuresJson: JSON.stringify(nextFeats) } : x
-                    )
-                  );
+                const selectedCaps: string[] = Array.isArray(p.capabilities) ? p.capabilities : [];
+                const toggleCap = (capKey: string) => {
+                  const next = selectedCaps.includes(capKey)
+                    ? selectedCaps.filter((k) => k !== capKey)
+                    : [...selectedCaps, capKey];
+                  setPlans((prev) => prev.map((x) => (x.id === p.id ? { ...x, capabilities: next } : x)));
                 };
+                const groupedCaps = capabilityCatalog.reduce<Record<string, typeof capabilityCatalog>>((acc, item) => {
+                  if (!acc[item.category]) acc[item.category] = [];
+                  acc[item.category].push(item);
+                  return acc;
+                }, {});
                 return (
-                  <div key={p.id} className="bg-white border border-slate-200 rounded-xl p-5 space-y-3 text-xs flex flex-col justify-between">
+                  <div
+                    key={p.id}
+                    className="bg-white border border-slate-200 rounded-xl p-5 space-y-3.5 text-xs flex flex-col justify-between"
+                  >
                     <div className="space-y-3">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-mono text-[11px] font-bold text-[#0069b6]">{p.code}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[11px] font-bold text-[#0069b6]">{p.code}</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[10px]">
+                            {selectedCaps.length}/{capabilityCatalog.length || 16} kapabilitas
+                          </span>
+                        </div>
                         <label className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 cursor-pointer">
                           <input
                             type="checkbox"
@@ -835,40 +843,52 @@ export const SuperadminDashboard: React.FC<{
                         </div>
                       </div>
 
-                      <div className="space-y-1.5 pt-1 border-t border-slate-100">
+                      <div className="space-y-2.5 pt-2 border-t border-slate-100">
                         <div className="flex items-center justify-between gap-2">
-                          <label className="font-bold text-slate-700">Daftar Fitur Paket ({featList.length})</label>
+                          <label className="font-bold text-slate-800">
+                            Hak Akses &amp; Kapabilitas Modul (Terkunci di Backend &amp; Menu)
+                          </label>
                           <button
                             type="button"
-                            onClick={() => updatePlanFeatures([...featList, ''])}
-                            className="text-[11px] font-bold text-[#0069b6] hover:underline inline-flex items-center gap-1"
+                            onClick={() => {
+                              const allKeys = capabilityCatalog.map((c) => c.key);
+                              const next = selectedCaps.length === allKeys.length ? [] : allKeys;
+                              setPlans((prev) => prev.map((x) => (x.id === p.id ? { ...x, capabilities: next } : x)));
+                            }}
+                            className="text-[11px] font-bold text-[#0069b6] hover:underline shrink-0"
                           >
-                            <Plus className="w-3 h-3" />
-                            <span>Tambah Fitur</span>
+                            {selectedCaps.length === capabilityCatalog.length ? 'Kosongkan' : 'Pilih Semua'}
                           </button>
                         </div>
-                        <div className="space-y-1.5">
-                          {featList.map((feat, fIdx) => (
-                            <div key={fIdx} className="flex items-center gap-1.5">
-                              <input
-                                type="text"
-                                value={feat}
-                                placeholder="Tulis nama fitur paket..."
-                                onChange={(e) => {
-                                  const next = [...featList];
-                                  next[fIdx] = e.target.value;
-                                  updatePlanFeatures(next);
-                                }}
-                                className="flex-1 h-8 px-2.5 rounded-lg border border-slate-300 text-xs"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => updatePlanFeatures(featList.filter((_, idx) => idx !== fIdx))}
-                                className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 shrink-0"
-                                title="Hapus fitur"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+
+                        <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                          {Object.entries(groupedCaps).map(([cat, items]) => (
+                            <div key={cat} className="space-y-1">
+                              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{cat}</div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                {items.map((cap) => {
+                                  const checked = selectedCaps.includes(cap.key);
+                                  return (
+                                    <label
+                                      key={cap.key}
+                                      title={cap.description}
+                                      className={`flex items-start gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${
+                                        checked
+                                          ? 'bg-sky-50/70 border-sky-200 text-slate-900'
+                                          : 'bg-slate-50/50 border-slate-200 text-slate-500 hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={() => toggleCap(cap.key)}
+                                        className="mt-0.5 rounded border-slate-300 shrink-0"
+                                      />
+                                      <span className="text-[11px] font-semibold leading-tight">{cap.label}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -883,14 +903,14 @@ export const SuperadminDashboard: React.FC<{
                           description: p.description,
                           priceMonthly: p.priceMonthly,
                           priceYearly: p.priceYearly,
-                          features: featList.map((x) => x.trim()).filter(Boolean),
+                          capabilities: selectedCaps,
                           active: p.active !== false,
                         });
-                        flash(`Paket & fitur ${p.name} berhasil disimpan.`);
+                        flash(`Paket & kapabilitas ${p.name} berhasil disimpan.`);
                       }}
                       className="w-full h-9 rounded-lg bg-[#0069b6] hover:bg-[#005a9e] text-white font-bold"
                     >
-                      Simpan Paket &amp; Fitur
+                      Simpan Paket &amp; Kapabilitas
                     </button>
                   </div>
                 );

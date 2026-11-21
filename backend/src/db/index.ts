@@ -3,6 +3,7 @@ import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { count, eq } from 'drizzle-orm';
 import * as schema from './schema';
+import { capabilityLabelsFromKeys, DEFAULT_PLAN_CAPABILITIES } from '../lib/capabilities';
 
 const connectionString =
   process.env.DATABASE_URL || 'postgresql://sidesa_user:sidesa_password@localhost:5435/sidesa_db';
@@ -284,10 +285,12 @@ export async function ensureDatabaseSchema(): Promise<void> {
       price_monthly INTEGER NOT NULL DEFAULT 150000,
       price_yearly INTEGER NOT NULL DEFAULT 1500000,
       features_json TEXT DEFAULT '[]',
+      capabilities_json TEXT DEFAULT '[]',
       active BOOLEAN NOT NULL DEFAULT TRUE,
       sort_order INTEGER NOT NULL DEFAULT 0,
       updated_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
+    ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS capabilities_json TEXT DEFAULT '[]';
 
     CREATE TABLE IF NOT EXISTS subscription_invoices (
       id TEXT PRIMARY KEY,
@@ -343,6 +346,18 @@ export async function ensureDatabaseSchema(): Promise<void> {
   `);
 
   await seedDefaultPlansAndSettings();
+  // Pastikan setiap paket default memiliki capabilities_json terisi jika masih kosong
+  for (const [code, caps] of Object.entries(DEFAULT_PLAN_CAPABILITIES)) {
+    const capsJson = JSON.stringify(caps);
+    const featJson = JSON.stringify(capabilityLabelsFromKeys(caps));
+    await queryClient`
+      UPDATE subscription_plans
+      SET capabilities_json = ${capsJson},
+          features_json = CASE WHEN features_json IS NULL OR features_json = '' OR features_json = '[]' THEN ${featJson} ELSE features_json END
+      WHERE code = ${code}
+        AND (capabilities_json IS NULL OR capabilities_json = '' OR capabilities_json = '[]')
+    `;
+  }
   await seedDesaPohjejerIfMissing();
   await seedDesaDlangguIfMissing();
 }
