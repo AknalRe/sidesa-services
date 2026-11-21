@@ -20,7 +20,9 @@ export interface ReneoOrderResult {
 }
 
 function getReneoConfig() {
-  const panelUrl = String(process.env.RENEO_PANEL_URL || '').trim().replace(/\/+$/, '');
+  const panelUrl = String(process.env.RENEO_PANEL_URL || 'http://host.docker.internal:8000')
+    .trim()
+    .replace(/\/+$/, '');
   const appToken = String(process.env.RENEO_APP_TOKEN || '').trim();
   return { panelUrl, appToken, enabled: Boolean(panelUrl && appToken) };
 }
@@ -89,18 +91,29 @@ export async function createReneoEcosystemOrder(input: {
 
 export async function getReneoPaymentMethods(): Promise<ReneoPaymentMethod[]> {
   const cfg = getReneoConfig();
-  if (!cfg.enabled) return [];
+  const candidates = Array.from(
+    new Set(
+      [
+        cfg.panelUrl,
+        'http://host.docker.internal:8000',
+        'http://host.docker.internal:8080',
+        'http://127.0.0.1:8000',
+      ].filter(Boolean)
+    )
+  );
 
-  const data = await fetchWithTimeout(`${cfg.panelUrl}/api/v1/app-catalog/payment-methods`, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-      'X-Reneo-App-Token': cfg.appToken,
-    },
-  });
-
-  if (!data?.ok || !Array.isArray(data?.paymentMethods)) return [];
-  return data.paymentMethods;
+  for (const base of candidates) {
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (cfg.appToken) headers['X-Reneo-App-Token'] = cfg.appToken;
+    const data = await fetchWithTimeout(`${base}/api/v1/app-catalog/payment-methods`, {
+      method: 'GET',
+      headers,
+    }, 3500);
+    if (data?.ok && Array.isArray(data?.paymentMethods) && data.paymentMethods.length > 0) {
+      return data.paymentMethods;
+    }
+  }
+  return [];
 }
 
 export async function getReneoEcosystemOrder(publicId: string): Promise<ReneoOrderResult | null> {

@@ -280,28 +280,65 @@ export default async function superadminRouter(fastify: FastifyInstance) {
   // Kelola Paket Langganan
   fastify.get('/plans', async () => {
     const rows = await db.select().from(subscriptionPlans).orderBy(subscriptionPlans.sortOrder);
-    return { success: true, data: rows };
+    return {
+      success: true,
+      data: rows.map((r) => {
+        let features: string[] = [];
+        try {
+          const parsed = JSON.parse(r.featuresJson || '[]');
+          if (Array.isArray(parsed)) features = parsed.map((x) => String(x));
+        } catch {
+          features = [];
+        }
+        return { ...r, features };
+      }),
+    };
   });
 
   fastify.patch<{
     Params: { id: string };
-    Body: { name?: string; description?: string; priceMonthly?: number; priceYearly?: number; active?: boolean };
+    Body: {
+      name?: string;
+      description?: string;
+      priceMonthly?: number;
+      priceYearly?: number;
+      features?: string[];
+      featuresJson?: string;
+      active?: boolean;
+    };
   }>('/plans/:id', async (req, reply) => {
     const [existing] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, req.params.id)).limit(1);
     if (!existing) return reply.status(404).send({ success: false, error: 'Paket tidak ditemukan.' });
+
+    let nextFeaturesJson = existing.featuresJson;
+    if (Array.isArray(req.body?.features)) {
+      const cleaned = req.body.features.map((f) => String(f || '').trim()).filter(Boolean);
+      nextFeaturesJson = JSON.stringify(cleaned);
+    } else if (typeof req.body?.featuresJson === 'string') {
+      nextFeaturesJson = req.body.featuresJson;
+    }
+
     const [updated] = await db
       .update(subscriptionPlans)
       .set({
         name: req.body?.name?.trim() || existing.name,
-        description: req.body?.description ?? existing.description,
+        description: req.body?.description !== undefined ? String(req.body.description) : existing.description,
         priceMonthly: req.body?.priceMonthly !== undefined ? Number(req.body.priceMonthly) : existing.priceMonthly,
         priceYearly: req.body?.priceYearly !== undefined ? Number(req.body.priceYearly) : existing.priceYearly,
+        featuresJson: nextFeaturesJson,
         active: req.body?.active !== undefined ? Boolean(req.body.active) : existing.active,
         updatedAt: new Date(),
       })
       .where(eq(subscriptionPlans.id, existing.id))
       .returning();
-    return { success: true, data: updated };
+    let features: string[] = [];
+    try {
+      const parsed = JSON.parse(updated.featuresJson || '[]');
+      if (Array.isArray(parsed)) features = parsed.map((x) => String(x));
+    } catch {
+      features = [];
+    }
+    return { success: true, data: { ...updated, features } };
   });
 
   // Pengaturan Rekening Pembayaran / QRIS / WA Konfirmasi

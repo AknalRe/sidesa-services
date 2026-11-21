@@ -16,6 +16,7 @@ import {
   Newspaper,
   Plus,
   Printer,
+  RefreshCw,
   Scale,
   ShoppingBag,
   Trash2,
@@ -769,67 +770,99 @@ export const AdminPanel: React.FC<{
   }
 
   const activeSlug = village?.slug || auth?.village?.slug || 'pohjejer';
+  const activeMenuItem = MENU.find((m) => m.id === tab) || MENU[0];
+  const MENU_GROUPS: Array<{ title: string; ids: AdminTab[] }> = [
+    { title: 'Utama', ids: ['dashboard', 'billing', 'profile'] },
+    { title: 'Pelayanan & Warga', ids: ['letters', 'residents', 'complaints', 'ppid', 'attendance'] },
+    { title: 'Keuangan & Sosial', ids: ['apbdes', 'bansos', 'pbb'] },
+    { title: 'Publikasi & Wilayah', ids: ['news', 'officials', 'umkm', 'places', 'indicators'] },
+  ];
 
   return (
-    <div className="min-h-screen w-full bg-[#F6F6F6] flex flex-col lg:flex-row">
-      {/* Sidebar (Sticky Compact Bar + Drawer on Mobile, Fixed Left Rail on Desktop) */}
-      <aside className="no-print sticky top-0 z-30 lg:static lg:w-64 bg-[#0B2A57] text-slate-200 flex flex-col shrink-0 shadow-sm lg:shadow-none">
-        <div className="px-3.5 py-2.5 lg:p-4 border-b border-white/10 flex items-center justify-between gap-2.5">
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <ReneoSidesaLogo className="w-8 h-8 lg:w-9 lg:h-9 shrink-0" />
+    <div className="min-h-screen h-screen supports-[height:100dvh]:h-dvh w-full bg-gray-50 flex overflow-hidden">
+      {mobileDrawerOpen && (
+        <div
+          className="no-print fixed inset-0 z-30 bg-black/40 lg:hidden"
+          onClick={() => setMobileDrawerOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar Back-Office Desa (Gaya CRM Dashboard Menu) */}
+      <aside
+        className={`no-print fixed inset-y-0 left-0 z-40 w-60 bg-[#121622] text-gray-200 flex flex-col h-screen supports-[height:100dvh]:h-dvh shrink-0 border-r border-[#1E2438] select-none transition-transform duration-200 lg:static lg:translate-x-0 ${
+          mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="h-14 px-4 flex items-center justify-between gap-2.5 border-b border-[#1E2438] shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <ReneoSidesaLogo className="w-7 h-7 shrink-0" />
             <div className="min-w-0">
-              <div className="text-sm font-extrabold text-white truncate">{village?.name || 'Reneo SIDesa'}</div>
-              <div className="text-[11px] font-mono text-emerald-300 truncate">/desa/{activeSlug}</div>
+              <div className="font-semibold text-sm text-white tracking-tight truncate">
+                {village?.name || 'Reneo SIDesa'}
+              </div>
+              <div className="text-[11px] font-mono text-gray-400 truncate">/desa/{activeSlug}</div>
             </div>
           </div>
           <button
             type="button"
-            onClick={() => setMobileDrawerOpen((v) => !v)}
-            aria-label="Menu Back-Office"
-            className="lg:hidden h-9 w-9 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center shrink-0"
+            onClick={() => setMobileDrawerOpen(false)}
+            aria-label="Tutup Menu"
+            className="lg:hidden p-1 text-gray-400 hover:text-white rounded"
           >
-            {mobileDrawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Horizontal Tab Strip on Mobile, Vertical Rail on Desktop */}
-        <nav className="px-2.5 py-2 lg:p-2.5 flex lg:flex-col gap-1 overflow-x-auto scrollbar-none lg:overflow-y-auto flex-1">
-          {MENU.map((m) => {
-            const Icon = m.icon;
-            return (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => {
-                  setMobileDrawerOpen(false);
-                  void loadTab(m.id);
-                }}
-                className={`px-3 py-2 rounded-lg lg:rounded-xl text-xs font-bold inline-flex items-center gap-2 shrink-0 whitespace-nowrap transition-colors ${
-                  tab === m.id ? 'bg-[#0069b6] text-white shadow-xs' : 'text-slate-300 hover:bg-white/10'
-                }`}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                <span>{m.label}</span>
-              </button>
-            );
-          })}
+        <nav className="flex-1 px-3 py-3 space-y-4 overflow-y-auto">
+          {MENU_GROUPS.map((group) => (
+            <div key={group.title} className="space-y-0.5">
+              <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                {group.title}
+              </div>
+              {group.ids.map((id) => {
+                const m = MENU.find((item) => item.id === id);
+                if (!m) return null;
+                const Icon = m.icon;
+                const isActive = tab === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => {
+                      setMobileDrawerOpen(false);
+                      void loadTab(m.id);
+                    }}
+                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium transition-colors ${
+                      isActive
+                        ? 'bg-[#1E2438] text-white'
+                        : 'text-gray-400 hover:bg-[#1E2438]/60 hover:text-gray-100'
+                    }`}
+                  >
+                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-indigo-400' : 'text-gray-400'}`} />
+                    <span className="truncate flex-1 text-left">{m.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
-        <div
-          className={`${
-            mobileDrawerOpen ? 'flex' : 'hidden'
-          } lg:flex p-3 border-t border-white/10 flex-col gap-2 bg-[#082147] lg:bg-transparent`}
-        >
+        <div className="p-3 border-t border-[#1E2438] space-y-2 text-xs shrink-0">
+          <div className="px-2 py-0.5">
+            <div className="font-semibold text-white truncate">{auth.user?.name}</div>
+            <div className="text-[11px] text-gray-400 font-mono truncate">{auth.user?.email}</div>
+          </div>
           <button
             type="button"
             onClick={() => {
               setMobileDrawerOpen(false);
               onBackToPortal(activeSlug);
             }}
-            className="h-9 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-xs font-extrabold text-slate-950 inline-flex items-center justify-center gap-1.5"
+            className="w-full h-8 px-2.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-semibold inline-flex items-center justify-center gap-1.5 transition-colors"
           >
             <Globe className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Buka /desa/{activeSlug}</span>
+            <span className="truncate">Portal /desa/{activeSlug}</span>
           </button>
           {onBackToLanding && (
             <button
@@ -838,9 +871,9 @@ export const AdminPanel: React.FC<{
                 setMobileDrawerOpen(false);
                 onBackToLanding();
               }}
-              className="h-9 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white inline-flex items-center justify-center gap-1.5"
+              className="w-full h-8 px-2.5 rounded-md bg-[#1E2438] hover:bg-[#272f48] text-gray-200 font-medium inline-flex items-center justify-center gap-1.5"
             >
-              <span>Beranda Platform SaaS</span>
+              <span>Beranda Platform</span>
             </button>
           )}
           <button
@@ -850,16 +883,52 @@ export const AdminPanel: React.FC<{
               await api.logout();
               await checkAuth();
             }}
-            className="h-9 px-3 rounded-xl border border-white/15 hover:bg-white/10 text-xs text-slate-300 inline-flex items-center justify-center gap-1.5"
+            className="w-full h-8 px-2.5 rounded-md text-rose-400 hover:bg-rose-500/15 hover:text-rose-300 font-medium inline-flex items-center justify-center gap-1.5 transition-colors"
           >
             <LogOut className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Keluar ({auth.user?.name})</span>
+            <span>Keluar</span>
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 min-w-0 p-3.5 sm:p-6 lg:p-8 overflow-y-auto space-y-5 sm:space-y-6">
+      {/* Right Column: Sticky CRM-Style Top Navbar + Scrollable Content */}
+      <div className="flex-1 min-w-0 flex flex-col h-screen supports-[height:100dvh]:h-dvh overflow-hidden">
+        <header className="no-print h-14 bg-white border-b border-gray-200 px-3 sm:px-6 flex items-center justify-between gap-2 sticky top-0 z-20 shrink-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={() => setMobileDrawerOpen(true)}
+              className="lg:hidden p-1.5 -ml-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-gray-900 shrink-0"
+              aria-label="Buka Menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <h2 className="text-sm sm:text-base font-semibold text-gray-900 truncate">
+              {activeMenuItem.label}
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => onBackToPortal(activeSlug)}
+              className="h-8 px-2.5 sm:px-3 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium inline-flex items-center gap-1.5"
+            >
+              <Globe className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span className="hidden sm:inline">Lihat Portal Desa</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => void loadTab(tab, false)}
+              title="Segarkan Data"
+              className="h-8 w-8 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 inline-flex items-center justify-center"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </header>
+
+        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-5 sm:space-y-6">
         {actionBanner && (
           <div
             className={`no-print p-3.5 rounded-xl border text-xs font-semibold flex items-center justify-between gap-3 ${
@@ -2819,7 +2888,8 @@ export const AdminPanel: React.FC<{
             </div>
           </div>
         )}
-      </main>
+        </main>
+      </div>
     </div>
   );
 };
