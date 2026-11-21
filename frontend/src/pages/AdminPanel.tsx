@@ -857,7 +857,7 @@ export const AdminPanel: React.FC<{
           </button>
         </div>
 
-        <nav className="flex-1 px-3 py-3 space-y-4 overflow-y-auto">
+        <nav className="flex-1 px-3 py-3 space-y-4 overflow-y-auto sidebar-scroll">
           {MENU_GROUPS.map((group) => (
             <div key={group.title} className="space-y-0.5">
               <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
