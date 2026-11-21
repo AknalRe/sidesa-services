@@ -1074,15 +1074,26 @@ export const AdminPanel: React.FC<{
                 </div>
                 {Array.isArray(billingData.reneoPaymentMethods) && billingData.reneoPaymentMethods.length > 0 ? (
                   <div className="space-y-1.5">
-                    {billingData.reneoPaymentMethods.map((m: any, i: number) => (
-                      <div key={i} className="pt-1 border-t border-slate-100 first:border-t-0 first:pt-0">
-                        <div className="font-bold text-slate-900">{m.label || m.bankName || m.type}</div>
-                        {m.accountNumber && (
-                          <div className="font-mono text-sm font-extrabold text-[#0069b6]">{m.accountNumber}</div>
-                        )}
-                        {m.accountName && <div className="text-slate-600">a.n. {m.accountName}</div>}
-                      </div>
-                    ))}
+                    {billingData.reneoPaymentMethods.map((m: any, i: number) => {
+                      const bankTitle = m.name || m.label || m.bankName || m.kind || m.type || 'Rekening';
+                      const acctNo = m.account || m.accountNumber || '';
+                      const acctHolder = m.holder || m.accountName || '';
+                      const kindLabel = String(m.kind || m.type || 'bank').toUpperCase();
+                      return (
+                        <div key={m.id || i} className="pt-1.5 border-t border-slate-100 first:border-t-0 first:pt-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-slate-900">{bankTitle}</span>
+                            <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[10px] font-bold">
+                              {kindLabel}
+                            </span>
+                          </div>
+                          {acctNo && (
+                            <div className="font-mono text-sm font-extrabold text-[#0069b6]">{acctNo}</div>
+                          )}
+                          {acctHolder && <div className="text-slate-600">a.n. {acctHolder}</div>}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <>
@@ -1573,6 +1584,31 @@ export const AdminPanel: React.FC<{
                   onChange={(url) => setVillage({ ...village, heroImageUrl: url })}
                   placeholder="Pilih foto balai desa atau pemandangan desa"
                 />
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                    <Globe className="w-4 h-4 text-[#0069b6]" />
+                    <span>Domain Resmi Desa (.desa.id / Custom Domain)</span>
+                  </div>
+                  {!isSuperadminMode && !activeCapabilities.includes('custom_domain') && (
+                    <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold inline-flex items-center gap-1">
+                      <Lock className="w-3 h-3" />
+                      <span>Paket Prioritas / Enterprise</span>
+                    </span>
+                  )}
+                </div>
+                <input
+                  placeholder="Contoh: pohjejer.desa.id"
+                  disabled={!isSuperadminMode && !activeCapabilities.includes('custom_domain')}
+                  value={village.customDomain || ''}
+                  onChange={(e) => setVillage({ ...village, customDomain: e.target.value })}
+                  className="w-full h-10 px-3 rounded-xl border border-slate-300 bg-white disabled:bg-slate-100 disabled:text-slate-500 font-mono text-sm"
+                />
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Arahkan DNS domain <span className="font-mono">.desa.id</span> milik desa (record <span className="font-mono">A</span> / <span className="font-mono">CNAME</span> atau Cloudflare Tunnel di Panel Reneo) ke server ini. Saat pengunjung membuka domain tersebut, portal resmi <strong>{village.name}</strong> akan tampil langsung di halaman utama (<span className="font-mono">/</span>).
+                </p>
               </div>
 
               <div>

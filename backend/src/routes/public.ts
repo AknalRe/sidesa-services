@@ -49,6 +49,51 @@ async function resolvePublicVillage(slug?: string) {
 }
 
 export default async function publicRouter(fastify: FastifyInstance) {
+  // Resolve custom domain (.desa.id / custom host) ke portal desa terkait
+  fastify.get<{ Querystring: { host?: string } }>('/resolve-host', async (req) => {
+    const rawHost = String(
+      req.query?.host || req.headers['x-forwarded-host'] || req.headers.host || ''
+    )
+      .split(',')[0]
+      .trim()
+      .toLowerCase()
+      .replace(/:\d+$/, '')
+      .replace(/^www\./, '');
+
+    if (!rawHost || rawHost === 'localhost' || rawHost === '127.0.0.1') {
+      return { success: true, data: { matched: false } };
+    }
+
+    const [found] = await db
+      .select({
+        id: villages.id,
+        slug: villages.slug,
+        name: villages.name,
+        customDomain: villages.customDomain,
+      })
+      .from(villages)
+      .where(
+        and(
+          eq(villages.status, 'ACTIVE'),
+          sql`LOWER(COALESCE(${villages.customDomain}, '')) = ${rawHost}`
+        )
+      )
+      .limit(1);
+
+    if (!found) {
+      return { success: true, data: { matched: false } };
+    }
+    return {
+      success: true,
+      data: {
+        matched: true,
+        slug: found.slug,
+        name: found.name,
+        customDomain: found.customDomain,
+      },
+    };
+  });
+
   // List ONLY published (status = ACTIVE) villages (either active subscription OR published unclaimed showcase by Superadmin)
   fastify.get('/villages', async () => {
     const list = await db

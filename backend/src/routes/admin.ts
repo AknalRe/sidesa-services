@@ -220,8 +220,9 @@ export default async function adminRouter(fastify: FastifyInstance) {
     return { success: true, data: v ? { ...v, boundaries } : null };
   });
 
-  fastify.patch<{ Body: Record<string, any> }>('/village', async (req) => {
+  fastify.patch<{ Body: Record<string, any> }>('/village', async (req, reply) => {
     const vid = getVillageId(req);
+    const user = (req as any).sidesaUser as SessionUser | undefined;
     const b = req.body || {};
     const updates: Record<string, any> = { updatedAt: new Date() };
     const allowed = [
@@ -232,6 +233,36 @@ export default async function adminRouter(fastify: FastifyInstance) {
     ];
     for (const k of allowed) {
       if (b[k] !== undefined) updates[k] = b[k];
+    }
+    if (b.customDomain !== undefined) {
+      const cleanedDomain = String(b.customDomain || '')
+        .trim()
+        .toLowerCase()
+        .replace(/^https?:\/\//, '')
+        .replace(/^www\./, '')
+        .replace(/\/.*$/, '')
+        .replace(/:\d+$/, '');
+      if (cleanedDomain) {
+        if (user?.role !== 'SUPERADMIN') {
+          const lic = await resolveVillageLicenseCapabilities(vid);
+          if (!lic.capabilities.includes('custom_domain')) {
+            return reply.status(403).send({
+              success: false,
+              code: 'FEATURE_LOCKED',
+              error: 'Fitur Custom Domain (.desa.id) hanya tersedia pada paket yang mengaktifkan kapabilitas Custom Domain.',
+            });
+          }
+        }
+        if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(cleanedDomain)) {
+          return reply.status(400).send({
+            success: false,
+            error: 'Format domain tidak valid. Contoh: pohjejer.desa.id',
+          });
+        }
+        updates.customDomain = cleanedDomain;
+      } else {
+        updates.customDomain = null;
+      }
     }
     if (typeof updates.slug === 'string') {
       updates.slug = slugifyTitle(updates.slug) || 'desa';
@@ -259,8 +290,15 @@ export default async function adminRouter(fastify: FastifyInstance) {
         updates.mapLng = Number(detail.coordinates.lng);
       }
     }
-    const [updated] = await db.update(villages).set(updates).where(eq(villages.id, vid)).returning();
-    return { success: true, data: updated };
+    try {
+      const [updated] = await db.update(villages).set(updates).where(eq(villages.id, vid)).returning();
+      return { success: true, data: updated };
+    } catch (err: any) {
+      if (String(err?.message || '').toLowerCase().includes('villages_custom_domain_idx')) {
+        return reply.status(409).send({ success: false, error: 'Domain kustom tersebut sudah digunakan oleh desa lain.' });
+      }
+      throw err;
+    }
   });
 
   // Residents CRUD

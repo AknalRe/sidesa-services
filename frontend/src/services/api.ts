@@ -17,6 +17,8 @@ export function setActiveSuperadminVillage(villageId: string | null) {
 export const api = {
   // Public Village Portal (supports multi-village slug e.g. /desa/nama-desa)
   getPublicVillages: async () => (await client.get('/public/villages')).data.data,
+  resolveHost: async (host?: string) =>
+    (await client.get('/public/resolve-host', { params: host ? { host } : {} })).data.data,
   getPublicPlans: async () => (await client.get('/public/plans')).data.data,
   verifyStudent: async (payload: {
     nim: string;

@@ -933,16 +933,27 @@ export const SuperadminDashboard: React.FC<{
                     Daftar rekening di bawah ini diambil langsung dari pengaturan pembayaran di <strong>Panel Reneo</strong> sehingga selalu seragam dengan seluruh aplikasi ekosistem Reneo.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {paymentConfig.reneoPaymentMethods.map((m: any, idx: number) => (
-                      <div key={idx} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-0.5">
-                        <div className="font-extrabold text-slate-900">{m.label || m.bankName || m.type}</div>
-                        {m.accountNumber && (
-                          <div className="font-mono text-sm font-extrabold text-[#0069b6]">{m.accountNumber}</div>
-                        )}
-                        {m.accountName && <div className="text-slate-600">a.n. {m.accountName}</div>}
-                        {m.instructions && <div className="text-[11px] text-slate-500 pt-1">{m.instructions}</div>}
-                      </div>
-                    ))}
+                    {paymentConfig.reneoPaymentMethods.map((m: any, idx: number) => {
+                      const bankTitle = m.name || m.label || m.bankName || m.kind || m.type || 'Rekening';
+                      const acctNo = m.account || m.accountNumber || '';
+                      const acctHolder = m.holder || m.accountName || '';
+                      const kindLabel = String(m.kind || m.type || 'bank').toUpperCase();
+                      return (
+                        <div key={m.id || idx} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-extrabold text-slate-900">{bankTitle}</span>
+                            <span className="px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 font-mono text-[10px] font-bold">
+                              {kindLabel}
+                            </span>
+                          </div>
+                          {acctNo && (
+                            <div className="font-mono text-sm font-extrabold text-[#0069b6] tracking-wide">{acctNo}</div>
+                          )}
+                          {acctHolder && <div className="text-slate-600">a.n. {acctHolder}</div>}
+                          {m.instructions && <div className="text-[11px] text-slate-500 pt-1">{m.instructions}</div>}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ) : (

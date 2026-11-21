@@ -30,6 +30,7 @@ export const villages = pgTable('villages', {
   phone: text('phone').default(''),
   email: text('email').default(''),
   website: text('website').default(''),
+  customDomain: text('custom_domain'),
   areaKm2: doublePrecision('area_km2').default(0),
   boundariesJson: text('boundaries_json'),
   mapLat: doublePrecision('map_lat').default(-7.2575),

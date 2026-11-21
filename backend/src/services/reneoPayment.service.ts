@@ -1,13 +1,38 @@
 export interface ReneoPaymentMethod {
   id?: string;
+  kind?: string;
   type?: string;
+  name?: string;
   label?: string;
   bankName?: string;
+  account?: string;
   accountNumber?: string;
+  holder?: string;
   accountName?: string;
   qrisImageUrl?: string;
   instructions?: string;
+  enabled?: boolean;
   [key: string]: any;
+}
+
+function normalizePaymentMethod(raw: any): ReneoPaymentMethod {
+  const name = String(raw?.name || raw?.label || raw?.bankName || raw?.kind || raw?.type || '').trim();
+  const account = String(raw?.account || raw?.accountNumber || '').trim();
+  const holder = String(raw?.holder || raw?.accountName || '').trim();
+  const kind = String(raw?.kind || raw?.type || 'bank').trim();
+  return {
+    ...raw,
+    id: raw?.id || undefined,
+    kind,
+    type: kind,
+    name,
+    label: name,
+    bankName: name,
+    account,
+    accountNumber: account,
+    holder,
+    accountName: holder,
+  };
 }
 
 export interface ReneoOrderResult {
@@ -85,7 +110,7 @@ export async function createReneoEcosystemOrder(input: {
     uniqueCode: Number(data.order.uniqueCode || 0),
     amountTotal: Number(data.order.amountTotal || input.amountList),
     status: String(data.order.status || 'pending'),
-    paymentMethods: Array.isArray(data.paymentMethods) ? data.paymentMethods : [],
+    paymentMethods: Array.isArray(data.paymentMethods) ? data.paymentMethods.map(normalizePaymentMethod) : [],
   };
 }
 
@@ -110,7 +135,7 @@ export async function getReneoPaymentMethods(): Promise<ReneoPaymentMethod[]> {
       headers,
     }, 3500);
     if (data?.ok && Array.isArray(data?.paymentMethods) && data.paymentMethods.length > 0) {
-      return data.paymentMethods;
+      return data.paymentMethods.map(normalizePaymentMethod);
     }
   }
   return [];
@@ -135,6 +160,6 @@ export async function getReneoEcosystemOrder(publicId: string): Promise<ReneoOrd
     uniqueCode: Number(data.order.uniqueCode || 0),
     amountTotal: Number(data.order.amountTotal || 0),
     status: String(data.order.status || 'pending'),
-    paymentMethods: Array.isArray(data.paymentMethods) ? data.paymentMethods : [],
+    paymentMethods: Array.isArray(data.paymentMethods) ? data.paymentMethods.map(normalizePaymentMethod) : [],
   };
 }

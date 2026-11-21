@@ -291,6 +291,8 @@ export async function ensureDatabaseSchema(): Promise<void> {
       updated_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
     ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS capabilities_json TEXT DEFAULT '[]';
+    ALTER TABLE villages ADD COLUMN IF NOT EXISTS custom_domain TEXT;
+    CREATE UNIQUE INDEX IF NOT EXISTS villages_custom_domain_idx ON villages (LOWER(custom_domain)) WHERE custom_domain IS NOT NULL AND custom_domain <> '';
 
     CREATE TABLE IF NOT EXISTS subscription_invoices (
       id TEXT PRIMARY KEY,

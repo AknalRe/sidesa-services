@@ -3,6 +3,7 @@ import { LandingPage } from './pages/LandingPage';
 import { PublicPortal } from './pages/PublicPortal';
 import { AdminPanel } from './pages/AdminPanel';
 import { getAppPrefix } from './lib/assets';
+import { api } from './services/api';
 
 type RouteView = 'landing' | 'village' | 'admin' | 'superadmin';
 
@@ -95,6 +96,30 @@ export function navigateToPath(targetPath: string, replace = false) {
 
 export default function App() {
   const [route, setRoute] = useState<ParsedRoute>(() => parseLocationRoute());
+  const [customHostVillage, setCustomHostVillage] = useState<{ slug: string; name: string; customDomain: string } | null>(null);
+  const [hostChecked, setHostChecked] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const prefix = getAppPrefix();
+    const h = (window.location.hostname || '').toLowerCase();
+    return Boolean(prefix || !h || h === 'localhost' || h === '127.0.0.1');
+  });
+
+  useEffect(() => {
+    if (hostChecked) return;
+    api
+      .resolveHost(window.location.hostname)
+      .then((res) => {
+        if (res?.matched && res?.slug) {
+          setCustomHostVillage({
+            slug: String(res.slug),
+            name: String(res.name || ''),
+            customDomain: String(res.customDomain || window.location.hostname),
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setHostChecked(true));
+  }, [hostChecked]);
 
   useEffect(() => {
     const syncRoute = () => {
@@ -107,6 +132,14 @@ export default function App() {
       window.removeEventListener('hashchange', syncRoute);
     };
   }, []);
+
+  if (!hostChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F6F6F6] text-xs font-semibold text-slate-600">
+        Memuat portal desa...
+      </div>
+    );
+  }
 
   if (route.view === 'admin' || route.view === 'superadmin') {
     return (
@@ -128,10 +161,44 @@ export default function App() {
           }
         }}
         onBackToPortal={(slug?: string) => {
+          if (customHostVillage) {
+            navigateToPath('/');
+            return;
+          }
           navigateToPath(`/desa/${slug || route.villageSlug || DEFAULT_VILLAGE_SLUG}`);
         }}
         onBackToLanding={() => {
           navigateToPath('/');
+        }}
+      />
+    );
+  }
+
+  // Custom Domain (.desa.id) langsung menyajikan Portal Resmi Desa di root /
+  if (customHostVillage && route.view === 'landing') {
+    const cleanPath = stripProxyPrefix(window.location.pathname || '/');
+    const segs = cleanPath.split('/').filter(Boolean);
+    const tabFromRoot = segs[0] || undefined;
+    const subFromRoot = segs[1] || undefined;
+    return (
+      <PublicPortal
+        villageSlug={customHostVillage.slug}
+        initialTab={tabFromRoot}
+        initialSubTab={subFromRoot}
+        onTabChange={(tab, sub) => {
+          let nextPath = '/';
+          if (tab && tab !== 'beranda') {
+            nextPath = `/${tab}`;
+            if (tab === 'infografis' && sub && sub !== 'penduduk') {
+              nextPath += `/${sub}`;
+            }
+          }
+          if (window.location.pathname !== nextPath) {
+            window.history.pushState({}, '', nextPath);
+          }
+        }}
+        onOpenAdmin={() => {
+          navigateToPath('/admin/dashboard');
         }}
       />
     );
