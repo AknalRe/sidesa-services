@@ -284,7 +284,7 @@ export const SuperadminDashboard: React.FC<{
           </div>
         </header>
 
-        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto">
+        <main className="flex-1 min-w-0 p-4 sm:p-6 space-y-5 overflow-y-auto">
         {savingMsg && (
           <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800">
             {savingMsg}
@@ -294,7 +294,7 @@ export const SuperadminDashboard: React.FC<{
         {tab === 'overview' && overview && (
           <section className="space-y-6">
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-900">Ringkasan Platform Reneo SIDesa</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900">Ringkasan Platform Reneo SIDesa</h1>
               <p className="text-xs sm:text-sm text-slate-600">
                 Pantau seluruh desa terdaftar, status langganan, dan verifikasi tagihan pembayaran.
               </p>
@@ -333,7 +333,7 @@ export const SuperadminDashboard: React.FC<{
           <section className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h1 className="text-2xl font-extrabold text-slate-900">Desa Terdaftar &amp; Direktori ({villages.length})</h1>
+                <h1 className="text-lg sm:text-xl font-bold text-slate-900">Desa Terdaftar &amp; Direktori ({villages.length})</h1>
                 <p className="text-xs sm:text-sm text-slate-600">
                   Buat desa baru, isi data melalui CMS, publikasikan secara publik, dan biarkan perangkat desa mengklaimnya dengan berlangganan.
                 </p>
@@ -621,7 +621,7 @@ export const SuperadminDashboard: React.FC<{
         {tab === 'invoices' && (
           <section className="space-y-4">
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-900">Tagihan &amp; Verifikasi Pembayaran Desa</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900">Tagihan &amp; Verifikasi Pembayaran Desa</h1>
               <p className="text-xs sm:text-sm text-slate-600">
                 Klik <strong>Konfirmasi Lunas</strong> untuk mengaktifkan website desa dan menambah durasi langganan secara otomatis.
               </p>
@@ -743,7 +743,7 @@ export const SuperadminDashboard: React.FC<{
         {tab === 'plans' && (
           <section className="space-y-6">
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-900">Paket Berlangganan &amp; Rekening Pembayaran</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900">Paket Berlangganan &amp; Rekening Pembayaran</h1>
               <p className="text-xs sm:text-sm text-slate-600">
                 Atur harga paket langganan bulanan/tahunan desa serta rekening transfer / QRIS yang tampil saat desa mendaftar.
               </p>
@@ -917,7 +917,7 @@ export const SuperadminDashboard: React.FC<{
               })}
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 space-y-4 max-w-2xl text-xs">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 space-y-4 w-full text-xs">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-base font-extrabold text-slate-900">Rekening &amp; Instruksi Pembayaran Platform</h2>
                 {Array.isArray(paymentConfig.reneoPaymentMethods) && paymentConfig.reneoPaymentMethods.length > 0 && (
@@ -932,7 +932,7 @@ export const SuperadminDashboard: React.FC<{
                   <p className="text-slate-600">
                     Daftar rekening di bawah ini diambil langsung dari pengaturan pembayaran di <strong>Panel Reneo</strong> sehingga selalu seragam dengan seluruh aplikasi ekosistem Reneo.
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {paymentConfig.reneoPaymentMethods.map((m: any, idx: number) => {
                       const bankTitle = m.name || m.label || m.bankName || m.kind || m.type || 'Rekening';
                       const acctNo = m.account || m.accountNumber || '';
@@ -958,7 +958,7 @@ export const SuperadminDashboard: React.FC<{
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Nama Bank</label>
                   <input

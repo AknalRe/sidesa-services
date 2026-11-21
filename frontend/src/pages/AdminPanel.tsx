@@ -979,7 +979,7 @@ export const AdminPanel: React.FC<{
           </div>
         </header>
 
-        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-5 sm:space-y-6">
+        <main className="flex-1 min-w-0 p-4 sm:p-6 overflow-y-auto space-y-5">
         {actionBanner && (
           <div
             className={`no-print p-3.5 rounded-xl border text-xs font-semibold flex items-center justify-between gap-3 ${
@@ -1042,7 +1042,7 @@ export const AdminPanel: React.FC<{
         {tab === 'billing' && billingData && (
           <section className="space-y-6">
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-900">Langganan &amp; Tagihan Desa</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900">Langganan &amp; Tagihan Desa</h1>
               <p className="text-xs sm:text-sm text-slate-600">
                 Kelola paket aktif, perpanjangan durasi berlangganan, dan konfirmasi pembayaran invoice.
               </p>
@@ -1235,7 +1235,7 @@ export const AdminPanel: React.FC<{
             </div>
 
             {confirmInvoiceId && (
-              <div className="bg-white border border-[#0069b6] rounded-xl p-5 space-y-3 text-xs max-w-lg">
+              <div className="bg-white border border-[#0069b6] rounded-xl p-5 space-y-3 text-xs w-full">
                 <div className="font-extrabold text-slate-900">Konfirmasi Pembayaran Invoice</div>
                 <input
                   type="text"
@@ -1355,10 +1355,10 @@ export const AdminPanel: React.FC<{
         {/* 1. DASHBOARD */}
         {tab === 'dashboard' && dashboard && (
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl p-6 shadow-2xs flex flex-wrap items-center justify-between gap-4">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
               <div>
                 <div className="text-xs font-bold uppercase text-[#0069b6]">CMS &amp; Back-Office Pemerintahan Desa</div>
-                <h1 className="text-2xl font-extrabold text-slate-900">{village?.name}</h1>
+                <h1 className="text-lg sm:text-xl font-bold text-slate-900">{village?.name}</h1>
                 <p className="text-xs text-slate-500">
                   Path Website Resmi Desa: <strong className="font-mono text-[#0069b6]">/desa/{activeSlug}</strong> ·
                   Seluruh data yang Anda input di bawah langsung tampil di portal publik desa.
@@ -1376,7 +1376,7 @@ export const AdminPanel: React.FC<{
                 <button
                   type="button"
                   onClick={() => onBackToPortal(activeSlug)}
-                  className="h-10 px-4 rounded-xl border border-slate-300 bg-white text-slate-800 text-xs font-bold inline-flex items-center gap-1.5"
+                  className="h-10 px-4 rounded-lg border border-slate-300 bg-white text-slate-800 text-xs font-bold inline-flex items-center gap-1.5"
                 >
                   <Globe className="w-4 h-4 text-[#0069b6]" />
                   <span>Lihat Website Desa</span>
@@ -1385,19 +1385,19 @@ export const AdminPanel: React.FC<{
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-2xl p-5 shadow-2xs">
+              <div className="bg-white border border-slate-200 rounded-xl p-5">
                 <div className="text-xs text-slate-500">Penduduk Terdata</div>
                 <div className="text-2xl font-extrabold font-mono mt-1">{dashboard.demographics.totalResidents}</div>
               </div>
-              <div className="bg-white rounded-2xl p-5 shadow-2xs">
+              <div className="bg-white border border-slate-200 rounded-xl p-5">
                 <div className="text-xs text-slate-500">Permohonan Surat Baru</div>
                 <div className="text-2xl font-extrabold font-mono text-amber-600 mt-1">{dashboard.pendingLetters}</div>
               </div>
-              <div className="bg-white rounded-2xl p-5 shadow-2xs">
+              <div className="bg-white border border-slate-200 rounded-xl p-5">
                 <div className="text-xs text-slate-500">Pengaduan Aktif</div>
                 <div className="text-2xl font-extrabold font-mono text-rose-600 mt-1">{dashboard.openComplaints}</div>
               </div>
-              <div className="bg-white rounded-2xl p-5 shadow-2xs">
+              <div className="bg-white border border-slate-200 rounded-xl p-5">
                 <div className="text-xs text-slate-500">Realisasi PBB-P2</div>
                 <div className="text-base font-extrabold font-mono text-emerald-700 mt-1">
                   {formatRp(dashboard.pbb.paidAmount)} / {formatRp(dashboard.pbb.totalAmount)}
@@ -1409,9 +1409,9 @@ export const AdminPanel: React.FC<{
 
         {/* 2. PROFIL, SEJARAH, BATAS WILAYAH & BANNER DESA */}
         {tab === 'profile' && village && (
-          <div className="space-y-4 max-w-4xl">
+          <div className="space-y-4 w-full">
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-900">Pengaturan Profil, Sejarah &amp; Visual Desa</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900">Pengaturan Profil, Sejarah &amp; Visual Desa</h1>
               <p className="text-xs text-slate-500">
                 Ubah identitas desa, slug URL (<span className="font-mono">/desa/{village.slug}</span>), sambutan Kepala
                 Desa, sejarah, batas wilayah, hingga foto banner hero.
@@ -1435,7 +1435,7 @@ export const AdminPanel: React.FC<{
                   });
                 }
               }}
-              className="bg-white rounded-2xl shadow-2xs p-6 space-y-4 text-xs"
+              className="bg-white border border-slate-200 rounded-xl p-6 space-y-4 text-xs"
             >
               <div className="p-3.5 rounded-xl bg-sky-50/70 border border-sky-200 space-y-2">
                 <div className="font-bold text-sky-900">
@@ -1465,7 +1465,7 @@ export const AdminPanel: React.FC<{
                     required
                     value={village.name || ''}
                     onChange={(e) => setVillage({ ...village, name: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm"
                   />
                 </div>
                 <div>
@@ -1474,7 +1474,7 @@ export const AdminPanel: React.FC<{
                     required
                     value={village.slug || ''}
                     onChange={(e) => setVillage({ ...village, slug: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-sm"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono text-sm"
                   />
                 </div>
                 <div>
@@ -1482,7 +1482,7 @@ export const AdminPanel: React.FC<{
                   <input
                     value={village.kodeDesa || ''}
                     onChange={(e) => setVillage({ ...village, kodeDesa: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-sm"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono text-sm"
                   />
                 </div>
                 <div>
@@ -1490,7 +1490,7 @@ export const AdminPanel: React.FC<{
                   <input
                     value={village.district || ''}
                     onChange={(e) => setVillage({ ...village, district: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm"
                   />
                 </div>
                 <div>
@@ -1498,7 +1498,7 @@ export const AdminPanel: React.FC<{
                   <input
                     value={village.regency || ''}
                     onChange={(e) => setVillage({ ...village, regency: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm"
                   />
                 </div>
                 <div>
@@ -1506,7 +1506,7 @@ export const AdminPanel: React.FC<{
                   <input
                     value={village.province || ''}
                     onChange={(e) => setVillage({ ...village, province: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm"
                   />
                 </div>
                 <div>
@@ -1514,7 +1514,7 @@ export const AdminPanel: React.FC<{
                   <input
                     value={village.headName || ''}
                     onChange={(e) => setVillage({ ...village, headName: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm"
                   />
                 </div>
                 <div>
@@ -1523,7 +1523,7 @@ export const AdminPanel: React.FC<{
                     placeholder="08xx-xxxx-xxxx"
                     value={village.phone || ''}
                     onChange={(e) => setVillage({ ...village, phone: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-sm"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono text-sm"
                   />
                 </div>
                 <div>
@@ -1533,7 +1533,7 @@ export const AdminPanel: React.FC<{
                     placeholder={`pemdes@${village.slug || 'desa'}.desa.id`}
                     value={village.email || ''}
                     onChange={(e) => setVillage({ ...village, email: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-sm"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono text-sm"
                   />
                 </div>
                 <div>
@@ -1543,7 +1543,7 @@ export const AdminPanel: React.FC<{
                     step="0.01"
                     value={village.areaKm2 ?? 0}
                     onChange={(e) => setVillage({ ...village, areaKm2: Number(e.target.value) })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-sm"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono text-sm"
                   />
                 </div>
                 <div>
@@ -1554,7 +1554,7 @@ export const AdminPanel: React.FC<{
                     placeholder="-7.610556"
                     value={village.mapLat ?? ''}
                     onChange={(e) => setVillage({ ...village, mapLat: e.target.value === '' ? null : Number(e.target.value) })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-sm"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono text-sm"
                   />
                 </div>
                 <div>
@@ -1565,7 +1565,7 @@ export const AdminPanel: React.FC<{
                     placeholder="112.472453"
                     value={village.mapLng ?? ''}
                     onChange={(e) => setVillage({ ...village, mapLng: e.target.value === '' ? null : Number(e.target.value) })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono text-sm"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono text-sm"
                   />
                 </div>
               </div>
@@ -1604,7 +1604,7 @@ export const AdminPanel: React.FC<{
                   disabled={!isSuperadminMode && !activeCapabilities.includes('custom_domain')}
                   value={village.customDomain || ''}
                   onChange={(e) => setVillage({ ...village, customDomain: e.target.value })}
-                  className="w-full h-10 px-3 rounded-xl border border-slate-300 bg-white disabled:bg-slate-100 disabled:text-slate-500 font-mono text-sm"
+                  className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white disabled:bg-slate-100 disabled:text-slate-500 font-mono text-sm"
                 />
                 <p className="text-[11px] text-slate-500 leading-relaxed">
                   Arahkan DNS domain <span className="font-mono">.desa.id</span> milik desa (record <span className="font-mono">A</span> / <span className="font-mono">CNAME</span> atau Cloudflare Tunnel di Panel Reneo) ke server ini. Saat pengunjung membuka domain tersebut, portal resmi <strong>{village.name}</strong> akan tampil langsung di halaman utama (<span className="font-mono">/</span>).
@@ -1616,7 +1616,7 @@ export const AdminPanel: React.FC<{
                 <input
                   value={village.address || ''}
                   onChange={(e) => setVillage({ ...village, address: e.target.value })}
-                  className="w-full h-10 px-3 rounded-xl border border-slate-300 text-sm"
+                  className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm"
                 />
               </div>
 
@@ -1628,7 +1628,7 @@ export const AdminPanel: React.FC<{
                     onChange={(e) =>
                       setVillage({ ...village, boundaries: { ...village.boundaries, north: e.target.value } })
                     }
-                    className="w-full h-9 px-3 rounded-xl border border-slate-300"
+                    className="w-full h-9 px-3 rounded-lg border border-slate-300"
                   />
                 </div>
                 <div>
@@ -1638,7 +1638,7 @@ export const AdminPanel: React.FC<{
                     onChange={(e) =>
                       setVillage({ ...village, boundaries: { ...village.boundaries, east: e.target.value } })
                     }
-                    className="w-full h-9 px-3 rounded-xl border border-slate-300"
+                    className="w-full h-9 px-3 rounded-lg border border-slate-300"
                   />
                 </div>
                 <div>
@@ -1648,7 +1648,7 @@ export const AdminPanel: React.FC<{
                     onChange={(e) =>
                       setVillage({ ...village, boundaries: { ...village.boundaries, south: e.target.value } })
                     }
-                    className="w-full h-9 px-3 rounded-xl border border-slate-300"
+                    className="w-full h-9 px-3 rounded-lg border border-slate-300"
                   />
                 </div>
                 <div>
@@ -1658,7 +1658,7 @@ export const AdminPanel: React.FC<{
                     onChange={(e) =>
                       setVillage({ ...village, boundaries: { ...village.boundaries, west: e.target.value } })
                     }
-                    className="w-full h-9 px-3 rounded-xl border border-slate-300"
+                    className="w-full h-9 px-3 rounded-lg border border-slate-300"
                   />
                 </div>
               </div>
@@ -1669,7 +1669,7 @@ export const AdminPanel: React.FC<{
                   rows={3}
                   value={village.headGreeting || ''}
                   onChange={(e) => setVillage({ ...village, headGreeting: e.target.value })}
-                  className="w-full p-3 rounded-xl border border-slate-300 text-sm"
+                  className="w-full p-3 rounded-lg border border-slate-300 text-sm"
                 />
               </div>
               <div>
@@ -1678,7 +1678,7 @@ export const AdminPanel: React.FC<{
                   rows={2}
                   value={village.vision || ''}
                   onChange={(e) => setVillage({ ...village, vision: e.target.value })}
-                  className="w-full p-3 rounded-xl border border-slate-300 text-sm"
+                  className="w-full p-3 rounded-lg border border-slate-300 text-sm"
                 />
               </div>
               <div>
@@ -1687,7 +1687,7 @@ export const AdminPanel: React.FC<{
                   rows={4}
                   value={village.mission || ''}
                   onChange={(e) => setVillage({ ...village, mission: e.target.value })}
-                  className="w-full p-3 rounded-xl border border-slate-300 text-sm"
+                  className="w-full p-3 rounded-lg border border-slate-300 text-sm"
                 />
               </div>
               <div>
@@ -1696,7 +1696,7 @@ export const AdminPanel: React.FC<{
                   rows={4}
                   value={village.history || ''}
                   onChange={(e) => setVillage({ ...village, history: e.target.value })}
-                  className="w-full p-3 rounded-xl border border-slate-300 text-sm"
+                  className="w-full p-3 rounded-lg border border-slate-300 text-sm"
                 />
               </div>
               <button
@@ -1713,7 +1713,7 @@ export const AdminPanel: React.FC<{
         {tab === 'news' && (
           <div className="space-y-5">
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-900">Manajemen Artikel, Berita &amp; Blog Desa</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900">Manajemen Artikel, Berita &amp; Blog Desa</h1>
               <p className="text-xs text-slate-500">
                 Artikel yang diterbitkan otomatis muncul di Hero Carousel Beranda serta halaman Berita Website Desa.
               </p>
@@ -1730,7 +1730,7 @@ export const AdminPanel: React.FC<{
                 setNewNews({ title: '', category: 'Kegiatan Desa', excerpt: '', coverUrl: '', content: '' });
                 setNews(await api.getNewsAdmin());
               }}
-              className="bg-white rounded-2xl shadow-2xs p-6 space-y-3 text-xs"
+              className="bg-white border border-slate-200 rounded-xl p-6 space-y-3 text-xs"
             >
               <div className="text-sm font-extrabold text-[#0069b6]">
                 {editingNewsId ? 'Edit Artikel / Berita Desa' : 'Tulis Artikel / Berita Baru'}
@@ -1741,13 +1741,13 @@ export const AdminPanel: React.FC<{
                   placeholder="Judul Artikel / Berita *"
                   value={newNews.title}
                   onChange={(e) => setNewNews({ ...newNews, title: e.target.value })}
-                  className="sm:col-span-2 h-10 px-3 rounded-xl border border-slate-300 text-sm"
+                  className="sm:col-span-2 h-10 px-3 rounded-lg border border-slate-300 text-sm"
                 />
                 <input
                   placeholder="Kategori (mis. Kegiatan Desa / Pertanian / Pengumuman)"
                   value={newNews.category}
                   onChange={(e) => setNewNews({ ...newNews, category: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300 text-sm"
+                  className="h-10 px-3 rounded-lg border border-slate-300 text-sm"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
@@ -1764,7 +1764,7 @@ export const AdminPanel: React.FC<{
                     placeholder="Otomatis diambil dari paragraf awal jika dikosongkan"
                     value={newNews.excerpt}
                     onChange={(e) => setNewNews({ ...newNews, excerpt: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300"
                   />
                 </div>
               </div>
@@ -1774,7 +1774,7 @@ export const AdminPanel: React.FC<{
                 placeholder="Tulis isi lengkap artikel atau berita kegiatan desa di sini *"
                 value={newNews.content}
                 onChange={(e) => setNewNews({ ...newNews, content: e.target.value })}
-                className="w-full p-3 rounded-xl border border-slate-300 text-sm leading-relaxed"
+                className="w-full p-3 rounded-lg border border-slate-300 text-sm leading-relaxed"
               />
               <div className="flex items-center gap-2">
                 <button
@@ -1790,7 +1790,7 @@ export const AdminPanel: React.FC<{
                       setEditingNewsId(null);
                       setNewNews({ title: '', category: 'Kegiatan Desa', excerpt: '', coverUrl: '', content: '' });
                     }}
-                    className="h-10 px-4 rounded-xl border border-slate-300 text-slate-700 font-bold"
+                    className="h-10 px-4 rounded-lg border border-slate-300 text-slate-700 font-bold"
                   >
                     Batal Edit
                   </button>
@@ -1798,7 +1798,7 @@ export const AdminPanel: React.FC<{
               </div>
             </form>
 
-            <div className="bg-white rounded-2xl shadow-2xs divide-y divide-slate-100 text-xs">
+            <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 text-xs">
               {news.map((n) => (
                 <div key={n.id} className="p-4 flex items-center justify-between gap-4">
                   <div className="min-w-0">
@@ -1846,8 +1846,8 @@ export const AdminPanel: React.FC<{
         {/* 4. PELAYANAN SURAT */}
         {tab === 'letters' && (
           <div className="space-y-4">
-            <h1 className="text-2xl font-extrabold text-slate-900">Pelayanan &amp; Persuratan Desa</h1>
-            <div className="bg-white rounded-2xl shadow-2xs overflow-x-auto">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900">Pelayanan &amp; Persuratan Desa</h1>
+            <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
@@ -1914,7 +1914,7 @@ export const AdminPanel: React.FC<{
         {/* 5. DATA PENDUDUK */}
         {tab === 'residents' && (
           <div className="space-y-4">
-            <h1 className="text-2xl font-extrabold text-slate-900">Administrasi Kependudukan (Permendagri 47/2016)</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900">Administrasi Kependudukan (Permendagri 47/2016)</h1>
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -1932,33 +1932,33 @@ export const AdminPanel: React.FC<{
                 });
                 setResidents(await api.getResidents());
               }}
-              className="bg-white rounded-2xl shadow-2xs p-5 grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 text-xs"
+              className="bg-white border border-slate-200 rounded-xl p-5 grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 text-xs"
             >
               <input
                 required
                 placeholder="NIK *"
                 value={newResident.nik}
                 onChange={(e) => setNewResident({ ...newResident, nik: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                className="h-10 px-3 rounded-lg border border-slate-300 font-mono"
               />
               <input
                 required
                 placeholder="No. KK *"
                 value={newResident.kkNumber}
                 onChange={(e) => setNewResident({ ...newResident, kkNumber: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                className="h-10 px-3 rounded-lg border border-slate-300 font-mono"
               />
               <input
                 required
                 placeholder="Nama Lengkap *"
                 value={newResident.fullName}
                 onChange={(e) => setNewResident({ ...newResident, fullName: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300"
+                className="h-10 px-3 rounded-lg border border-slate-300"
               />
               <select
                 value={newResident.gender}
                 onChange={(e) => setNewResident({ ...newResident, gender: e.target.value })}
-                className="h-10 px-2.5 rounded-xl border border-slate-300 bg-white"
+                className="h-10 px-2.5 rounded-lg border border-slate-300 bg-white"
               >
                 <option value="L">Laki-laki</option>
                 <option value="P">Perempuan</option>
@@ -1967,19 +1967,19 @@ export const AdminPanel: React.FC<{
                 placeholder="Dusun"
                 value={newResident.dusun}
                 onChange={(e) => setNewResident({ ...newResident, dusun: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300"
+                className="h-10 px-3 rounded-lg border border-slate-300"
               />
               <input
                 placeholder="Pendidikan"
                 value={newResident.education}
                 onChange={(e) => setNewResident({ ...newResident, education: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300"
+                className="h-10 px-3 rounded-lg border border-slate-300"
               />
               <input
                 placeholder="Pekerjaan"
                 value={newResident.occupation}
                 onChange={(e) => setNewResident({ ...newResident, occupation: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300"
+                className="h-10 px-3 rounded-lg border border-slate-300"
               />
               <button
                 type="submit"
@@ -1988,7 +1988,7 @@ export const AdminPanel: React.FC<{
                 <Plus className="w-4 h-4" /> Tambah
               </button>
             </form>
-            <div className="bg-white rounded-2xl shadow-2xs overflow-x-auto">
+            <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
@@ -2038,7 +2038,7 @@ export const AdminPanel: React.FC<{
         {/* 6. APBDES */}
         {tab === 'apbdes' && (
           <div className="space-y-4">
-            <h1 className="text-2xl font-extrabold text-slate-900">Pengelolaan Anggaran APBDes</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900">Pengelolaan Anggaran APBDes</h1>
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -2046,18 +2046,18 @@ export const AdminPanel: React.FC<{
                 setNewApbdes({ ...newApbdes, label: '', budgetAmount: 0, realizedAmount: 0 });
                 setApbdes(await api.getApbdes());
               }}
-              className="bg-white rounded-2xl shadow-2xs p-5 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs"
+              className="bg-white border border-slate-200 rounded-xl p-5 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs"
             >
               <input
                 type="number"
                 value={newApbdes.fiscalYear}
                 onChange={(e) => setNewApbdes({ ...newApbdes, fiscalYear: Number(e.target.value) })}
-                className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                className="h-10 px-3 rounded-lg border border-slate-300 font-mono"
               />
               <select
                 value={newApbdes.category}
                 onChange={(e) => setNewApbdes({ ...newApbdes, category: e.target.value })}
-                className="h-10 px-2.5 rounded-xl border border-slate-300 bg-white"
+                className="h-10 px-2.5 rounded-lg border border-slate-300 bg-white"
               >
                 <option value="PENDAPATAN">PENDAPATAN</option>
                 <option value="BELANJA">BELANJA</option>
@@ -2068,27 +2068,27 @@ export const AdminPanel: React.FC<{
                 placeholder="Uraian Pos Anggaran *"
                 value={newApbdes.label}
                 onChange={(e) => setNewApbdes({ ...newApbdes, label: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300"
+                className="h-10 px-3 rounded-lg border border-slate-300"
               />
               <input
                 type="number"
                 placeholder="Pagu Anggaran"
                 value={newApbdes.budgetAmount}
                 onChange={(e) => setNewApbdes({ ...newApbdes, budgetAmount: Number(e.target.value) })}
-                className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                className="h-10 px-3 rounded-lg border border-slate-300 font-mono"
               />
               <input
                 type="number"
                 placeholder="Realisasi"
                 value={newApbdes.realizedAmount}
                 onChange={(e) => setNewApbdes({ ...newApbdes, realizedAmount: Number(e.target.value) })}
-                className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                className="h-10 px-3 rounded-lg border border-slate-300 font-mono"
               />
               <button type="submit" className="h-10 px-3 rounded-xl bg-[#0069b6] text-white font-bold">
                 Tambah Pos
               </button>
             </form>
-            <div className="bg-white rounded-2xl shadow-2xs overflow-x-auto">
+            <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
@@ -2133,7 +2133,7 @@ export const AdminPanel: React.FC<{
         {/* 7. BANSOS */}
         {tab === 'bansos' && (
           <div className="space-y-4">
-            <h1 className="text-2xl font-extrabold text-slate-900">Penerima Bantuan Sosial (Bansos)</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900">Penerima Bantuan Sosial (Bansos)</h1>
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -2141,26 +2141,26 @@ export const AdminPanel: React.FC<{
                 setNewBansos({ ...newBansos, nik: '', fullName: '' });
                 setBansos(await api.getBansos());
               }}
-              className="bg-white rounded-2xl shadow-2xs p-5 grid grid-cols-1 sm:grid-cols-6 gap-2.5 text-xs"
+              className="bg-white border border-slate-200 rounded-xl p-5 grid grid-cols-1 sm:grid-cols-6 gap-2.5 text-xs"
             >
               <input
                 required
                 placeholder="NIK *"
                 value={newBansos.nik}
                 onChange={(e) => setNewBansos({ ...newBansos, nik: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                className="h-10 px-3 rounded-lg border border-slate-300 font-mono"
               />
               <input
                 required
                 placeholder="Nama Penerima *"
                 value={newBansos.fullName}
                 onChange={(e) => setNewBansos({ ...newBansos, fullName: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300"
+                className="h-10 px-3 rounded-lg border border-slate-300"
               />
               <select
                 value={newBansos.program}
                 onChange={(e) => setNewBansos({ ...newBansos, program: e.target.value })}
-                className="h-10 px-2.5 rounded-xl border border-slate-300 bg-white"
+                className="h-10 px-2.5 rounded-lg border border-slate-300 bg-white"
               >
                 <option value="BLT-DD">BLT-DD</option>
                 <option value="PKH">PKH</option>
@@ -2171,20 +2171,20 @@ export const AdminPanel: React.FC<{
                 placeholder="Dusun"
                 value={newBansos.dusun}
                 onChange={(e) => setNewBansos({ ...newBansos, dusun: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300"
+                className="h-10 px-3 rounded-lg border border-slate-300"
               />
               <input
                 type="number"
                 placeholder="Nominal"
                 value={newBansos.amount}
                 onChange={(e) => setNewBansos({ ...newBansos, amount: Number(e.target.value) })}
-                className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                className="h-10 px-3 rounded-lg border border-slate-300 font-mono"
               />
               <button type="submit" className="h-10 px-3 rounded-xl bg-[#0069b6] text-white font-bold">
                 Tambah Penerima
               </button>
             </form>
-            <div className="bg-white rounded-2xl shadow-2xs divide-y divide-slate-100 text-xs">
+            <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 text-xs">
               {bansos.map((b) => (
                 <div key={b.id} className="p-4 flex items-center justify-between gap-2">
                   <div>
@@ -2214,7 +2214,7 @@ export const AdminPanel: React.FC<{
         {/* 8. PAJAK PBB-P2 */}
         {tab === 'pbb' && (
           <div className="space-y-4">
-            <h1 className="text-2xl font-extrabold text-slate-900">Pelacakan Pajak PBB-P2 Desa</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900">Pelacakan Pajak PBB-P2 Desa</h1>
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -2222,34 +2222,34 @@ export const AdminPanel: React.FC<{
                 setNewPbb({ ...newPbb, nop: '', taxpayerName: '' });
                 setPbb(await api.getPbb());
               }}
-              className="bg-white rounded-2xl shadow-2xs p-5 grid grid-cols-1 sm:grid-cols-4 gap-2.5 text-xs"
+              className="bg-white border border-slate-200 rounded-xl p-5 grid grid-cols-1 sm:grid-cols-4 gap-2.5 text-xs"
             >
               <input
                 required
                 placeholder="NOP *"
                 value={newPbb.nop}
                 onChange={(e) => setNewPbb({ ...newPbb, nop: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                className="h-10 px-3 rounded-lg border border-slate-300 font-mono"
               />
               <input
                 required
                 placeholder="Nama Wajib Pajak *"
                 value={newPbb.taxpayerName}
                 onChange={(e) => setNewPbb({ ...newPbb, taxpayerName: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300"
+                className="h-10 px-3 rounded-lg border border-slate-300"
               />
               <input
                 type="number"
                 placeholder="Tagihan PBB"
                 value={newPbb.taxAmount}
                 onChange={(e) => setNewPbb({ ...newPbb, taxAmount: Number(e.target.value) })}
-                className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                className="h-10 px-3 rounded-lg border border-slate-300 font-mono"
               />
               <button type="submit" className="h-10 px-3 rounded-xl bg-[#0069b6] text-white font-bold">
                 Tambah Data PBB
               </button>
             </form>
-            <div className="bg-white rounded-2xl shadow-2xs divide-y divide-slate-100 text-xs">
+            <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 text-xs">
               {pbb.map((p) => (
                 <div key={p.id} className="p-4 flex items-center justify-between gap-2">
                   <div>
@@ -2283,7 +2283,7 @@ export const AdminPanel: React.FC<{
         {/* 9. PERANGKAT DESA (SOTK) */}
         {tab === 'officials' && (
           <div className="space-y-4">
-            <h1 className="text-2xl font-extrabold text-slate-900">Perangkat Desa (SOTK)</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900">Perangkat Desa (SOTK)</h1>
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -2291,27 +2291,27 @@ export const AdminPanel: React.FC<{
                 setNewOfficial({ name: '', position: '', nip: '', phone: '', photoUrl: '', sortOrder: 10 });
                 setOfficials(await api.getOfficials());
               }}
-              className="bg-white rounded-2xl shadow-2xs p-5 grid grid-cols-1 sm:grid-cols-5 gap-2.5 text-xs"
+              className="bg-white border border-slate-200 rounded-xl p-5 grid grid-cols-1 sm:grid-cols-5 gap-2.5 text-xs"
             >
               <input
                 required
                 placeholder="Nama Lengkap & Gelar *"
                 value={newOfficial.name}
                 onChange={(e) => setNewOfficial({ ...newOfficial, name: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300"
+                className="h-10 px-3 rounded-lg border border-slate-300"
               />
               <input
                 required
                 placeholder="Jabatan (mis. Sekretaris Desa) *"
                 value={newOfficial.position}
                 onChange={(e) => setNewOfficial({ ...newOfficial, position: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300"
+                className="h-10 px-3 rounded-lg border border-slate-300"
               />
               <input
                 placeholder="NIP / NIAP (opsional)"
                 value={newOfficial.nip}
                 onChange={(e) => setNewOfficial({ ...newOfficial, nip: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                className="h-10 px-3 rounded-lg border border-slate-300 font-mono"
               />
               <div className="sm:col-span-5 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end pt-1">
                 <div className="sm:col-span-2">
@@ -2328,7 +2328,7 @@ export const AdminPanel: React.FC<{
                 </button>
               </div>
             </form>
-            <div className="bg-white rounded-2xl shadow-2xs divide-y divide-slate-100 text-xs">
+            <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 text-xs">
               {officials.map((o) => (
                 <div key={o.id} className="p-4 flex items-center justify-between gap-2">
                   <div>
@@ -2356,7 +2356,7 @@ export const AdminPanel: React.FC<{
         {/* 10. PRODUK UMKM / BELI DARI DESA */}
         {tab === 'umkm' && (
           <div className="space-y-4">
-            <h1 className="text-2xl font-extrabold text-slate-900">Katalog UMKM — Beli Dari Desa</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900">Katalog UMKM — Beli Dari Desa</h1>
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -2373,7 +2373,7 @@ export const AdminPanel: React.FC<{
                 });
                 setUmkm(await api.getUmkmAdmin());
               }}
-              className="bg-white rounded-2xl shadow-2xs p-5 space-y-3 text-xs"
+              className="bg-white border border-slate-200 rounded-xl p-5 space-y-3 text-xs"
             >
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
                 <input
@@ -2381,26 +2381,26 @@ export const AdminPanel: React.FC<{
                   placeholder="Nama Produk UMKM *"
                   value={newUmkm.name}
                   onChange={(e) => setNewUmkm({ ...newUmkm, name: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300"
+                  className="h-10 px-3 rounded-lg border border-slate-300"
                 />
                 <input
                   placeholder="Kategori (Kuliner / Pertanian / Kerajinan)"
                   value={newUmkm.category}
                   onChange={(e) => setNewUmkm({ ...newUmkm, category: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300"
+                  className="h-10 px-3 rounded-lg border border-slate-300"
                 />
                 <input
                   type="number"
                   placeholder="Harga (Rp)"
                   value={newUmkm.price}
                   onChange={(e) => setNewUmkm({ ...newUmkm, price: Number(e.target.value) })}
-                  className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                  className="h-10 px-3 rounded-lg border border-slate-300 font-mono"
                 />
                 <input
                   placeholder="Satuan (pcs / kg / bungkus)"
                   value={newUmkm.unit}
                   onChange={(e) => setNewUmkm({ ...newUmkm, unit: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300"
+                  className="h-10 px-3 rounded-lg border border-slate-300"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -2409,14 +2409,14 @@ export const AdminPanel: React.FC<{
                   placeholder="Nama Penjual / UMKM *"
                   value={newUmkm.sellerName}
                   onChange={(e) => setNewUmkm({ ...newUmkm, sellerName: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300"
+                  className="h-10 px-3 rounded-lg border border-slate-300"
                 />
                 <input
                   required
                   placeholder="Nomor WhatsApp Penjual *"
                   value={newUmkm.sellerPhone}
                   onChange={(e) => setNewUmkm({ ...newUmkm, sellerPhone: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                  className="h-10 px-3 rounded-lg border border-slate-300 font-mono"
                 />
                 <div className="sm:col-span-3">
                   <ImageUploadField
@@ -2433,14 +2433,14 @@ export const AdminPanel: React.FC<{
                   placeholder="Deskripsi singkat produk..."
                   value={newUmkm.description}
                   onChange={(e) => setNewUmkm({ ...newUmkm, description: e.target.value })}
-                  className="flex-1 h-10 px-3 rounded-xl border border-slate-300"
+                  className="flex-1 h-10 px-3 rounded-lg border border-slate-300"
                 />
                 <button type="submit" className="h-10 px-5 rounded-xl bg-[#0069b6] text-white font-bold">
                   Tambah Produk
                 </button>
               </div>
             </form>
-            <div className="bg-white rounded-2xl shadow-2xs divide-y divide-slate-100 text-xs">
+            <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 text-xs">
               {umkm.map((u) => (
                 <div key={u.id} className="p-4 flex items-center justify-between gap-2">
                   <div>
@@ -2471,7 +2471,7 @@ export const AdminPanel: React.FC<{
         {tab === 'places' && (
           <div className="space-y-4">
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-900">Peta Lokasi (POI), Potensi, Wisata &amp; Galeri</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900">Peta Lokasi (POI), Potensi, Wisata &amp; Galeri</h1>
               <p className="text-xs text-slate-500">
                 Tambahkan titik fasilitas peta desa (POI), potensi ekonomi/pertanian, destinasi wisata, maupun foto
                 galeri kegiatan desa.
@@ -2503,13 +2503,13 @@ export const AdminPanel: React.FC<{
                   setActionBanner({ type: 'error', text: err?.response?.data?.error || 'Gagal menambah lokasi.' });
                 }
               }}
-              className="bg-white rounded-2xl shadow-2xs p-5 space-y-3 text-xs"
+              className="bg-white border border-slate-200 rounded-xl p-5 space-y-3 text-xs"
             >
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
                 <select
                   value={newPlace.kind}
                   onChange={(e) => setNewPlace({ ...newPlace, kind: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300 bg-white font-bold"
+                  className="h-10 px-3 rounded-lg border border-slate-300 bg-white font-bold"
                 >
                   <option value="POI">POI / Titik Fasilitas Peta</option>
                   <option value="POTENSI">Potensi Unggulan Desa</option>
@@ -2521,13 +2521,13 @@ export const AdminPanel: React.FC<{
                   placeholder="Nama Lokasi / Potensi / Judul Galeri *"
                   value={newPlace.title}
                   onChange={(e) => setNewPlace({ ...newPlace, title: e.target.value })}
-                  className="sm:col-span-2 h-10 px-3 rounded-xl border border-slate-300"
+                  className="sm:col-span-2 h-10 px-3 rounded-lg border border-slate-300"
                 />
                 <input
                   placeholder="Kategori (mis. Pertanian / Kesehatan)"
                   value={newPlace.category}
                   onChange={(e) => setNewPlace({ ...newPlace, category: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300"
+                  className="h-10 px-3 rounded-lg border border-slate-300"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
@@ -2535,19 +2535,19 @@ export const AdminPanel: React.FC<{
                   placeholder="Alamat / Dusun"
                   value={newPlace.address}
                   onChange={(e) => setNewPlace({ ...newPlace, address: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300"
+                  className="h-10 px-3 rounded-lg border border-slate-300"
                 />
                 <input
                   placeholder="Latitude (mis. -7.2010)"
                   value={newPlace.lat}
                   onChange={(e) => setNewPlace({ ...newPlace, lat: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                  className="h-10 px-3 rounded-lg border border-slate-300 font-mono"
                 />
                 <input
                   placeholder="Longitude (mis. 112.4724)"
                   value={newPlace.lng}
                   onChange={(e) => setNewPlace({ ...newPlace, lng: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                  className="h-10 px-3 rounded-lg border border-slate-300 font-mono"
                 />
               </div>
               <ImageUploadField
@@ -2562,14 +2562,14 @@ export const AdminPanel: React.FC<{
                   placeholder="Keterangan / deskripsi..."
                   value={newPlace.description}
                   onChange={(e) => setNewPlace({ ...newPlace, description: e.target.value })}
-                  className="flex-1 h-10 px-3 rounded-xl border border-slate-300"
+                  className="flex-1 h-10 px-3 rounded-lg border border-slate-300"
                 />
                 <button type="submit" className="h-10 px-5 rounded-xl bg-[#0069b6] text-white font-bold">
                   Simpan Data
                 </button>
               </div>
             </form>
-            <div className="bg-white rounded-2xl shadow-2xs divide-y divide-slate-100 text-xs">
+            <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 text-xs">
               {places.map((pl) => (
                 <div key={pl.id} className="p-4 flex items-center justify-between gap-2">
                   <div>
@@ -2599,8 +2599,8 @@ export const AdminPanel: React.FC<{
 
         {/* 12. INDEKS DESA (IDM, SDGs & STUNTING) */}
         {tab === 'indicators' && (
-          <div className="space-y-4 max-w-2xl">
-            <h1 className="text-2xl font-extrabold text-slate-900">Indeks Desa Membangun (IDM), SDGs &amp; Stunting</h1>
+          <div className="space-y-4 w-full">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900">Indeks Desa Membangun (IDM), SDGs &amp; Stunting</h1>
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -2612,7 +2612,7 @@ export const AdminPanel: React.FC<{
                   setActionBanner({ type: 'error', text: err?.response?.data?.error || 'Gagal menyimpan indeks desa.' });
                 }
               }}
-              className="bg-white rounded-2xl shadow-2xs p-6 space-y-4 text-xs"
+              className="bg-white border border-slate-200 rounded-xl p-6 space-y-4 text-xs"
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -2621,7 +2621,7 @@ export const AdminPanel: React.FC<{
                     type="number"
                     value={indicatorForm.year}
                     onChange={(e) => setIndicatorForm({ ...indicatorForm, year: Number(e.target.value) })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono"
                   />
                 </div>
                 <div>
@@ -2629,7 +2629,7 @@ export const AdminPanel: React.FC<{
                   <select
                     value={indicatorForm.idmStatus}
                     onChange={(e) => setIndicatorForm({ ...indicatorForm, idmStatus: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 bg-white font-bold"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white font-bold"
                   >
                     <option value="MANDIRI">MANDIRI</option>
                     <option value="MAJU">MAJU</option>
@@ -2644,7 +2644,7 @@ export const AdminPanel: React.FC<{
                     step="0.0001"
                     value={indicatorForm.idmScore}
                     onChange={(e) => setIndicatorForm({ ...indicatorForm, idmScore: Number(e.target.value) })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono"
                   />
                 </div>
                 <div>
@@ -2654,7 +2654,7 @@ export const AdminPanel: React.FC<{
                     step="0.01"
                     value={indicatorForm.sdgsScore}
                     onChange={(e) => setIndicatorForm({ ...indicatorForm, sdgsScore: Number(e.target.value) })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono"
                   />
                 </div>
                 <div>
@@ -2663,7 +2663,7 @@ export const AdminPanel: React.FC<{
                     type="number"
                     value={indicatorForm.stuntingCases}
                     onChange={(e) => setIndicatorForm({ ...indicatorForm, stuntingCases: Number(e.target.value) })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono"
                   />
                 </div>
                 <div>
@@ -2673,7 +2673,7 @@ export const AdminPanel: React.FC<{
                     step="0.1"
                     value={indicatorForm.stuntingRate}
                     onChange={(e) => setIndicatorForm({ ...indicatorForm, stuntingRate: Number(e.target.value) })}
-                    className="w-full h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono"
                   />
                 </div>
               </div>
@@ -2687,7 +2687,7 @@ export const AdminPanel: React.FC<{
         {/* 13. PPID & PERMOHONAN INFORMASI PUBLIK */}
         {tab === 'ppid' && (
           <div className="space-y-6">
-            <h1 className="text-2xl font-extrabold text-slate-900">Dokumen PPID &amp; Permohonan Informasi (UU KIP)</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900">Dokumen PPID &amp; Permohonan Informasi (UU KIP)</h1>
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -2702,13 +2702,13 @@ export const AdminPanel: React.FC<{
                 });
                 setPpidData(await api.getPpidAdmin());
               }}
-              className="bg-white rounded-2xl shadow-2xs p-5 space-y-3 text-xs"
+              className="bg-white border border-slate-200 rounded-xl p-5 space-y-3 text-xs"
             >
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
                 <select
                   value={newPpidDoc.category}
                   onChange={(e) => setNewPpidDoc({ ...newPpidDoc, category: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300 bg-white font-bold"
+                  className="h-10 px-3 rounded-lg border border-slate-300 bg-white font-bold"
                 >
                   <option value="BERKALA">Informasi Berkala</option>
                   <option value="SERTA_MERTA">Informasi Serta-Merta</option>
@@ -2720,13 +2720,13 @@ export const AdminPanel: React.FC<{
                   placeholder="Judul Dokumen Publik *"
                   value={newPpidDoc.title}
                   onChange={(e) => setNewPpidDoc({ ...newPpidDoc, title: e.target.value })}
-                  className="sm:col-span-2 h-10 px-3 rounded-xl border border-slate-300"
+                  className="sm:col-span-2 h-10 px-3 rounded-lg border border-slate-300"
                 />
                 <input
                   placeholder="Nomor Perdes / SK"
                   value={newPpidDoc.documentNumber}
                   onChange={(e) => setNewPpidDoc({ ...newPpidDoc, documentNumber: e.target.value })}
-                  className="h-10 px-3 rounded-xl border border-slate-300 font-mono"
+                  className="h-10 px-3 rounded-lg border border-slate-300 font-mono"
                 />
               </div>
               <div className="flex gap-2.5">
@@ -2734,7 +2734,7 @@ export const AdminPanel: React.FC<{
                   placeholder="Ringkasan isi dokumen..."
                   value={newPpidDoc.summary}
                   onChange={(e) => setNewPpidDoc({ ...newPpidDoc, summary: e.target.value })}
-                  className="flex-1 h-10 px-3 rounded-xl border border-slate-300"
+                  className="flex-1 h-10 px-3 rounded-lg border border-slate-300"
                 />
                 <button type="submit" className="h-10 px-5 rounded-xl bg-[#0069b6] text-white font-bold">
                   Tambah Dokumen PPID
@@ -2742,7 +2742,7 @@ export const AdminPanel: React.FC<{
               </div>
             </form>
 
-            <div className="bg-white rounded-2xl shadow-2xs divide-y divide-slate-100 text-xs">
+            <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 text-xs">
               {(ppidData.documents || []).length === 0 ? (
                 <div className="p-6 text-center text-slate-500">Belum ada dokumen PPID yang dipublikasikan.</div>
               ) : (
@@ -2776,12 +2776,12 @@ export const AdminPanel: React.FC<{
               </h2>
               <div className="space-y-2.5">
                 {(ppidData.requests || []).length === 0 ? (
-                  <div className="bg-white rounded-2xl p-6 text-center text-xs text-slate-500">
+                  <div className="bg-white border border-slate-200 rounded-xl p-6 text-center text-xs text-slate-500">
                     Belum ada permohonan informasi publik yang masuk.
                   </div>
                 ) : (
                   (ppidData.requests || []).map((r) => (
-                    <div key={r.id} className="bg-white rounded-2xl shadow-2xs p-5 space-y-2 text-xs">
+                    <div key={r.id} className="bg-white border border-slate-200 rounded-xl p-5 space-y-2 text-xs">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="font-mono font-bold text-[#0069b6]">
                           {r.ticketCode} · NIK {r.requesterNik}
@@ -2859,15 +2859,15 @@ export const AdminPanel: React.FC<{
         {/* 14. PENGADUAN WARGA */}
         {tab === 'complaints' && (
           <div className="space-y-4">
-            <h1 className="text-2xl font-extrabold text-slate-900">Pengaduan Masyarakat</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900">Pengaduan Masyarakat</h1>
             <div className="space-y-3">
               {complaints.length === 0 ? (
-                <div className="bg-white rounded-2xl p-6 text-center text-xs text-slate-500">
+                <div className="bg-white border border-slate-200 rounded-xl p-6 text-center text-xs text-slate-500">
                   Belum ada pengaduan warga.
                 </div>
               ) : (
                 complaints.map((c) => (
-                  <div key={c.id} className="bg-white rounded-2xl shadow-2xs p-5 space-y-2 text-xs">
+                  <div key={c.id} className="bg-white border border-slate-200 rounded-xl p-5 space-y-2 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="font-mono font-bold text-[#0069b6]">
                         {c.ticketCode} · {c.category}
@@ -2916,7 +2916,7 @@ export const AdminPanel: React.FC<{
         {/* 15. ABSENSI & BUKU TAMU */}
         {tab === 'attendance' && (
           <div className="space-y-4">
-            <h1 className="text-2xl font-extrabold text-slate-900">Absensi Aparatur &amp; Buku Tamu</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900">Absensi Aparatur &amp; Buku Tamu</h1>
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -2924,12 +2924,12 @@ export const AdminPanel: React.FC<{
                 setNewAttendance({ kind: 'APARATUR', personName: '', roleOrOrigin: '', purpose: '' });
                 setAttendance(await api.getAttendance());
               }}
-              className="bg-white rounded-2xl shadow-2xs p-5 grid grid-cols-1 sm:grid-cols-5 gap-2.5 text-xs"
+              className="bg-white border border-slate-200 rounded-xl p-5 grid grid-cols-1 sm:grid-cols-5 gap-2.5 text-xs"
             >
               <select
                 value={newAttendance.kind}
                 onChange={(e) => setNewAttendance({ ...newAttendance, kind: e.target.value })}
-                className="h-10 px-2.5 rounded-xl border border-slate-300 bg-white font-bold"
+                className="h-10 px-2.5 rounded-lg border border-slate-300 bg-white font-bold"
               >
                 <option value="APARATUR">Absensi Aparatur</option>
                 <option value="TAMU">Buku Tamu</option>
@@ -2939,25 +2939,25 @@ export const AdminPanel: React.FC<{
                 placeholder="Nama *"
                 value={newAttendance.personName}
                 onChange={(e) => setNewAttendance({ ...newAttendance, personName: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300"
+                className="h-10 px-3 rounded-lg border border-slate-300"
               />
               <input
                 placeholder="Jabatan / Instansi"
                 value={newAttendance.roleOrOrigin}
                 onChange={(e) => setNewAttendance({ ...newAttendance, roleOrOrigin: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300"
+                className="h-10 px-3 rounded-lg border border-slate-300"
               />
               <input
                 placeholder="Keperluan"
                 value={newAttendance.purpose}
                 onChange={(e) => setNewAttendance({ ...newAttendance, purpose: e.target.value })}
-                className="h-10 px-3 rounded-xl border border-slate-300"
+                className="h-10 px-3 rounded-lg border border-slate-300"
               />
               <button type="submit" className="h-10 px-3 rounded-xl bg-[#0069b6] text-white font-bold">
                 Catat Kehadiran
               </button>
             </form>
-            <div className="bg-white rounded-2xl shadow-2xs divide-y divide-slate-100 text-xs">
+            <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 text-xs">
               {attendance.length === 0 ? (
                 <div className="p-6 text-center text-slate-500">Belum ada catatan absensi aparatur atau buku tamu.</div>
               ) : (
